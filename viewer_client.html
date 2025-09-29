@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Viewer Controller</title>
+  <script>
+    let ws;
+    let connected = false;
+
+    function connectWebSocket() {
+      ws = new WebSocket("wss://your-relay-server.com/input");
+      ws.onopen = () => {
+        connected = true;
+        document.getElementById("status").textContent = "Connected";
+      };
+    }
+
+    function pollGamepad() {
+      const gp = navigator.getGamepads()[0];
+      if (gp && connected) {
+        const input = {
+          buttons: gp.buttons.map(b => b.pressed),
+          axes: gp.axes.map(a => parseFloat(a.toFixed(2)))
+        };
+        ws.send(JSON.stringify(input));
+      }
+      requestAnimationFrame(pollGamepad);
+    }
+
+    window.onload = () => {
+      connectWebSocket();
+      pollGamepad();
+    };
+  </script>
+</head>
+<body>
+  <h2>🎮 Viewer Controller</h2>
+  <p id="status">Connecting...</p>
+</body>
+</html>
