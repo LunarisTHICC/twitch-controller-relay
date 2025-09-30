@@ -34,74 +34,45 @@
       padding: 8px; max-height: 200px; overflow-y: auto;
       z-index: 1000;
     }
-    #remap-panel select {
-      margin-left: 4px;
-    }
-    /* Remap toggle button */
+    #remap-panel select { margin-left: 4px; }
     #remap-toggle {
-      position: absolute;
-      bottom: 10px; right: 10px;
+      position: absolute; bottom: 10px; right: 10px;
       background: linear-gradient(145deg, #10b981, #059669);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 6px rgba(0,0,0,0.6);
-      z-index: 1001;
+      color: white; border: none; border-radius: 6px;
+      padding: 6px 12px; font-weight: bold; cursor: pointer;
+      box-shadow: 0 0 6px rgba(0,0,0,0.6); z-index: 1001;
     }
-    /* Chat toggle button */
     #chat-toggle {
-      position: absolute;
-      bottom: 50px; right: 10px;
+      position: absolute; bottom: 50px; right: 10px;
       background: linear-gradient(145deg, #1f6feb, #3b82f6);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 8px rgba(0,0,0,0.6);
-      z-index: 1001;
+      color: white; border: none; border-radius: 6px;
+      padding: 8px 16px; font-weight: bold; cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,0,0,0.6); z-index: 1001;
     }
-    /* Chat panel */
     #chat-panel {
-      position: absolute;
-      top: 0; right: 0;
+      position: absolute; top: 0; right: 0;
       width: 300px; height: 100%;
-      background: #0b0f14;
-      border-left: 2px solid #222;
-      display: none;
-      z-index: 1000;
+      background: #0b0f14; border-left: 2px solid #222;
+      display: none; z-index: 1000;
     }
-    #chat-panel iframe {
+    #chat-panel iframe { width: 100%; height: 100%; border: none; }
+    #webrtc {
+      position: absolute; top: 0; left: 0;
       width: 100%; height: 100%;
-      border: none;
+      background: black; z-index: 0;
     }
   </style>
 </head>
 <body>
 
-  <!-- Connection status indicator -->
+  <video id="webrtc" autoplay playsinline muted></video>
+
   <div id="connection-indicator" title="Connection status"></div>
-
-  <!-- Debug toggle button -->
   <button id="debug-toggle">Toggle Debug</button>
-
-  <!-- Debug panel -->
   <div id="debug-panel"></div>
-
-  <!-- Remap panel -->
   <div id="remap-panel"></div>
-
-  <!-- Remap toggle button -->
   <button id="remap-toggle">Remap</button>
-
-  <!-- Chat toggle button -->
   <button id="chat-toggle">Chat</button>
-
-  <!-- Chat panel -->
   <div id="chat-panel">
     <iframe
       src="https://www.twitch.tv/embed/junkfoodjon/chat?parent=localhost&parent=127.0.0.1&parent=complicatedly-lacier-cristine.ngrok-free.dev&parent=lunaristhicc.github.io"
@@ -115,7 +86,6 @@
     toggleBtn.addEventListener('click', () => {
       debugPanel.style.display = (debugPanel.style.display === 'none') ? 'block' : 'none';
     });
-
     function logDebug(msg) {
       const p = document.createElement('div');
       p.textContent = msg;
@@ -126,7 +96,6 @@
     const params = new URLSearchParams(window.location.search);
     let relayDomain = params.get("relay") || window.location.hostname + ":8765";
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-
     const wsUrl = (relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1"))
       ? `ws://${relayDomain}/viewer`
       : `wss://${relayDomain}/ws/viewer`;
@@ -134,22 +103,18 @@
     logDebug("WS URL: " + wsUrl);
     const ws = new WebSocket(wsUrl);
     let viewerID = null;
-
     const connectionIndicator = document.getElementById("connection-indicator");
 
     const buttonMap = {
       0: "A", 1: "B", 2: "X", 3: "Y",
-      4: "LB", 5: "RB",
-      8: "Back", 9: "Start",
-      10: "LS", 11: "RS",
-      12: "DPadUp", 13: "DPadDown",
+      4: "LB", 5: "RB", 8: "Back", 9: "Start",
+      10: "LS", 11: "RS", 12: "DPadUp", 13: "DPadDown",
       14: "DPadLeft", 15: "DPadRight"
     };
 
     // --- Remap configuration ---
     let remap = JSON.parse(localStorage.getItem("remapConfig") || "{}");
     Object.values(buttonMap).forEach(btn => { if (!remap[btn]) remap[btn] = btn; });
-
     function buildRemapUI() {
       const panel = document.getElementById("remap-panel");
       panel.innerHTML = "<b>Button Remap</b><br/>";
@@ -159,8 +124,7 @@
         const select = document.createElement("select");
         for (const target of Object.values(buttonMap)) {
           const opt = document.createElement("option");
-          opt.value = target;
-          opt.textContent = target;
+          opt.value = target; opt.textContent = target;
           if (remap[btn] === target) opt.selected = true;
           select.appendChild(opt);
         }
@@ -174,27 +138,34 @@
       }
     }
     buildRemapUI();
-    // --- Remap toggle logic ---
+
     const remapToggle = document.getElementById("remap-toggle");
     const remapPanel = document.getElementById("remap-panel");
     let remapVisible = true;
-
     remapToggle.addEventListener("click", () => {
       if (remapVisible) {
         remapPanel.style.display = "none";
-        remapToggle.style.bottom = "10px";
-        remapToggle.style.right = "10px";
         remapToggle.textContent = "Remap";
         remapVisible = false;
-        logDebug("Remap panel hidden");
       } else {
         remapPanel.style.display = "block";
-        remapToggle.style.right = "320px"; // shift toggle to the right of panel
         remapToggle.textContent = "Hide Remap";
         remapVisible = true;
-        logDebug("Remap panel shown");
       }
     });
+
+    // --- WebRTC setup ---
+    const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+    let dataChannel = pc.createDataChannel("inputs");
+    pc.addTransceiver("video", { direction: "recvonly" });
+    const webrtcVideo = document.getElementById("webrtc");
+    pc.ontrack = (event) => {
+      const [stream] = event.streams;
+      webrtcVideo.srcObject = stream;
+      logDebug("WebRTC video track attached");
+    };
+    dataChannel.onopen = () => logDebug("DataChannel open");
+    dataChannel.onclose = () => logDebug("DataChannel closed");
 
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
@@ -202,35 +173,22 @@
       ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === "welcome" && msg.viewer_id) {
           viewerID = msg.viewer_id;
           logDebug("Handshake complete. Viewer ID: " + viewerID);
-
-          // Delay Twitch iframe injection
-          setTimeout(() => {
-            const iframe = document.createElement("iframe");
-            iframe.id = "twitch-player";
-            iframe.src = "https://player.twitch.tv/?channel=junkfoodjon"
-                       + "&parent=localhost"
-                       + "&parent=127.0.0.1"
-                       + "&parent=complicatedly-lacier-cristine.ngrok-free.dev"
-                       + "&parent=lunaristhicc.github.io"
-                       + "&autoplay=true"
-                       + "&muted=true";
-            iframe.width = "100%";
-            iframe.height = "100%";
-            iframe.allowFullscreen = true;
-            iframe.style.position = "absolute";
-            iframe.style.top = "0";
-            iframe.style.left = "0";
-            iframe.style.zIndex = "0";
-            document.body.appendChild(iframe);
-            logDebug("Twitch iframe injected.");
-            window.focus();
-          }, 3000);
+          const offer = await pc.createOffer({ offerToReceiveVideo: true });
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({ type: "offer", role: "viewer", viewer: viewerID, sdp: pc.localDescription }));
+        } else if (msg.type === "answer" && msg.sdp
+		        } else if (msg.type === "answer" && msg.sdp) {
+          pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+          logDebug("WebRTC answer applied");
+        } else if (msg.type === "candidate" && msg.candidate) {
+          pc.addIceCandidate(msg.candidate);
+          logDebug("ICE candidate added");
         }
       } catch (e) {
         logDebug("Error parsing server message: " + e);
@@ -247,6 +205,7 @@
       connectionIndicator.style.backgroundColor = "gray";
     };
 
+    // --- Gamepad polling and input relay ---
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
       if (gamepads[0] && viewerID) {
@@ -287,18 +246,9 @@
       logDebug("Gamepad disconnected: " + e.gamepad.id);
     });
 
-    // --- WebRTC DataChannel setup ---
-    let pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-    let dataChannel = pc.createDataChannel("inputs");
-
-    dataChannel.onopen = () => logDebug("DataChannel open");
-    dataChannel.onclose = () => logDebug("DataChannel closed");
-    dataChannel.onerror = (e) => logDebug("DataChannel error: " + e);
-
     // --- Chat toggle logic ---
     const chatToggle = document.getElementById("chat-toggle");
     const chatPanel = document.getElementById("chat-panel");
-
     chatToggle.addEventListener("click", () => {
       if (chatPanel.style.display === "none" || chatPanel.style.display === "") {
         chatPanel.style.display = "block";
