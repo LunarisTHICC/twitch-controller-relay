@@ -59,7 +59,9 @@
 </head>
 <body>
 
-  <video id="webrtc" autoplay playsinline></video>
+  <!-- Muted initially to satisfy autoplay policies -->
+  <video id="webrtc" autoplay playsinline muted></video>
+  <button id="unmute" style="position:absolute;top:10px;left:10px;z-index:1001;">Unmute</button>
 
   <div id="connection-indicator" title="Connection status"></div>
   <button id="debug-toggle">Toggle Debug</button>
@@ -77,12 +79,6 @@
   </div>
 
   <script>
-    // Options baked in:
-    // 1) Robust signaling + trickle ICE (pc.onicecandidate)
-    // 2) Live connection-state debug overlay (ICE/DTLS/DC states)
-    // 3) Input redundancy: DataChannel primary, WebSocket fallback
-    // 4) Adjustable gamepad polling rate + deadzone
-
     const debugPanel = document.getElementById('debug-panel');
     const toggleBtn = document.getElementById('debug-toggle');
     const stateLine = document.getElementById('state-line');
@@ -96,8 +92,7 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
     function setIndicator(color) {
-      const el = document.getElementById("connection-indicator");
-      el.style.backgroundColor = color;
+      document.getElementById("connection-indicator").style.backgroundColor = color;
     }
     function renderState(pc, dc) {
       const text = [
@@ -163,7 +158,7 @@
       remapVisible = !remapVisible;
     });
 
-    // --- WebRTC setup (Option 1: robust signaling + trickle ICE) ---
+    // --- WebRTC setup ---
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       sdpSemantics: "unified-plan"
@@ -171,15 +166,24 @@
     const webrtcVideo = document.getElementById("webrtc");
     let dataChannel = pc.createDataChannel("inputs", { ordered: true });
 
+    // Receive both video and audio
     pc.addTransceiver("video", { direction: "recvonly" });
+    pc.addTransceiver("audio", { direction: "recvonly" });
+
     pc.ontrack = (event) => {
       const [stream] = event.streams;
       webrtcVideo.srcObject = stream;
-      logDebug("WebRTC video track attached");
+      logDebug("WebRTC track attached");
+      webrtcVideo.play().catch(err => logDebug("Autoplay blocked: " + err));
     };
-
-    dataChannel.onopen = () => { logDebug("DataChannel open"); renderState(pc, dataChannel); };
-    dataChannel.onclose = () => { logDebug("DataChannel closed"); renderState(pc, dataChannel); };
+        dataChannel.onopen = () => {
+      logDebug("DataChannel open");
+      renderState(pc, dataChannel);
+    };
+    dataChannel.onclose = () => {
+      logDebug("DataChannel closed");
+      renderState(pc, dataChannel);
+    };
     pc.oniceconnectionstatechange = () => {
       renderState(pc, dataChannel);
       const s = pc.iceConnectionState;
@@ -193,7 +197,6 @@
       logDebug("Peer connection state: " + pc.connectionState);
     };
 
-    // Trickle ICE: send local candidates to relay
     pc.onicecandidate = (event) => {
       if (event.candidate && viewerID) {
         ws.send(JSON.stringify({ type: "candidate", viewer: viewerID, candidate: event.candidate }));
@@ -201,19 +204,19 @@
       }
     };
 
-    // WebSocket signaling
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
       setIndicator("gold");
       ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
     };
+
     ws.onmessage = async (event) => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === "welcome" && msg.viewer_id) {
           viewerID = msg.viewer_id;
           logDebug("Handshake complete. Viewer ID: " + viewerID);
-          const offer = await pc.createOffer({ offerToReceiveVideo: true });
+          const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.send(JSON.stringify({ type: "offer", role: "viewer", viewer: viewerID, sdp: pc.localDescription }));
           renderState(pc, dataChannel);
@@ -240,10 +243,10 @@
       setIndicator("gray");
     };
 
-    // --- Inputs (Options 3 & 4: redundancy + adjustable polling) ---
-    const POLL_MODE = "raf";       // "raf" for ~60Hz, "interval" for custom Hz
-    const POLL_INTERVAL_MS = 33;   // effective ~30Hz if POLL_MODE === "interval"
-    const AXIS_DEADZONE = 0.08;    // small deadzone to reduce jitter
+    // --- Inputs ---
+    const POLL_MODE = "raf";
+    const POLL_INTERVAL_MS = 33;
+    const AXIS_DEADZONE = 0.08;
     function applyDeadzone(v) {
       return Math.abs(v) < AXIS_DEADZONE ? 0.0 : v;
     }
@@ -266,11 +269,9 @@
     }
 
     function sendInput(payload) {
-      // DataChannel primary
       if (dataChannel && dataChannel.readyState === "open") {
         dataChannel.send(JSON.stringify(payload));
       } else if (ws.readyState === WebSocket.OPEN) {
-        // WebSocket fallback
         ws.send(JSON.stringify(payload));
       }
     }
@@ -301,7 +302,7 @@
       logDebug("Gamepad disconnected: " + e.gamepad.id);
     });
 
-    // --- Chat toggle logic ---
+    // --- Chat toggle ---
     const chatToggle = document.getElementById("chat-toggle");
     const chatPanel = document.getElementById("chat-panel");
     chatToggle.addEventListener("click", () => {
@@ -314,9 +315,14 @@
       }
     });
 
-    // Start polling even without gamepad event (some browsers don’t fire it)
+    // Unmute button
+    document.getElementById("unmute").addEventListener("click", () => {
+      webrtcVideo.muted = false;
+      webrtcVideo.play().catch(err => logDebug("Unmute/play error: " + err));
+    });
+
+    // Start polling immediately
     startPolling();
   </script>
 </body>
 </html>
-
