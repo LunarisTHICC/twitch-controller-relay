@@ -28,11 +28,7 @@
 </head>
 <body>
   <!-- Twitch Embed -->
-  <iframe
-    id="twitch-player"
-    src="https://player.twitch.tv/?channel=junkfoodjon&parent=localhost"
-    allowfullscreen>
-  </iframe>
+  <iframe id="twitch-player" allowfullscreen></iframe>
 
   <!-- Debug toggle button -->
   <button id="debug-toggle">Toggle Debug</button>
@@ -41,6 +37,12 @@
   <div id="debug-panel"></div>
 
   <script>
+    // --- Auto-detect domain for Twitch embed ---
+    const domain = window.location.hostname;
+    const iframe = document.getElementById("twitch-player");
+    iframe.src = `https://player.twitch.tv/?channel=junkfoodjon&parent=${domain}`;
+
+    // --- Debug panel logic ---
     const debugPanel = document.getElementById('debug-panel');
     const toggleBtn = document.getElementById('debug-toggle');
     toggleBtn.addEventListener('click', () => {
@@ -80,7 +82,7 @@
 
         // Send to relay
         const payload = {
-          viewer: "anon-" + Math.floor(Math.random()*1000), // replace with real ID if you have one
+          viewer: "anon-" + Math.floor(Math.random()*1000), // replace with real ID if needed
           buttons: buttons,
           axes: axes
         };
