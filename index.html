@@ -72,7 +72,7 @@
     let relayDomain = params.get("relay") || "localhost:8765";
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
-    const wsUrl = relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1")
+    const wsUrl = `wss://complicatedly-lacier-cristine.ngrok-free.dev/ws/viewer`;
   ? `ws://${relayDomain}/viewer`
   : `wss://${relayDomain}/ws/viewer`;   // <-- note the /ws/ prefix
 
@@ -154,4 +154,5 @@
   </script>
 </body>
 </html>
+
 
