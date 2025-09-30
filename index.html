@@ -106,14 +106,12 @@
 
     const params = new URLSearchParams(window.location.search);
     let relayDomain = params.get("relay");
-  if (!relayDomain) {
+if (!relayDomain) {
   logDebug("Missing ?relay=... in URL. Cannot connect.");
   return;
-  }
-    relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-    const wsUrl = (relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1"))
-      ? `ws://${relayDomain}/viewer`
-      : `wss://${relayDomain}/ws/viewer`;
+}
+relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+const wsUrl = `wss://${relayDomain}/ws/viewer`;
 
     logDebug("WS URL: " + wsUrl);
     const ws = new WebSocket(wsUrl);
@@ -330,4 +328,5 @@
   </script>
 </body>
 </html>
+
 
