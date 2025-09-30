@@ -1,4 +1,3 @@
-<!-- THIS IS NOT A FULL FILE -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -59,11 +58,15 @@
 
     // --- WebSocket URL via query param ---
     const params = new URLSearchParams(window.location.search);
-    const relayDomain = params.get("relay") || "localhost:8765";
+    let relayDomain = params.get("relay") || "localhost:8765";
+    // Auto-strip http:// or https:// if pasted
+    relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+
     const wsUrl = relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1")
       ? `ws://${relayDomain}/viewer`
       : `wss://${relayDomain}/viewer`;
 
+    console.log("DEBUG wsUrl =", wsUrl);
     const ws = new WebSocket(wsUrl);
     let viewerID = null;
 
@@ -95,7 +98,7 @@
 
     ws.onclose = () => logDebug("Disconnected from relay server.");
     ws.onerror = (err) => logDebug("WebSocket error: " + err);
-<!-- THIS IS NOT A FULL FILE -->
+
     // --- Gamepad polling loop ---
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
