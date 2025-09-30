@@ -73,8 +73,8 @@
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
     const wsUrl = relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1")
-      ? `ws://${relayDomain}/viewer`
-      : `wss://${relayDomain}/viewer`;
+  ? `ws://${relayDomain}/viewer`
+  : `wss://${relayDomain}/ws/viewer`;   // <-- note the /ws/ prefix
 
     console.log("DEBUG wsUrl =", wsUrl);
     const ws = new WebSocket(wsUrl);
@@ -154,3 +154,4 @@
   </script>
 </body>
 </html>
+
