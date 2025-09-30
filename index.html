@@ -5,6 +5,7 @@
   <style>
     body { font-family: Arial, sans-serif; background: #111; color: #eee; }
     #status { margin-bottom: 10px; font-weight: bold; }
+    #viewerId { margin-bottom: 10px; color: #0ff; }
     #log {
       width: 100%;
       height: 200px;
@@ -20,6 +21,7 @@
 <body>
   <h1>Viewer Controller</h1>
   <p id="status">Connecting...</p>
+  <p id="viewerId">Viewer ID: (not assigned yet)</p>
   <div id="log"></div>
 
   <script>
@@ -35,6 +37,9 @@
 
     const statusEl = document.getElementById("status");
     const logEl = document.getElementById("log");
+    const viewerIdEl = document.getElementById("viewerId");
+
+    let viewerId = null;
 
     function log(msg) {
       const line = document.createElement("div");
@@ -56,6 +61,19 @@
     ws.onerror = (err) => {
       statusEl.textContent = "⚠️ Error";
       log("WebSocket error: " + err);
+    };
+
+    ws.onmessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data);
+        if (data.viewer && !viewerId) {
+          viewerId = data.viewer;
+          viewerIdEl.textContent = "Viewer ID: " + viewerId;
+          log("Assigned viewer ID: " + viewerId);
+        }
+      } catch (e) {
+        log("Non-JSON message: " + evt.data);
+      }
     };
 
     function pollGamepad() {
