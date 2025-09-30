@@ -8,7 +8,7 @@
     #viewerId { margin-bottom: 10px; color: #0ff; }
     #log {
       width: 100%;
-      height: 200px;
+      height: 250px;
       background: #222;
       color: #0f0;
       font-family: monospace;
@@ -78,10 +78,18 @@
 
     function pollGamepad() {
       const gamepads = navigator.getGamepads();
-      if (!gamepads) return;
+      if (!gamepads) {
+        log("No gamepads array");
+        return;
+      }
 
       const gp = gamepads[0];
-      if (!gp) return;
+      if (!gp) {
+        log("No gamepad detected");
+        return;
+      }
+
+      log("Gamepad detected: " + gp.id);
 
       const buttons = gp.buttons
         .map((b, i) => b.pressed ? buttonNames[i] : null)
@@ -100,7 +108,7 @@
       }
     }
 
-    setInterval(pollGamepad, 200);
+    setInterval(pollGamepad, 500); // slower interval for clearer logs
   </script>
 </body>
 </html>
