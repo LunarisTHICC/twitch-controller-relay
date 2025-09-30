@@ -63,17 +63,28 @@
     ws.onclose = () => logDebug("Disconnected from relay server.");
     ws.onerror = (err) => logDebug("WebSocket error: " + err);
 
+    // --- Button index → Xbox name map ---
+    const buttonMap = {
+      0: "A", 1: "B", 2: "X", 3: "Y",
+      4: "LB", 5: "RB",
+      6: "LT", 7: "RT",
+      8: "Back", 9: "Start",
+      10: "LS", 11: "RS",
+      12: "DPadUp", 13: "DPadDown",
+      14: "DPadLeft", 15: "DPadRight"
+    };
+
     // --- Gamepad polling loop ---
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
       if (gamepads[0]) {
         const gp = gamepads[0];
 
-        // Collect pressed buttons
+        // Collect pressed buttons as names
         const buttons = [];
         gp.buttons.forEach((btn, i) => {
-          if (btn.pressed) {
-            buttons.push(i);
+          if (btn.pressed && buttonMap[i]) {
+            buttons.push(buttonMap[i]);
           }
         });
 
