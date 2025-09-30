@@ -48,11 +48,12 @@
   <div id="debug-panel"></div>
 
   <script>
-    // --- Twitch embed with correct parent ---
-    const domain = window.location.hostname;
+    // --- Twitch embed with both localhost and ngrok parent ---
     const iframe = document.getElementById("twitch-player");
-    iframe.src = `https://player.twitch.tv/?channel=junkfoodjon&parent=${domain}`;
-
+    iframe.src = "https://player.twitch.tv/?channel=junkfoodjon"
+               + "&parent=localhost"
+               + "&parent=127.0.0.1"
+               + "&parent=complicatedly-lacier-cristine.ngrok-free.dev";
 
     // --- Debug panel logic ---
     const debugPanel = document.getElementById('debug-panel');
@@ -68,20 +69,14 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // --- Build WebSocket URL (ngrok http tunnels require /ws/ prefix) ---
+    // --- WebSocket URL builder ---
     const params = new URLSearchParams(window.location.search);
-    let relayDomain = params.get("relay"); // optional override, e.g. ?relay=complicatedly-lacier-cristine.ngrok-free.dev
-    if (relayDomain) {
-      relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-    }
-    // Default to your current ngrok domain if no ?relay= provided
-    const defaultNgrok = "complicatedly-lacier-cristine.ngrok-free.dev";
+    let relayDomain = params.get("relay") || window.location.hostname + ":8765";
+    relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
-    const targetDomain = relayDomain || defaultNgrok;
-
-    const wsUrl = (targetDomain.includes("localhost") || targetDomain.includes("127.0.0.1"))
-      ? `ws://${targetDomain}/viewer`
-      : `wss://${targetDomain}/ws/viewer`; // IMPORTANT: /ws/viewer for ngrok http
+    const wsUrl = (relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1"))
+      ? `ws://${relayDomain}/viewer`
+      : `wss://${relayDomain}/ws/viewer`;
 
     console.log("DEBUG wsUrl =", wsUrl);
     logDebug("WS URL: " + wsUrl);
@@ -100,7 +95,7 @@
       14: "DPadLeft", 15: "DPadRight"
     };
 
-    // Send hello immediately so relay classifies this as a viewer and keeps connection alive
+    // --- WebSocket events ---
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
       connectionIndicator.style.backgroundColor = "limegreen";
@@ -164,4 +159,3 @@
   </script>
 </body>
 </html>
-
