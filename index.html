@@ -2,40 +2,47 @@
 <html>
 <head>
   <title>Viewer Controller</title>
-  <script>
-    let ws;
-    let connected = false;
-
-    function connectWebSocket() {
-      ws = new WebSocket("wss://complicatedly-lacier-cristine.ngrok-free.dev/input");
-      ws.onopen = () => {
-        connected = true;
-        document.getElementById("status").textContent = "Connected";
-      };
-    }
-
-    function pollGamepad() {
-      const gp = navigator.getGamepads()[0];
-      if (gp && connected) {
-        const input = {
-          buttons: gp.buttons.map(b => b.pressed),
-          axes: gp.axes.map(a => parseFloat(a.toFixed(2)))
-        };
-        ws.send(JSON.stringify(input));
-      }
-      requestAnimationFrame(pollGamepad);
-    }
-
-    window.onload = () => {
-      connectWebSocket();
-      pollGamepad();
-    };
-  </script>
 </head>
 <body>
-  <h2>🎮 Viewer Controller</h2>
+  <h1>Viewer Controller</h1>
   <p id="status">Connecting...</p>
+
+  <script>
+    const buttonNames = [
+      "A", "B", "X", "Y",
+      "LB", "RB", "LT", "RT",
+      "Back", "Start", "LS", "RS",
+      "DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Home"
+    ];
+
+    const ws = new WebSocket("wss://complicatedly-lacier-cristine.ngrok-free.dev/input");
+
+    ws.onopen = () => {
+      document.getElementById("status").textContent = "Connected";
+    };
+
+    function pollGamepad() {
+      const gamepads = navigator.getGamepads();
+      if (!gamepads) return;
+
+      const gp = gamepads[0];
+      if (!gp) return;
+
+      const buttons = gp.buttons
+        .map((b, i) => b.pressed ? buttonNames[i] : null)
+        .filter(b => b !== null);
+
+      const axes = gp.axes.map(a => parseFloat(a.toFixed(2)));
+
+      const payload = {
+        buttons: buttons,
+        axes: axes
+      };
+
+      ws.send(JSON.stringify(payload));
+    }
+
+    setInterval(pollGamepad, 100);
+  </script>
 </body>
 </html>
-
-
