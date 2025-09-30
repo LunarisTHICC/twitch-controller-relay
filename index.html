@@ -16,12 +16,15 @@
       padding: 5px;
       border: 1px solid #555;
     }
+    button { margin: 5px; padding: 8px 12px; }
   </style>
 </head>
 <body>
   <h1>Viewer Controller</h1>
   <p id="status">Connecting...</p>
   <p id="viewerId">Viewer ID: (not assigned yet)</p>
+  <button id="startBtn">Start Sending</button>
+  <button id="stopBtn" disabled>Stop Sending</button>
   <div id="log"></div>
 
   <script>
@@ -32,14 +35,16 @@
       "DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Home"
     ];
 
-    // Change this to your ngrok URL
     const ws = new WebSocket("wss://complicatedly-lacier-cristine.ngrok-free.dev/input");
 
     const statusEl = document.getElementById("status");
     const logEl = document.getElementById("log");
     const viewerIdEl = document.getElementById("viewerId");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
 
     let viewerId = null;
+    let pollInterval = null;
 
     function log(msg) {
       const line = document.createElement("div");
@@ -78,10 +83,7 @@
 
     function pollGamepad() {
       const gamepads = navigator.getGamepads();
-      if (!gamepads) {
-        log("No gamepads array");
-        return;
-      }
+      if (!gamepads) return;
 
       const gp = gamepads[0];
       if (!gp) {
@@ -89,18 +91,13 @@
         return;
       }
 
-      log("Gamepad detected: " + gp.id);
-
       const buttons = gp.buttons
         .map((b, i) => b.pressed ? buttonNames[i] : null)
         .filter(b => b !== null);
 
       const axes = gp.axes.map(a => parseFloat(a.toFixed(2)));
 
-      const payload = {
-        buttons: buttons,
-        axes: axes
-      };
+      const payload = { buttons, axes };
 
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(payload));
@@ -108,7 +105,24 @@
       }
     }
 
-    setInterval(pollGamepad, 500); // slower interval for clearer logs
+    startBtn.onclick = () => {
+      if (!pollInterval) {
+        pollInterval = setInterval(pollGamepad, 200);
+        log("Started sending inputs");
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+      }
+    };
+
+    stopBtn.onclick = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        log("Stopped sending inputs");
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    };
   </script>
 </body>
 </html>
