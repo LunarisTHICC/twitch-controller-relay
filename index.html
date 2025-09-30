@@ -1,128 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Viewer Controller</title>
+  <title>Viewer Controller + Stream</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; }
-    #status { margin-bottom: 10px; font-weight: bold; }
-    #viewerId { margin-bottom: 10px; color: #0ff; }
-    #log {
-      width: 100%;
-      height: 250px;
-      background: #222;
-      color: #0f0;
-      font-family: monospace;
-      overflow-y: scroll;
-      padding: 5px;
-      border: 1px solid #555;
+    body, html {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      background: black; overflow: hidden;
     }
-    button { margin: 5px; padding: 8px 12px; }
+    #twitch-player {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+    #debug-toggle {
+      position: absolute; top: 10px; right: 10px;
+      z-index: 1000;
+    }
+    #debug-panel {
+      position: absolute; top: 40px; right: 10px;
+      background: rgba(0,0,0,0.7); color: #0f0;
+      font-family: monospace; font-size: 12px;
+      padding: 5px; max-width: 300px; max-height: 200px;
+      overflow-y: auto; display: none;
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
-  <h1>Viewer Controller</h1>
-  <p id="status">Connecting...</p>
-  <p id="viewerId">Viewer ID: (not assigned yet)</p>
-  <button id="startBtn">Start Sending</button>
-  <button id="stopBtn" disabled>Stop Sending</button>
-  <div id="log"></div>
+  <!-- Twitch Embed -->
+  <iframe
+    id="twitch-player"
+    src="https://player.twitch.tv/?channel=junkfoodjon&parent=localhost"
+    allowfullscreen>
+  </iframe>
+
+  <!-- Debug toggle button -->
+  <button id="debug-toggle">Toggle Debug</button>
+
+  <!-- Debug panel -->
+  <div id="debug-panel"></div>
 
   <script>
-    const buttonNames = [
-      "A", "B", "X", "Y",
-      "LB", "RB", "LT", "RT",
-      "Back", "Start", "LS", "RS",
-      "DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Home"
-    ];
+    const debugPanel = document.getElementById('debug-panel');
+    const toggleBtn = document.getElementById('debug-toggle');
+    toggleBtn.addEventListener('click', () => {
+      debugPanel.style.display = (debugPanel.style.display === 'none') ? 'block' : 'none';
+    });
 
-    const ws = new WebSocket("wss://complicatedly-lacier-cristine.ngrok-free.dev/input");
-
-    const statusEl = document.getElementById("status");
-    const logEl = document.getElementById("log");
-    const viewerIdEl = document.getElementById("viewerId");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-
-    let viewerId = null;
-    let pollInterval = null;
-
-    function log(msg) {
-      const line = document.createElement("div");
-      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-      logEl.appendChild(line);
-      logEl.scrollTop = logEl.scrollHeight;
+    function logDebug(msg) {
+      const p = document.createElement('div');
+      p.textContent = msg;
+      debugPanel.appendChild(p);
+      debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    ws.onopen = () => {
-      statusEl.textContent = "✅ Connected to relay";
-      log("WebSocket connected");
-    };
+    // --- WebSocket connection to your relay ---
+    const ws = new WebSocket("wss://complicatedly-lacier-cristine.ngrok-free.dev/viewer");
 
-    ws.onclose = (evt) => {
-      statusEl.textContent = "❌ Disconnected";
-      log(`WebSocket closed (code ${evt.code})`);
-    };
+    ws.onopen = () => logDebug("Connected to relay server.");
+    ws.onclose = () => logDebug("Disconnected from relay server.");
+    ws.onerror = (err) => logDebug("WebSocket error: " + err);
 
-    ws.onerror = (err) => {
-      statusEl.textContent = "⚠️ Error";
-      log("WebSocket error: " + err);
-    };
+    // --- Gamepad polling loop ---
+    function pollGamepads() {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      if (gamepads[0]) {
+        const gp = gamepads[0];
 
-    ws.onmessage = (evt) => {
-      try {
-        const data = JSON.parse(evt.data);
-        if (data.viewer && !viewerId) {
-          viewerId = data.viewer;
-          viewerIdEl.textContent = "Viewer ID: " + viewerId;
-          log("Assigned viewer ID: " + viewerId);
+        // Collect pressed buttons
+        const buttons = [];
+        gp.buttons.forEach((btn, i) => {
+          if (btn.pressed) {
+            buttons.push(i);
+          }
+        });
+
+        // Collect axes
+        const axes = gp.axes.map(v => parseFloat(v.toFixed(2)));
+
+        // Send to relay
+        const payload = {
+          viewer: "anon-" + Math.floor(Math.random()*1000), // replace with real ID if you have one
+          buttons: buttons,
+          axes: axes
+        };
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(payload));
         }
-      } catch (e) {
-        log("Non-JSON message: " + evt.data);
+
+        logDebug("Sent: " + JSON.stringify(payload));
       }
-    };
-
-    function pollGamepad() {
-      const gamepads = navigator.getGamepads();
-      if (!gamepads) return;
-
-      const gp = gamepads[0];
-      if (!gp) {
-        log("No gamepad detected");
-        return;
-      }
-
-      const buttons = gp.buttons
-        .map((b, i) => b.pressed ? buttonNames[i] : null)
-        .filter(b => b !== null);
-
-      const axes = gp.axes.map(a => parseFloat(a.toFixed(2)));
-
-      const payload = { buttons, axes };
-
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(payload));
-        log("Sent: " + JSON.stringify(payload));
-      }
+      requestAnimationFrame(pollGamepads);
     }
 
-    startBtn.onclick = () => {
-      if (!pollInterval) {
-        pollInterval = setInterval(pollGamepad, 200);
-        log("Started sending inputs");
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-      }
-    };
+    window.addEventListener("gamepadconnected", (e) => {
+      logDebug("Gamepad connected: " + e.gamepad.id);
+      pollGamepads();
+    });
 
-    stopBtn.onclick = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-        log("Stopped sending inputs");
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-      }
-    };
+    window.addEventListener("gamepaddisconnected", (e) => {
+      logDebug("Gamepad disconnected: " + e.gamepad.id);
+    });
   </script>
 </body>
 </html>
