@@ -1,14 +1,11 @@
+<!DOCTYPE html>
+<html>
 <head>
   <title>Viewer Controller + Stream</title>
   <style>
     body, html {
       margin: 0; padding: 0; height: 100%; width: 100%;
       background: black; overflow: hidden;
-    }
-    #twitch-player {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      border: none;
     }
     #debug-toggle {
       position: absolute; top: 10px; right: 10px;
@@ -33,20 +30,9 @@
   </style>
 </head>
 <body>
-  <!-- Twitch Embed -->
-<iframe id="twitch-player"
-  src="https://player.twitch.tv/?channel=junkfoodjon
-       &parent=localhost
-       &parent=127.0.0.1
-       &parent=complicatedly-lacier-cristine.ngrok-free.dev
-       &parent=lunaristhicc.github.io
-       &autoplay=true
-       &muted=true"
-  height="100%" width="100%" allowfullscreen>
-</iframe>
 
   <!-- Connection status indicator -->
-  <div id="connection-indicator" title="Connection status" style="background-color: limegreen;"></div>
+  <div id="connection-indicator" title="Connection status" style="background-color: gray;"></div>
 
   <!-- Debug toggle button -->
   <button id="debug-toggle">Toggle Debug</button>
@@ -55,15 +41,6 @@
   <div id="debug-panel"></div>
 
   <script>
-    // --- Twitch embed with all parents (localhost + ngrok + GitHub Pages) ---
-    const iframe = document.getElementById("twitch-player");
-    iframe.src = "https://player.twitch.tv/?channel=junkfoodjon"
-               + "&parent=localhost"
-               + "&parent=127.0.0.1"
-               + "&parent=complicatedly-lacier-cristine.ngrok-free.dev"
-               + "&parent=lunaristhicc.github.io";
-
-    // --- Debug panel logic ---
     const debugPanel = document.getElementById('debug-panel');
     const toggleBtn = document.getElementById('debug-toggle');
     toggleBtn.addEventListener('click', () => {
@@ -77,7 +54,6 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // --- WebSocket URL builder ---
     const params = new URLSearchParams(window.location.search);
     let relayDomain = params.get("relay") || window.location.hostname + ":8765";
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
@@ -103,7 +79,6 @@
       14: "DPadLeft", 15: "DPadRight"
     };
 
-    // --- WebSocket events ---
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
       connectionIndicator.style.backgroundColor = "limegreen";
@@ -116,6 +91,28 @@
         if (msg.type === "welcome" && msg.viewer_id) {
           viewerID = msg.viewer_id;
           logDebug("Handshake complete. Viewer ID: " + viewerID);
+
+          // Delay Twitch iframe injection
+          setTimeout(() => {
+            const iframe = document.createElement("iframe");
+            iframe.id = "twitch-player";
+            iframe.src = "https://player.twitch.tv/?channel=junkfoodjon"
+                       + "&parent=localhost"
+                       + "&parent=127.0.0.1"
+                       + "&parent=complicatedly-lacier-cristine.ngrok-free.dev"
+                       + "&parent=lunaristhicc.github.io"
+                       + "&autoplay=true"
+                       + "&muted=true";
+            iframe.width = "100%";
+            iframe.height = "100%";
+            iframe.allowFullscreen = true;
+            iframe.style.position = "absolute";
+            iframe.style.top = "0";
+            iframe.style.left = "0";
+            iframe.style.zIndex = "0";
+            document.body.appendChild(iframe);
+            logDebug("Twitch iframe injected.");
+          }, 3000); // 3-second delay
         }
       } catch (e) {
         logDebug("Error parsing server message: " + e);
@@ -132,7 +129,6 @@
       connectionIndicator.style.backgroundColor = "gray";
     };
 
-    // --- Gamepad polling loop ---
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
       if (gamepads[0] && viewerID) {
@@ -161,9 +157,10 @@
       logDebug("Gamepad connected: " + e.gamepad.id);
       pollGamepads();
     });
+
     window.addEventListener("gamepaddisconnected", (e) => {
       logDebug("Gamepad disconnected: " + e.gamepad.id);
     });
   </script>
 </body>
-
+</html>
