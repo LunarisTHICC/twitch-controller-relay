@@ -105,7 +105,11 @@
     }
 
     const params = new URLSearchParams(window.location.search);
-    let relayDomain = params.get("relay") || window.location.hostname + ":8765";
+    let relayDomain = params.get("relay");
+  if (!relayDomain) {
+  logDebug("Missing ?relay=... in URL. Cannot connect.");
+  return;
+  }
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
     const wsUrl = (relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1"))
       ? `ws://${relayDomain}/viewer`
@@ -326,3 +330,4 @@
   </script>
 </body>
 </html>
+
