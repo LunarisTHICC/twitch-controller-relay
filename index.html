@@ -59,7 +59,6 @@
 </head>
 <body>
 
-  <!-- Muted initially to satisfy autoplay policies -->
   <video id="webrtc" autoplay playsinline muted></video>
   <button id="unmute" style="position:absolute;top:10px;left:10px;z-index:1001;">Unmute</button>
 
@@ -106,227 +105,229 @@
 
     const params = new URLSearchParams(window.location.search);
     let relayDomain = params.get("relay");
-if (!relayDomain) {
-  logDebug("Missing ?relay=... in URL. Cannot connect.");
-  return;
-}
-relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-const wsUrl = `wss://${relayDomain}/ws/viewer`;
 
-    logDebug("WS URL: " + wsUrl);
-    const ws = new WebSocket(wsUrl);
-    let viewerID = null;
+    function startViewer(wsUrl) {
+      logDebug("WS URL: " + wsUrl);
+      const ws = new WebSocket(wsUrl);
+      let viewerID = null;
 
-    const buttonMap = {
-      0: "A", 1: "B", 2: "X", 3: "Y",
-      4: "LB", 5: "RB", 8: "Back", 9: "Start",
-      10: "LS", 11: "RS", 12: "DPadUp", 13: "DPadDown",
-      14: "DPadLeft", 15: "DPadRight"
-    };
+      const buttonMap = {
+        0: "A", 1: "B", 2: "X", 3: "Y",
+        4: "LB", 5: "RB", 8: "Back", 9: "Start",
+        10: "LS", 11: "RS", 12: "DPadUp", 13: "DPadDown",
+        14: "DPadLeft", 15: "DPadRight"
+      };
 
-    // --- Remap configuration ---
-    let remap = JSON.parse(localStorage.getItem("remapConfig") || "{}");
-    Object.values(buttonMap).forEach(btn => { if (!remap[btn]) remap[btn] = btn; });
-    function buildRemapUI() {
-      const panel = document.getElementById("remap-panel");
-      panel.innerHTML = "<b>Button Remap</b><br/>";
-      for (const btn of Object.values(buttonMap)) {
-        const row = document.createElement("div");
-        row.textContent = btn + " → ";
-        const select = document.createElement("select");
-        for (const target of Object.values(buttonMap)) {
-          const opt = document.createElement("option");
-          opt.value = target; opt.textContent = target;
-          if (remap[btn] === target) opt.selected = true;
-          select.appendChild(opt);
+      // --- Remap configuration ---
+      let remap = JSON.parse(localStorage.getItem("remapConfig") || "{}");
+      Object.values(buttonMap).forEach(btn => { if (!remap[btn]) remap[btn] = btn; });
+      function buildRemapUI() {
+        const panel = document.getElementById("remap-panel");
+        panel.innerHTML = "<b>Button Remap</b><br/>";
+        for (const btn of Object.values(buttonMap)) {
+          const row = document.createElement("div");
+          row.textContent = btn + " → ";
+          const select = document.createElement("select");
+          for (const target of Object.values(buttonMap)) {
+            const opt = document.createElement("option");
+            opt.value = target; opt.textContent = target;
+            if (remap[btn] === target) opt.selected = true;
+            select.appendChild(opt);
+          }
+          select.onchange = () => {
+            remap[btn] = select.value;
+            localStorage.setItem("remapConfig", JSON.stringify(remap));
+            logDebug(`Remapped ${btn} → ${select.value}`);
+          };
+          row.appendChild(select);
+          panel.appendChild(row);
         }
-        select.onchange = () => {
-          remap[btn] = select.value;
-          localStorage.setItem("remapConfig", JSON.stringify(remap));
-          logDebug(`Remapped ${btn} → ${select.value}`);
+      }
+      buildRemapUI();
+
+      const remapToggle = document.getElementById("remap-toggle");
+      const remapPanel = document.getElementById("remap-panel");
+      let remapVisible = true;
+      remapToggle.addEventListener("click", () => {
+        remapPanel.style.display = remapVisible ? "none" : "block";
+        remapToggle.textContent = remapVisible ? "Remap" : "Hide Remap";
+        remapVisible = !remapVisible;
+      });
+
+      // --- WebRTC setup ---
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        sdpSemantics: "unified-plan"
+      });
+      const webrtcVideo = document.getElementById("webrtc");
+      let dataChannel = pc.createDataChannel("inputs", { ordered: true });
+
+      pc.addTransceiver("video", { direction: "recvonly" });
+      pc.addTransceiver("audio", { direction: "recvonly" });
+
+      pc.ontrack = (event) => {
+        const [stream] = event.streams;
+        webrtcVideo.srcObject = stream;
+        logDebug("WebRTC track attached");
+        webrtcVideo.play().catch(err => logDebug("Autoplay blocked: " + err));
+      };
+      dataChannel.onopen = () => {
+        logDebug("DataChannel open");
+        renderState(pc, dataChannel);
+      };
+      dataChannel.onclose = () => {
+        logDebug("DataChannel closed");
+        renderState(pc, dataChannel);
+      };
+            pc.oniceconnectionstatechange = () => {
+        renderState(pc, dataChannel);
+        const s = pc.iceConnectionState;
+        if (s === "connected" || s === "completed") setIndicator("limegreen");
+        else if (s === "checking") setIndicator("gold");
+        else setIndicator("gray");
+        logDebug("ICE state: " + s);
+      };
+
+      pc.onconnectionstatechange = () => {
+        renderState(pc, dataChannel);
+        logDebug("Peer connection state: " + pc.connectionState);
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate && viewerID) {
+          ws.send(JSON.stringify({ type: "candidate", viewer: viewerID, candidate: event.candidate }));
+          logDebug("Sent ICE candidate");
+        }
+      };
+
+      ws.onopen = () => {
+        logDebug("Connected to relay at " + wsUrl);
+        setIndicator("gold");
+        ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
+      };
+
+      ws.onmessage = async (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "welcome" && msg.viewer_id) {
+            viewerID = msg.viewer_id;
+            logDebug("Handshake complete. Viewer ID: " + viewerID);
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            ws.send(JSON.stringify({ type: "offer", role: "viewer", viewer: viewerID, sdp: pc.localDescription }));
+            renderState(pc, dataChannel);
+          } else if (msg.type === "answer" && msg.sdp) {
+            await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+            logDebug("WebRTC answer applied");
+            renderState(pc, dataChannel);
+          } else if (msg.type === "candidate" && msg.candidate) {
+            await pc.addIceCandidate(msg.candidate);
+            logDebug("ICE candidate added");
+          }
+        } catch (e) {
+          logDebug("Error parsing server message: " + e);
+        }
+      };
+
+      ws.onclose = () => {
+        logDebug("Disconnected from relay server.");
+        setIndicator("gray");
+      };
+
+      ws.onerror = (err) => {
+        logDebug("WebSocket error: " + err);
+        setIndicator("gray");
+      };
+
+      // --- Inputs ---
+      const POLL_MODE = "raf";
+      const POLL_INTERVAL_MS = 33;
+      const AXIS_DEADZONE = 0.08;
+      function applyDeadzone(v) {
+        return Math.abs(v) < AXIS_DEADZONE ? 0.0 : v;
+      }
+
+      function collectInputPayload(gp) {
+        const buttons = [];
+        gp.buttons.forEach((btn, i) => {
+          if (btn.pressed && i !== 6 && i !== 7 && buttonMap[i]) {
+            const logical = buttonMap[i];
+            const mapped = remap[logical] || logical;
+            buttons.push(mapped);
+          }
+        });
+        const axes = gp.axes.map(v => parseFloat(applyDeadzone(v).toFixed(2)));
+        const triggers = {
+          LT: gp.buttons[6]?.value ?? axes[2] ?? 0.0,
+          RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
         };
-        row.appendChild(select);
-        panel.appendChild(row);
+        return { viewer: viewerID, buttons, axes, triggers };
       }
-    }
-    buildRemapUI();
 
-    const remapToggle = document.getElementById("remap-toggle");
-    const remapPanel = document.getElementById("remap-panel");
-    let remapVisible = true;
-    remapToggle.addEventListener("click", () => {
-      remapPanel.style.display = remapVisible ? "none" : "block";
-      remapToggle.textContent = remapVisible ? "Remap" : "Hide Remap";
-      remapVisible = !remapVisible;
-    });
-
-    // --- WebRTC setup ---
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-      sdpSemantics: "unified-plan"
-    });
-    const webrtcVideo = document.getElementById("webrtc");
-    let dataChannel = pc.createDataChannel("inputs", { ordered: true });
-
-    // Receive both video and audio
-    pc.addTransceiver("video", { direction: "recvonly" });
-    pc.addTransceiver("audio", { direction: "recvonly" });
-
-    pc.ontrack = (event) => {
-      const [stream] = event.streams;
-      webrtcVideo.srcObject = stream;
-      logDebug("WebRTC track attached");
-      webrtcVideo.play().catch(err => logDebug("Autoplay blocked: " + err));
-    };
-        dataChannel.onopen = () => {
-      logDebug("DataChannel open");
-      renderState(pc, dataChannel);
-    };
-    dataChannel.onclose = () => {
-      logDebug("DataChannel closed");
-      renderState(pc, dataChannel);
-    };
-    pc.oniceconnectionstatechange = () => {
-      renderState(pc, dataChannel);
-      const s = pc.iceConnectionState;
-      if (s === "connected" || s === "completed") setIndicator("limegreen");
-      else if (s === "checking") setIndicator("gold");
-      else setIndicator("gray");
-      logDebug("ICE state: " + s);
-    };
-    pc.onconnectionstatechange = () => {
-      renderState(pc, dataChannel);
-      logDebug("Peer connection state: " + pc.connectionState);
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate && viewerID) {
-        ws.send(JSON.stringify({ type: "candidate", viewer: viewerID, candidate: event.candidate }));
-        logDebug("Sent ICE candidate");
-      }
-    };
-
-    ws.onopen = () => {
-      logDebug("Connected to relay at " + wsUrl);
-      setIndicator("gold");
-      ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
-    };
-
-    ws.onmessage = async (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "welcome" && msg.viewer_id) {
-          viewerID = msg.viewer_id;
-          logDebug("Handshake complete. Viewer ID: " + viewerID);
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          ws.send(JSON.stringify({ type: "offer", role: "viewer", viewer: viewerID, sdp: pc.localDescription }));
-          renderState(pc, dataChannel);
-        } else if (msg.type === "answer" && msg.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-          logDebug("WebRTC answer applied");
-          renderState(pc, dataChannel);
-        } else if (msg.type === "candidate" && msg.candidate) {
-          await pc.addIceCandidate(msg.candidate);
-          logDebug("ICE candidate added");
+      function sendInput(payload) {
+        if (dataChannel && dataChannel.readyState === "open") {
+          dataChannel.send(JSON.stringify(payload));
+        } else if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(payload));
         }
-      } catch (e) {
-        logDebug("Error parsing server message: " + e);
       }
-    };
 
-    ws.onclose = () => {
-      logDebug("Disconnected from relay server.");
-      setIndicator("gray");
-    };
+      function pollGamepadsOnce() {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        if (gamepads[0] && viewerID) {
+          const payload = collectInputPayload(gamepads[0]);
+          sendInput(payload);
+        }
+      }
 
-    ws.onerror = (err) => {
-      logDebug("WebSocket error: " + err);
-      setIndicator("gray");
-    };
+      function startPolling() {
+        if (POLL_MODE === "raf") {
+          const loop = () => { pollGamepadsOnce(); requestAnimationFrame(loop); };
+          requestAnimationFrame(loop);
+        } else {
+          setInterval(pollGamepadsOnce, POLL_INTERVAL_MS);
+        }
+      }
 
-    // --- Inputs ---
-    const POLL_MODE = "raf";
-    const POLL_INTERVAL_MS = 33;
-    const AXIS_DEADZONE = 0.08;
-    function applyDeadzone(v) {
-      return Math.abs(v) < AXIS_DEADZONE ? 0.0 : v;
-    }
+      window.addEventListener("gamepadconnected", (e) => {
+        logDebug("Gamepad connected: " + e.gamepad.id);
+        startPolling();
+      });
 
-    function collectInputPayload(gp) {
-      const buttons = [];
-      gp.buttons.forEach((btn, i) => {
-        if (btn.pressed && i !== 6 && i !== 7 && buttonMap[i]) {
-          const logical = buttonMap[i];
-          const mapped = remap[logical] || logical;
-          buttons.push(mapped);
+      window.addEventListener("gamepaddisconnected", (e) => {
+        logDebug("Gamepad disconnected: " + e.gamepad.id);
+      });
+
+      // --- Chat toggle ---
+      const chatToggle = document.getElementById("chat-toggle");
+      const chatPanel = document.getElementById("chat-panel");
+      chatToggle.addEventListener("click", () => {
+        if (chatPanel.style.display === "none" || chatPanel.style.display === "") {
+          chatPanel.style.display = "block";
+          logDebug("Chat panel opened");
+        } else {
+          chatPanel.style.display = "none";
+          logDebug("Chat panel closed");
         }
       });
-      const axes = gp.axes.map(v => parseFloat(applyDeadzone(v).toFixed(2)));
-      const triggers = {
-        LT: gp.buttons[6]?.value ?? axes[2] ?? 0.0,
-        RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
-      };
-      return { viewer: viewerID, buttons, axes, triggers };
-    }
 
-    function sendInput(payload) {
-      if (dataChannel && dataChannel.readyState === "open") {
-        dataChannel.send(JSON.stringify(payload));
-      } else if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(payload));
-      }
-    }
+      // Unmute button
+      document.getElementById("unmute").addEventListener("click", () => {
+        webrtcVideo.muted = false;
+        webrtcVideo.play().catch(err => logDebug("Unmute/play error: " + err));
+      });
 
-    function pollGamepadsOnce() {
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      if (gamepads[0] && viewerID) {
-        const payload = collectInputPayload(gamepads[0]);
-        sendInput(payload);
-      }
-    }
-
-    function startPolling() {
-      if (POLL_MODE === "raf") {
-        const loop = () => { pollGamepadsOnce(); requestAnimationFrame(loop); };
-        requestAnimationFrame(loop);
-      } else {
-        setInterval(pollGamepadsOnce, POLL_INTERVAL_MS);
-      }
-    }
-
-    window.addEventListener("gamepadconnected", (e) => {
-      logDebug("Gamepad connected: " + e.gamepad.id);
+      // Start polling immediately
       startPolling();
-    });
+    } // <-- end of startViewer
 
-    window.addEventListener("gamepaddisconnected", (e) => {
-      logDebug("Gamepad disconnected: " + e.gamepad.id);
-    });
-
-    // --- Chat toggle ---
-    const chatToggle = document.getElementById("chat-toggle");
-    const chatPanel = document.getElementById("chat-panel");
-    chatToggle.addEventListener("click", () => {
-      if (chatPanel.style.display === "none" || chatPanel.style.display === "") {
-        chatPanel.style.display = "block";
-        logDebug("Chat panel opened");
-      } else {
-        chatPanel.style.display = "none";
-        logDebug("Chat panel closed");
-      }
-    });
-
-    // Unmute button
-    document.getElementById("unmute").addEventListener("click", () => {
-      webrtcVideo.muted = false;
-      webrtcVideo.play().catch(err => logDebug("Unmute/play error: " + err));
-    });
-
-    // Start polling immediately
-    startPolling();
+    if (!relayDomain) {
+      logDebug("Missing ?relay=... in URL. Cannot connect.");
+    } else {
+      relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const wsUrl = `wss://${relayDomain}/ws/viewer`;
+      startViewer(wsUrl);
+    }
   </script>
 </body>
 </html>
-
-
