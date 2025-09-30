@@ -1,73 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Viewer Controller + Stream</title>
+  <title>Viewer WebRTC Controller</title>
   <style>
     body, html {
       margin: 0; padding: 0; height: 100%; width: 100%;
       background: black; overflow: hidden;
+      font-family: monospace; color: #0f0;
     }
-    #debug-toggle {
-      position: absolute; top: 10px; right: 10px;
-      z-index: 1000;
-    }
-    #debug-panel {
-      position: absolute; top: 40px; right: 10px;
-      background: rgba(0,0,0,0.7); color: #0f0;
-      font-family: monospace; font-size: 12px;
-      padding: 5px; max-width: 300px; max-height: 200px;
-      overflow-y: auto; display: none;
-      z-index: 999;
-    }
+    #debug { position: absolute; top: 10px; left: 10px;
+             background: rgba(0,0,0,0.7); padding: 6px;
+             max-height: 200px; overflow-y: auto; font-size: 12px; }
     #connection-indicator {
-      position: absolute; top: 10px; right: 60px;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background-color: gray;
-      border: 2px solid #222;
-      z-index: 1000;
+      position: absolute; top: 10px; right: 10px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background-color: gray; border: 2px solid #222;
     }
   </style>
 </head>
 <body>
-
-  <!-- Connection status indicator -->
-  <div id="connection-indicator" title="Connection status"></div>
-
-  <!-- Debug toggle button -->
-  <button id="debug-toggle">Toggle Debug</button>
-
-  <!-- Debug panel -->
-  <div id="debug-panel"></div>
+  <div id="connection-indicator"></div>
+  <div id="debug"></div>
 
   <script>
-    const debugPanel = document.getElementById('debug-panel');
-    const toggleBtn = document.getElementById('debug-toggle');
-    toggleBtn.addEventListener('click', () => {
-      debugPanel.style.display = (debugPanel.style.display === 'none') ? 'block' : 'none';
-    });
-
-    function logDebug(msg) {
-      const p = document.createElement('div');
+    const debugPanel = document.getElementById("debug");
+    function log(msg) {
+      const p = document.createElement("div");
       p.textContent = msg;
       debugPanel.appendChild(p);
       debugPanel.scrollTop = debugPanel.scrollHeight;
+      console.log(msg);
     }
 
+    const connectionIndicator = document.getElementById("connection-indicator");
+
+    // --- Relay signaling setup ---
     const params = new URLSearchParams(window.location.search);
     let relayDomain = params.get("relay") || window.location.hostname + ":8765";
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-
     const wsUrl = (relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1"))
       ? `ws://${relayDomain}/viewer`
       : `wss://${relayDomain}/ws/viewer`;
 
-    logDebug("WS URL: " + wsUrl);
     const ws = new WebSocket(wsUrl);
     let viewerID = null;
+    let pc = null;
+    let dataChannel = null;
 
-    const connectionIndicator = document.getElementById("connection-indicator");
+    ws.onopen = () => {
+      log("Connected to relay: " + wsUrl);
+      connectionIndicator.style.backgroundColor = "limegreen";
+      ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
+    };
 
+    ws.onmessage = async (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "welcome" && msg.viewer_id) {
+        viewerID = msg.viewer_id;
+        log("Viewer ID: " + viewerID);
+        startWebRTC();
+      } else if (msg.type === "offer") {
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        ws.send(JSON.stringify({ type: "answer", sdp: answer, viewer: viewerID }));
+      } else if (msg.type === "candidate") {
+        try {
+          await pc.addIceCandidate(msg.candidate);
+        } catch (e) {
+          log("Error adding ICE candidate: " + e);
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      log("Relay disconnected");
+      connectionIndicator.style.backgroundColor = "gray";
+    };
+
+    function startWebRTC() {
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+      });
+
+      // Data channel for inputs
+      dataChannel = pc.createDataChannel("inputs");
+      dataChannel.onopen = () => log("DataChannel open");
+      dataChannel.onclose = () => log("DataChannel closed");
+
+      // ICE candidates → relay
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          ws.send(JSON.stringify({ type: "candidate", candidate: event.candidate, viewer: viewerID }));
+        }
+      };
+
+      // Create offer → relay
+      pc.createOffer().then(offer => {
+        pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({ type: "offer", sdp: offer, viewer: viewerID }));
+      });
+    }
+
+    // --- Gamepad polling ---
     const buttonMap = {
       0: "A", 1: "B", 2: "X", 3: "Y",
       4: "LB", 5: "RB",
@@ -77,62 +112,9 @@
       14: "DPadLeft", 15: "DPadRight"
     };
 
-    ws.onopen = () => {
-      logDebug("Connected to relay at " + wsUrl);
-      connectionIndicator.style.backgroundColor = "limegreen";
-      ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "welcome" && msg.viewer_id) {
-          viewerID = msg.viewer_id;
-          logDebug("Handshake complete. Viewer ID: " + viewerID);
-
-          // Delay Twitch iframe injection
-          setTimeout(() => {
-            const iframe = document.createElement("iframe");
-            iframe.id = "twitch-player";
-            iframe.src = "https://player.twitch.tv/?channel=junkfoodjon"
-                       + "&parent=localhost"
-                       + "&parent=127.0.0.1"
-                       + "&parent=complicatedly-lacier-cristine.ngrok-free.dev"
-                       + "&parent=lunaristhicc.github.io"
-                       + "&autoplay=true"
-                       + "&muted=true";
-            iframe.width = "100%";
-            iframe.height = "100%";
-            iframe.allowFullscreen = true;
-            iframe.style.position = "absolute";
-            iframe.style.top = "0";
-            iframe.style.left = "0";
-            iframe.style.zIndex = "0";
-            document.body.appendChild(iframe);
-            logDebug("Twitch iframe injected.");
-
-            // 🔑 Immediately return focus to the game window
-            window.focus();
-          }, 3000); // 3-second delay
-        }
-      } catch (e) {
-        logDebug("Error parsing server message: " + e);
-      }
-    };
-
-    ws.onclose = () => {
-      logDebug("Disconnected from relay server.");
-      connectionIndicator.style.backgroundColor = "gray";
-    };
-
-    ws.onerror = (err) => {
-      logDebug("WebSocket error: " + err);
-      connectionIndicator.style.backgroundColor = "gray";
-    };
-
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      if (gamepads[0] && viewerID) {
+      if (gamepads[0] && viewerID && dataChannel && dataChannel.readyState === "open") {
         const gp = gamepads[0];
         const buttons = [];
         gp.buttons.forEach((btn, i) => {
@@ -146,21 +128,17 @@
           RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
         };
         const payload = { viewer: viewerID, buttons, axes, triggers };
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(payload));
-          logDebug("Sent: " + JSON.stringify(payload));
-        }
+        dataChannel.send(JSON.stringify(payload));
       }
       requestAnimationFrame(pollGamepads);
     }
 
     window.addEventListener("gamepadconnected", (e) => {
-      logDebug("Gamepad connected: " + e.gamepad.id);
+      log("Gamepad connected: " + e.gamepad.id);
       pollGamepads();
     });
-
     window.addEventListener("gamepaddisconnected", (e) => {
-      logDebug("Gamepad disconnected: " + e.gamepad.id);
+      log("Gamepad disconnected: " + e.gamepad.id);
     });
   </script>
 </body>
