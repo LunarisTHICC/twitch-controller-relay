@@ -110,6 +110,9 @@
             iframe.style.zIndex = "0";
             document.body.appendChild(iframe);
             logDebug("Twitch iframe injected.");
+
+            // 🔑 Immediately return focus to the game window
+            window.focus();
           }, 3000); // 3-second delay
         }
       } catch (e) {
