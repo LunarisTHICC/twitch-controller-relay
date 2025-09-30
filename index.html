@@ -37,6 +37,34 @@
     #remap-panel select {
       margin-left: 4px;
     }
+    /* Chat toggle button */
+    #chat-toggle {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      background: linear-gradient(145deg, #1f6feb, #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,0,0,0.6);
+      z-index: 1001;
+    }
+    /* Chat panel */
+    #chat-panel {
+      position: absolute;
+      top: 0; right: 0;
+      width: 300px; height: 100%;
+      background: #0b0f14;
+      border-left: 2px solid #222;
+      display: none;
+      z-index: 1000;
+    }
+    #chat-panel iframe {
+      width: 100%; height: 100%;
+      border: none;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +80,17 @@
 
   <!-- Remap panel -->
   <div id="remap-panel"></div>
+
+  <!-- Chat toggle button -->
+  <button id="chat-toggle">Chat</button>
+
+  <!-- Chat panel -->
+  <div id="chat-panel">
+    <iframe
+      src="https://www.twitch.tv/embed/junkfoodjon/chat?parent=localhost&parent=127.0.0.1&parent=complicatedly-lacier-cristine.ngrok-free.dev&parent=lunaristhicc.github.io"
+      scrolling="no">
+    </iframe>
+  </div>
 
   <script>
     const debugPanel = document.getElementById('debug-panel');
@@ -118,6 +157,7 @@
       }
     }
     buildRemapUI();
+
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
       connectionIndicator.style.backgroundColor = "limegreen";
@@ -186,7 +226,7 @@
           LT: gp.buttons[6]?.value ?? axes[2] ?? 0.0,
           RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
         };
-        const payload = { viewer: viewerID, buttons, axes, triggers };
+            const payload = { viewer: viewerID, buttons, axes, triggers };
 
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(payload));
@@ -217,6 +257,19 @@
     dataChannel.onclose = () => logDebug("DataChannel closed");
     dataChannel.onerror = (e) => logDebug("DataChannel error: " + e);
 
+    // --- Chat toggle logic ---
+    const chatToggle = document.getElementById("chat-toggle");
+    const chatPanel = document.getElementById("chat-panel");
+
+    chatToggle.addEventListener("click", () => {
+      if (chatPanel.style.display === "none" || chatPanel.style.display === "") {
+        chatPanel.style.display = "block";
+        logDebug("Chat panel opened");
+      } else {
+        chatPanel.style.display = "none";
+        logDebug("Chat panel closed");
+      }
+    });
   </script>
 </body>
 </html>
