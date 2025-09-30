@@ -1,3 +1,4 @@
+<!-- THIS IS NOT A FULL FILE -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -56,15 +57,19 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // --- Ngrok-only WebSocket URL ---
-    const wsUrl = `wss://${domain}/viewer`;
+    // --- WebSocket URL via query param ---
+    const params = new URLSearchParams(window.location.search);
+    const relayDomain = params.get("relay") || "localhost:8765";
+    const wsUrl = relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1")
+      ? `ws://${relayDomain}/viewer`
+      : `wss://${relayDomain}/viewer`;
+
     const ws = new WebSocket(wsUrl);
     let viewerID = null;
 
     const buttonMap = {
       0: "A", 1: "B", 2: "X", 3: "Y",
       4: "LB", 5: "RB",
-      // 6,7 are LT/RT handled separately
       8: "Back", 9: "Start",
       10: "LS", 11: "RS",
       12: "DPadUp", 13: "DPadDown",
@@ -90,42 +95,27 @@
 
     ws.onclose = () => logDebug("Disconnected from relay server.");
     ws.onerror = (err) => logDebug("WebSocket error: " + err);
-
+<!-- THIS IS NOT A FULL FILE -->
     // --- Gamepad polling loop ---
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
       if (gamepads[0] && viewerID) {
         const gp = gamepads[0];
-
-        // Collect pressed buttons (skip LT/RT here)
         const buttons = [];
         gp.buttons.forEach((btn, i) => {
           if (btn.pressed && i !== 6 && i !== 7 && buttonMap[i]) {
             buttons.push(buttonMap[i]);
           }
         });
-
-        // Collect axes
         const axes = gp.axes.map(v => parseFloat(v.toFixed(2)));
-
-        // Collect LT/RT as analog triggers
         const triggers = {
           LT: gp.buttons[6]?.value ?? axes[2] ?? 0.0,
           RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
         };
-
-        // Send to relay
-        const payload = {
-          viewer: viewerID,
-          buttons: buttons,
-          axes: axes,
-          triggers: triggers
-        };
-
+        const payload = { viewer: viewerID, buttons, axes, triggers };
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(payload));
         }
-
         logDebug("Sent: " + JSON.stringify(payload));
       }
       requestAnimationFrame(pollGamepads);
@@ -135,7 +125,6 @@
       logDebug("Gamepad connected: " + e.gamepad.id);
       pollGamepads();
     });
-
     window.addEventListener("gamepaddisconnected", (e) => {
       logDebug("Gamepad disconnected: " + e.gamepad.id);
     });
