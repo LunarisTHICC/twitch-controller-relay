@@ -2,10 +2,25 @@
 <html>
 <head>
   <title>Viewer Controller</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; }
+    #status { margin-bottom: 10px; font-weight: bold; }
+    #log {
+      width: 100%;
+      height: 200px;
+      background: #222;
+      color: #0f0;
+      font-family: monospace;
+      overflow-y: scroll;
+      padding: 5px;
+      border: 1px solid #555;
+    }
+  </style>
 </head>
 <body>
   <h1>Viewer Controller</h1>
   <p id="status">Connecting...</p>
+  <div id="log"></div>
 
   <script>
     const buttonNames = [
@@ -15,10 +30,32 @@
       "DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Home"
     ];
 
+    // Change this to your ngrok URL
     const ws = new WebSocket("wss://complicatedly-lacier-cristine.ngrok-free.dev/input");
 
+    const statusEl = document.getElementById("status");
+    const logEl = document.getElementById("log");
+
+    function log(msg) {
+      const line = document.createElement("div");
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
     ws.onopen = () => {
-      document.getElementById("status").textContent = "Connected";
+      statusEl.textContent = "✅ Connected to relay";
+      log("WebSocket connected");
+    };
+
+    ws.onclose = (evt) => {
+      statusEl.textContent = "❌ Disconnected";
+      log(`WebSocket closed (code ${evt.code})`);
+    };
+
+    ws.onerror = (err) => {
+      statusEl.textContent = "⚠️ Error";
+      log("WebSocket error: " + err);
     };
 
     function pollGamepad() {
@@ -39,10 +76,13 @@
         axes: axes
       };
 
-      ws.send(JSON.stringify(payload));
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+        log("Sent: " + JSON.stringify(payload));
+      }
     }
 
-    setInterval(pollGamepad, 100);
+    setInterval(pollGamepad, 200);
   </script>
 </body>
 </html>
