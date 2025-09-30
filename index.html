@@ -56,8 +56,14 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // --- WebSocket connection to your relay ---
-    const ws = new WebSocket("ws://localhost:8765/viewer"); // change to wss://<ngrok-domain>/viewer for public
+    // --- Auto-detect WebSocket URL ---
+    let wsUrl;
+    if (domain === "localhost" || domain === "127.0.0.1") {
+      wsUrl = "ws://localhost:8765/viewer";
+    } else {
+      wsUrl = `wss://${domain}/viewer`;
+    }
+    const ws = new WebSocket(wsUrl);
     let viewerID = null;
 
     const buttonMap = {
