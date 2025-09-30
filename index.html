@@ -48,12 +48,12 @@
   <div id="debug-panel"></div>
 
   <script>
-    // --- Twitch embed with both localhost and ngrok parent ---
+    // --- Twitch embed with all parents (localhost + ngrok) ---
     const iframe = document.getElementById("twitch-player");
     iframe.src = "https://player.twitch.tv/?channel=junkfoodjon"
-           + "&parent=localhost"
-           + "&parent=127.0.0.1"
-           + "&parent=complicatedly-lacier-cristine.ngrok-free.dev";
+               + "&parent=localhost"
+               + "&parent=127.0.0.1"
+               + "&parent=complicatedly-lacier-cristine.ngrok-free.dev";
 
     // --- Debug panel logic ---
     const debugPanel = document.getElementById('debug-panel');
@@ -159,4 +159,3 @@
   </script>
 </body>
 </html>
-
