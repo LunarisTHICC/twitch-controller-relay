@@ -67,16 +67,24 @@
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
 
-    // --- WebSocket URL via query param ---
+    // --- Build WebSocket URL (ngrok http tunnels require /ws/ prefix) ---
     const params = new URLSearchParams(window.location.search);
-    let relayDomain = params.get("relay") || "localhost:8765";
-    relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    let relayDomain = params.get("relay"); // optional override, e.g. ?relay=complicatedly-lacier-cristine.ngrok-free.dev
+    if (relayDomain) {
+      relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    }
+    // Default to your current ngrok domain if no ?relay= provided
+    const defaultNgrok = "complicatedly-lacier-cristine.ngrok-free.dev";
 
-    const wsUrl = `wss://complicatedly-lacier-cristine.ngrok-free.dev/ws/viewer`;
-  ? `ws://${relayDomain}/viewer`
-  : `wss://${relayDomain}/ws/viewer`;   // <-- note the /ws/ prefix
+    const targetDomain = relayDomain || defaultNgrok;
+
+    const wsUrl = (targetDomain.includes("localhost") || targetDomain.includes("127.0.0.1"))
+      ? `ws://${targetDomain}/viewer`
+      : `wss://${targetDomain}/ws/viewer`; // IMPORTANT: /ws/viewer for ngrok http
 
     console.log("DEBUG wsUrl =", wsUrl);
+    logDebug("WS URL: " + wsUrl);
+
     const ws = new WebSocket(wsUrl);
     let viewerID = null;
 
@@ -91,10 +99,11 @@
       14: "DPadLeft", 15: "DPadRight"
     };
 
+    // Send hello immediately so relay classifies this as a viewer and keeps connection alive
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
       connectionIndicator.style.backgroundColor = "limegreen";
-      ws.send(JSON.stringify({ type: "hello" }));
+      ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
     };
 
     ws.onmessage = (event) => {
@@ -138,8 +147,8 @@
         const payload = { viewer: viewerID, buttons, axes, triggers };
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(payload));
+          logDebug("Sent: " + JSON.stringify(payload));
         }
-        logDebug("Sent: " + JSON.stringify(payload));
       }
       requestAnimationFrame(pollGamepads);
     }
@@ -154,5 +163,3 @@
   </script>
 </body>
 </html>
-
-
