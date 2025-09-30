@@ -24,11 +24,22 @@
       overflow-y: auto; display: none;
       z-index: 999;
     }
+    #connection-indicator {
+      position: absolute; top: 10px; right: 60px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background-color: gray;
+      border: 2px solid #222;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
   <!-- Twitch Embed -->
   <iframe id="twitch-player" allowfullscreen></iframe>
+
+  <!-- Connection status indicator -->
+  <div id="connection-indicator"></div>
 
   <!-- Debug toggle button -->
   <button id="debug-toggle">Toggle Debug</button>
@@ -59,7 +70,6 @@
     // --- WebSocket URL via query param ---
     const params = new URLSearchParams(window.location.search);
     let relayDomain = params.get("relay") || "localhost:8765";
-    // Auto-strip http:// or https:// if pasted
     relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
     const wsUrl = relayDomain.includes("localhost") || relayDomain.includes("127.0.0.1")
@@ -69,6 +79,8 @@
     console.log("DEBUG wsUrl =", wsUrl);
     const ws = new WebSocket(wsUrl);
     let viewerID = null;
+
+    const connectionIndicator = document.getElementById("connection-indicator");
 
     const buttonMap = {
       0: "A", 1: "B", 2: "X", 3: "Y",
@@ -81,6 +93,7 @@
 
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
+      connectionIndicator.style.backgroundColor = "limegreen";
       ws.send(JSON.stringify({ type: "hello" }));
     };
 
@@ -96,8 +109,15 @@
       }
     };
 
-    ws.onclose = () => logDebug("Disconnected from relay server.");
-    ws.onerror = (err) => logDebug("WebSocket error: " + err);
+    ws.onclose = () => {
+      logDebug("Disconnected from relay server.");
+      connectionIndicator.style.backgroundColor = "gray";
+    };
+
+    ws.onerror = (err) => {
+      logDebug("WebSocket error: " + err);
+      connectionIndicator.style.backgroundColor = "gray";
+    };
 
     // --- Gamepad polling loop ---
     function pollGamepads() {
