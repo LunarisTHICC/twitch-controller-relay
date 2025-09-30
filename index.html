@@ -27,6 +27,16 @@
       border: 2px solid #222;
       z-index: 1000;
     }
+    #remap-panel {
+      position: absolute; bottom: 10px; left: 10px;
+      background: rgba(0,0,0,0.7); color: #0f0;
+      font-family: monospace; font-size: 12px;
+      padding: 8px; max-height: 200px; overflow-y: auto;
+      z-index: 1000;
+    }
+    #remap-panel select {
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
@@ -39,6 +49,9 @@
 
   <!-- Debug panel -->
   <div id="debug-panel"></div>
+
+  <!-- Remap panel -->
+  <div id="remap-panel"></div>
 
   <script>
     const debugPanel = document.getElementById('debug-panel');
@@ -77,6 +90,34 @@
       14: "DPadLeft", 15: "DPadRight"
     };
 
+    // --- Remap configuration ---
+    let remap = JSON.parse(localStorage.getItem("remapConfig") || "{}");
+    Object.values(buttonMap).forEach(btn => { if (!remap[btn]) remap[btn] = btn; });
+
+    function buildRemapUI() {
+      const panel = document.getElementById("remap-panel");
+      panel.innerHTML = "<b>Button Remap</b><br/>";
+      for (const btn of Object.values(buttonMap)) {
+        const row = document.createElement("div");
+        row.textContent = btn + " → ";
+        const select = document.createElement("select");
+        for (const target of Object.values(buttonMap)) {
+          const opt = document.createElement("option");
+          opt.value = target;
+          opt.textContent = target;
+          if (remap[btn] === target) opt.selected = true;
+          select.appendChild(opt);
+        }
+        select.onchange = () => {
+          remap[btn] = select.value;
+          localStorage.setItem("remapConfig", JSON.stringify(remap));
+          logDebug(`Remapped ${btn} → ${select.value}`);
+        };
+        row.appendChild(select);
+        panel.appendChild(row);
+      }
+    }
+    buildRemapUI();
     ws.onopen = () => {
       logDebug("Connected to relay at " + wsUrl);
       connectionIndicator.style.backgroundColor = "limegreen";
@@ -110,10 +151,8 @@
             iframe.style.zIndex = "0";
             document.body.appendChild(iframe);
             logDebug("Twitch iframe injected.");
-
-            // 🔑 Immediately return focus to the game window
             window.focus();
-          }, 3000); // 3-second delay
+          }, 3000);
         }
       } catch (e) {
         logDebug("Error parsing server message: " + e);
@@ -129,6 +168,7 @@
       logDebug("WebSocket error: " + err);
       connectionIndicator.style.backgroundColor = "gray";
     };
+
     function pollGamepads() {
       const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
       if (gamepads[0] && viewerID) {
@@ -136,7 +176,9 @@
         const buttons = [];
         gp.buttons.forEach((btn, i) => {
           if (btn.pressed && i !== 6 && i !== 7 && buttonMap[i]) {
-            buttons.push(buttonMap[i]);
+            const logical = buttonMap[i];
+            const mapped = remap[logical] || logical;
+            buttons.push(mapped);
           }
         });
         const axes = gp.axes.map(v => parseFloat(v.toFixed(2)));
@@ -146,13 +188,10 @@
         };
         const payload = { viewer: viewerID, buttons, axes, triggers };
 
-        // Send via WebSocket relay
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(payload));
           logDebug("Sent WS: " + JSON.stringify(payload));
         }
-
-        // Also send via WebRTC DataChannel if available
         if (dataChannel && dataChannel.readyState === "open") {
           dataChannel.send(JSON.stringify(payload));
           logDebug("Sent DC: " + JSON.stringify(payload));
@@ -178,8 +217,6 @@
     dataChannel.onclose = () => logDebug("DataChannel closed");
     dataChannel.onerror = (e) => logDebug("DataChannel error: " + e);
 
-    // In a real deployment, you'd exchange SDP/ICE with your host signaling server here.
-    // For now, this is a placeholder to show where the WebRTC input path integrates.
-
   </script>
 </body>
+</html>
