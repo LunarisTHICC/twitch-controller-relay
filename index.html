@@ -7,9 +7,7 @@
       margin: 0; padding: 0; height: 100%; width: 100%;
       background: black; overflow: hidden;
     }
-    #debug-toggle {
-      position: absolute; top: 10px; right: 10px; z-index: 1000;
-    }
+    #debug-toggle { position: absolute; top: 10px; right: 10px; z-index: 1000; }
     #debug-panel {
       position: absolute; top: 40px; right: 10px;
       background: rgba(0,0,0,0.7); color: #0f0;
@@ -29,19 +27,25 @@
       padding: 8px; max-height: 200px; overflow-y: auto;
       z-index: 1000;
     }
-    #remap-toggle {
-      position: absolute; bottom: 10px; right: 10px;
-      background: linear-gradient(145deg, #10b981, #059669);
-      color: white; border: none; border-radius: 6px;
-      padding: 6px 12px; font-weight: bold; cursor: pointer;
+    #remap-toggle, #chat-toggle, #unmute {
+      position: absolute; border: none; border-radius: 6px;
+      color: #fff; font-weight: bold; cursor: pointer;
       box-shadow: 0 0 6px rgba(0,0,0,0.6); z-index: 1001;
     }
+    #remap-toggle {
+      bottom: 10px; right: 10px;
+      background: linear-gradient(145deg, #10b981, #059669);
+      padding: 6px 12px;
+    }
     #chat-toggle {
-      position: absolute; bottom: 50px; right: 10px;
+      bottom: 50px; right: 10px;
       background: linear-gradient(145deg, #1f6feb, #3b82f6);
-      color: white; border: none; border-radius: 6px;
-      padding: 8px 16px; font-weight: bold; cursor: pointer;
-      box-shadow: 0 0 8px rgba(0,0,0,0.6); z-index: 1001;
+      padding: 8px 16px;
+    }
+    #unmute {
+      top: 10px; left: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 6px 12px;
     }
     #chat-panel {
       position: absolute; top: 0; right: 0;
@@ -49,26 +53,19 @@
       background: #0b0f14; border-left: 2px solid #222;
       display: none; z-index: 1000;
     }
-    #chat-panel iframe {
-      width: 100%; height: 100%; border: none;
-    }
+    #chat-iframe { width: 100%; height: 100%; border: none; }
     #webrtc {
       position: absolute; top: 0; left: 0;
       width: 100%; height: 100%;
       background: black; z-index: 0;
     }
-    #state-line {
-      margin-top: 6px; white-space: pre-wrap;
-    }
+    #state-line { margin-top: 6px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
 
   <video id="webrtc" autoplay playsinline muted></video>
-  <button id="unmute"
-          style="position:absolute;top:10px;left:10px;z-index:1001;">
-    Unmute
-  </button>
+  <button id="unmute">Unmute</button>
 
   <div id="connection-indicator" title="Connection status"></div>
   <button id="debug-toggle">Toggle Debug</button>
@@ -84,291 +81,211 @@
   </div>
 
   <script>
+    // Debug helpers
     const debugPanel = document.getElementById('debug-panel');
-    const toggleBtn = document.getElementById('debug-toggle');
     const stateLine = document.getElementById('state-line');
-
-    toggleBtn.addEventListener('click', () => {
-      debugPanel.style.display =
-        (debugPanel.style.display === 'none') ? 'block' : 'none';
-    });
-
+    document.getElementById('debug-toggle')
+      .addEventListener('click', () => {
+        debugPanel.style.display =
+          debugPanel.style.display === 'none' ? 'block' : 'none';
+      });
     function logDebug(msg) {
-      const p = document.createElement('div');
-      p.textContent = msg;
-      debugPanel.appendChild(p);
+      const div = document.createElement('div');
+      div.textContent = msg;
+      debugPanel.appendChild(div);
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
-
     function setIndicator(color) {
       document.getElementById('connection-indicator')
               .style.backgroundColor = color;
     }
-
     function renderState(pc, dc) {
-      const text = [
+      stateLine.textContent = [
         `ICE: ${pc.iceConnectionState}`,
         `DTLS: ${pc.connectionState}`,
         `Signaling: ${pc.signalingState}`,
-        `DC: ${dc ? dc.readyState : 'n/a'}`
+        `DC: ${dc?.readyState ?? 'n/a'}`
       ].join(' | ');
-      stateLine.textContent = text;
     }
 
+    // Determine relay host
+    const params = new URLSearchParams(window.location.search);
+    let host = params.get('relay') || window.location.host;
+    host = host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+
+    // Populate Twitch chat iframe
+    document.getElementById('chat-iframe').src =
+      `https://www.twitch.tv/embed/junkfoodjon/chat?parent=${host}`;
+
     function startViewer(wsUrl) {
-      logDebug("WS URL: " + wsUrl);
+      logDebug('WS URL → ' + wsUrl);
       const ws = new WebSocket(wsUrl);
       let viewerID = null;
 
+      // Gamepad remap setup
       const buttonMap = {
-        0: "A", 1: "B", 2: "X", 3: "Y",
-        4: "LB", 5: "RB", 8: "Back", 9: "Start",
-        10: "LS", 11: "RS", 12: "DPadUp",
-        13: "DPadDown", 14: "DPadLeft",
-        15: "DPadRight"
+        0:'A',1:'B',2:'X',3:'Y',
+        4:'LB',5:'RB',8:'Back',9:'Start',
+        10:'LS',11:'RS',12:'DPadUp',
+        13:'DPadDown',14:'DPadLeft',15:'DPadRight'
       };
-
-      // --- Remap configuration ---
-      let remap = JSON.parse(localStorage.getItem('remapConfig') || '{}');
-      Object.values(buttonMap).forEach(btn => {
-        if (!remap[btn]) remap[btn] = btn;
-      });
-
-      function buildRemapUI() {
+      let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
+      Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
+      function buildRemapUI(){
         const panel = document.getElementById('remap-panel');
         panel.innerHTML = '<b>Button Remap</b><br/>';
-        Object.values(buttonMap).forEach(btn => {
+        Object.values(buttonMap).forEach(btn=>{
           const row = document.createElement('div');
-          row.textContent = btn + ' → ';
-          const select = document.createElement('select');
-          Object.values(buttonMap).forEach(target => {
+          row.textContent = btn+' → ';
+          const sel = document.createElement('select');
+          Object.values(buttonMap).forEach(t=>{
             const opt = document.createElement('option');
-            opt.value = target;
-            opt.textContent = target;
-            if (remap[btn] === target) opt.selected = true;
-            select.appendChild(opt);
+            opt.value=opt.textContent=t;
+            if(remap[btn]===t) opt.selected=true;
+            sel.appendChild(opt);
           });
-          select.onchange = () => {
-            remap[btn] = select.value;
-            localStorage.setItem('remapConfig', JSON.stringify(remap));
-            logDebug(`Remapped ${btn} → ${select.value}`);
+          sel.onchange=()=>{
+            remap[btn]=sel.value;
+            localStorage.setItem('remapConfig',JSON.stringify(remap));
+            logDebug(`Remap ${btn}→${sel.value}`);
           };
-          row.appendChild(select);
+          row.appendChild(sel);
           panel.appendChild(row);
         });
       }
       buildRemapUI();
-
-      const remapToggle = document.getElementById('remap-toggle');
-      const remapPanel = document.getElementById('remap-panel');
-      let remapVisible = true;
-      remapToggle.addEventListener('click', () => {
-        remapPanel.style.display = remapVisible ? 'none' : 'block';
-        remapToggle.textContent = remapVisible ? 'Remap' : 'Hide Remap';
-        remapVisible = !remapVisible;
-      });
-      // --- WebRTC setup ---
+      let remapVisible=true;
+      document.getElementById('remap-toggle')
+        .addEventListener('click',()=>{
+          document.getElementById('remap-panel').style.display =
+            remapVisible?'none':'block';
+          remapVisible = !remapVisible;
+        });
+      // WebRTC & DataChannel
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-        sdpSemantics: 'unified-plan'
+        iceServers:[{urls:'stun:stun.l.google.com:19302'}],
+        sdpSemantics:'unified-plan'
       });
-      const webrtcVideo = document.getElementById('webrtc');
-      const dataChannel = pc.createDataChannel('inputs', { ordered: true });
+      const videoEl = document.getElementById('webrtc');
+      const dc = pc.createDataChannel('inputs',{ordered:true});
+      pc.addTransceiver('video',{direction:'recvonly'});
+      pc.addTransceiver('audio',{direction:'recvonly'});
 
-      pc.addTransceiver('video', { direction: 'recvonly' });
-      pc.addTransceiver('audio', { direction: 'recvonly' });
+      pc.ontrack = e=>{
+        videoEl.srcObject = e.streams[0];
+        logDebug('Track attached');
+        videoEl.play().catch(err=>logDebug('Autoplay blocked: '+err));
+      };
+      dc.onopen  = ()=>{ logDebug('DC open'); renderState(pc,dc); };
+      dc.onclose = ()=>{ logDebug('DC closed'); renderState(pc,dc); };
 
-      pc.ontrack = (event) => {
-        const [stream] = event.streams;
-        webrtcVideo.srcObject = stream;
-        logDebug('WebRTC track attached');
-        webrtcVideo
-          .play()
-          .catch(err => logDebug('Autoplay blocked: ' + err));
+      pc.oniceconnectionstatechange = ()=>{
+        renderState(pc,dc);
+        const s=pc.iceConnectionState;
+        setIndicator(s==='connected'||s==='completed'?'limegreen'
+          :s==='checking'?'gold':'gray');
+        logDebug('ICE '+s);
       };
 
-      dataChannel.onopen = () => {
-        logDebug('DataChannel open');
-        renderState(pc, dataChannel);
-      };
-      dataChannel.onclose = () => {
-        logDebug('DataChannel closed');
-        renderState(pc, dataChannel);
+      pc.onconnectionstatechange = ()=>{
+        logDebug('Conn state '+pc.connectionState);
+        renderState(pc,dc);
       };
 
-      pc.oniceconnectionstatechange = () => {
-        renderState(pc, dataChannel);
-        const s = pc.iceConnectionState;
-        if (s === 'connected' || s === 'completed') setIndicator('limegreen');
-        else if (s === 'checking') setIndicator('gold');
-        else setIndicator('gray');
-        logDebug('ICE state: ' + s);
-      };
-
-      pc.onconnectionstatechange = () => {
-        renderState(pc, dataChannel);
-        logDebug('Peer connection state: ' + pc.connectionState);
-      };
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate && viewerID) {
+      pc.onicecandidate = ev=>{
+        if(ev.candidate && viewerID){
           ws.send(JSON.stringify({
-            type: 'candidate',
-            viewer: viewerID,
-            candidate: {
-              candidate: event.candidate.candidate,
-              sdpMid: event.candidate.sdpMid,
-              sdpMLineIndex: event.candidate.sdpMLineIndex
+            type:'candidate', viewer:viewerID,
+            candidate:{
+              candidate:ev.candidate.candidate,
+              sdpMid:ev.candidate.sdpMid,
+              sdpMLineIndex:ev.candidate.sdpMLineIndex
             }
           }));
           logDebug('Sent ICE candidate');
         }
       };
 
-      ws.onopen = () => {
-        logDebug('Connected to relay at ' + wsUrl);
+      ws.onopen = ()=>{
+        logDebug('WS open');
         setIndicator('gold');
-        ws.send(JSON.stringify({ type: 'hello', role: 'viewer' }));
+        ws.send(JSON.stringify({type:'hello',role:'viewer'}));
       };
 
-      ws.onmessage = async (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === 'welcome' && msg.viewer_id) {
-            viewerID = msg.viewer_id;
-            logDebug('Handshake complete. Viewer ID: ' + viewerID);
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify({
-              type: 'offer',
-              role: 'viewer',
-              viewer: viewerID,
-              sdp: pc.localDescription
-            }));
-            renderState(pc, dataChannel);
-          } else if (msg.type === 'answer' && msg.sdp) {
-            await pc.setRemoteDescription(
-              new RTCSessionDescription(msg.sdp)
-            );
-            logDebug('WebRTC answer applied');
-            renderState(pc, dataChannel);
-          } else if (msg.type === 'candidate' && msg.candidate) {
-            await pc.addIceCandidate(
-              new RTCIceCandidate(msg.candidate)
-            );
-            logDebug('ICE candidate added');
-          }
-        } catch (e) {
-          logDebug('Error parsing server message: ' + e);
+      ws.onmessage = async evt=>{
+        const msg = JSON.parse(evt.data);
+        if(msg.type==='welcome'){
+          viewerID=msg.viewer_id;
+          logDebug('Welcome '+viewerID);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({
+            type:'offer', role:'viewer',
+            viewer:viewerID, sdp:pc.localDescription
+          }));
+          renderState(pc,dc);
+
+        } else if(msg.type==='answer'){
+          await pc.setRemoteDescription(
+            new RTCSessionDescription(msg.sdp)
+          );
+          logDebug('Answer applied');
+          renderState(pc,dc);
+
+        } else if(msg.type==='candidate'){
+          await pc.addIceCandidate(
+            new RTCIceCandidate(msg.candidate)
+          );
+          logDebug('Candidate added');
         }
       };
 
-      ws.onclose = () => {
-        logDebug('Disconnected from relay server.');
+      ws.onerror = err=>{
+        logDebug('WebSocket error: '+ (err.message||JSON.stringify(err)));
         setIndicator('gray');
       };
-      ws.onerror = (err) => {
-        logDebug('WebSocket error: ' + err);
+      ws.onclose = ()=>{
+        logDebug('WS closed');
         setIndicator('gray');
       };
 
-      // --- Input polling ---
-      const POLL_MODE = 'raf';
-      const POLL_INTERVAL_MS = 33;
-      const AXIS_DEADZONE = 0.08;
-      function applyDeadzone(v) {
-        return Math.abs(v) < AXIS_DEADZONE ? 0.0 : v;
+      // Gamepad polling
+      const DEAD=0.08, POLL_MS=33;
+      function applyDZ(v){ return Math.abs(v)<DEAD?0:v; }
+      function poll(){
+        const gps=navigator.getGamepads?.()||[];
+        if(gps[0]&&viewerID){
+          const gp=gps[0], btns=[], axes=gp.axes.map(v=>+applyDZ(v).toFixed(2));
+          gp.buttons.forEach((b,i)=>{
+            if(b.pressed && buttonMap[i] && i!==6&&i!==7){
+              btns.push(remap[buttonMap[i]]);
+            }
+          });
+          const trg={LT:gp.buttons[6]?.value||0, RT:gp.buttons[7]?.value||0};
+          const payload={viewer:viewerID,buttons:btns,axes,triggers:trg};
+          if(dc.readyState==='open') dc.send(JSON.stringify(payload));
+          else if(ws.readyState===1) ws.send(JSON.stringify(payload));
+        }
+        requestAnimationFrame(poll);
       }
+      window.addEventListener('gamepadconnected',()=>{ logDebug('GP connected'); poll();});
 
-      function collectInputPayload(gp) {
-        const buttons = [];
-        gp.buttons.forEach((btn, i) => {
-          if (btn.pressed && i !== 6 && i !== 7 && buttonMap[i]) {
-            const logical = buttonMap[i];
-            const mapped = remap[logical] || logical;
-            buttons.push(mapped);
-          }
+      // Chat toggle & Unmute
+      document.getElementById('chat-toggle')
+        .addEventListener('click',()=>{
+          const p = document.getElementById('chat-panel');
+          p.style.display = p.style.display==='block'?'none':'block';
+          logDebug(p.style.display+' chat');
         });
-        const axes = gp.axes.map(v =>
-          parseFloat(applyDeadzone(v).toFixed(2))
-        );
-        const triggers = {
-          LT: gp.buttons[6]?.value ?? axes[2] ?? 0.0,
-          RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
-        };
-        return { viewer: viewerID, buttons, axes, triggers };
-      }
-
-      function sendInput(payload) {
-        if (dataChannel.readyState === 'open') {
-          dataChannel.send(JSON.stringify(payload));
-        } else if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(payload));
-        }
-      }
-
-      function pollGamepadsOnce() {
-        const gps = navigator.getGamepads
-          ? navigator.getGamepads()
-          : [];
-        if (gps[0] && viewerID) {
-          const payload = collectInputPayload(gps[0]);
-          sendInput(payload);
-        }
-      }
-
-      function startPolling() {
-        if (POLL_MODE === 'raf') {
-          const loop = () => {
-            pollGamepadsOnce();
-            requestAnimationFrame(loop);
-          };
-          requestAnimationFrame(loop);
-        } else {
-          setInterval(pollGamepadsOnce, POLL_INTERVAL_MS);
-        }
-      }
-
-      window.addEventListener('gamepadconnected', (e) => {
-        logDebug('Gamepad connected: ' + e.gamepad.id);
-        startPolling();
-      });
-      window.addEventListener('gamepaddisconnected', (e) => {
-        logDebug('Gamepad disconnected: ' + e.gamepad.id);
-      });
-
-      // --- Chat toggle ---
-      const chatToggle = document.getElementById('chat-toggle');
-      const chatPanel = document.getElementById('chat-panel');
-      chatToggle.addEventListener('click', () => {
-        chatPanel.style.display =
-          chatPanel.style.display === 'none' ? 'block' : 'none';
-        logDebug(
-          chatPanel.style.display === 'block'
-            ? 'Chat panel opened'
-            : 'Chat panel closed'
-        );
-      });
-
-      // Unmute button
-      document.getElementById('unmute').addEventListener('click', () => {
-        webrtcVideo.muted = false;
-        webrtcVideo
-          .play()
-          .catch(err => logDebug('Unmute/play error: ' + err));
-      });
-
-      // Start polling
-      startPolling();
+      document.getElementById('unmute')
+        .addEventListener('click',()=>{
+          videoEl.muted=false;
+          videoEl.play().catch(e=>logDebug('Unmute err:'+e));
+        });
     }
 
-    // --- Dynamic host & initialization ---
-    (function init() {
-      const host = window.location.host;
-      // Set chat iframe src dynamically
-      document.getElementById('chat-iframe').src =
-        `https://www.twitch.tv/embed/junkfoodjon/chat?parent=${host}`;
-      // Connect to relay
+    // Kick off
+    (()=>{
       const wsUrl = `wss://${host}/ws/viewer`;
       startViewer(wsUrl);
     })();
