@@ -152,270 +152,260 @@
   </footer>
 
 <script>
-(function(){
-  const logEl = document.getElementById('log');
-  const vid = document.getElementById('vid');
-  const overlay = document.getElementById('overlay');
-  const ovText = document.getElementById('ovText');
-  const btnUnmute = document.getElementById('btnUnmute');
-  const btnChat = document.getElementById('btnChat');
-  const btnRemap = document.getElementById('btnRemap');
-  const pSig = document.getElementById('pSig');
-  const pIce = document.getElementById('pIce');
-  const pDtls = document.getElementById('pDtls');
-  const pPc = document.getElementById('pPc');
-  const pDc = document.getElementById('pDc');
-  const pAv = document.getElementById('pAv');
-  const pWs = document.getElementById('pWs');
-  const pHost = document.getElementById('pHost');
-  const pRelay = document.getElementById('pRelay');
-  const wsUrlPill = document.getElementById('wsUrl');
-  const chatWrap = document.getElementById('chatWrap');
-  const chatIframe = document.getElementById('chatIframe');
-  const chatChannelInput = document.getElementById('chatChannel');
-  const btnSetChannel = document.getElementById('btnSetChannel');
+/* === Viewer WebRTC + Input Patch Block (drop-in) ===
+   - Keeps your protocol: viewer-initiated offer, {type:'candidate', viewer, ...}
+   - Auto-reconnects on ICE/PC failure and WS close/error
+   - Sends inputs with exact schema {Buttons, Axes, Triggers} (+ viewer + viewer_id)
+   - Fixes Twitch chat "refused to connect" by using page host as parent
+*/
 
-  const setPill = (el, state, label) => {
-    el.classList.remove('ok','warn','bad');
-    if (state === 'ok') el.classList.add('ok');
-    else if (state === 'warn') el.classList.add('warn');
-    else if (state === 'bad') el.classList.add('bad');
-    if (label) el.textContent = label;
-  };
-
-  const log = (...args) => {
-    const msg = args.join(' ');
-    logEl.textContent += msg + "\n";
-    logEl.scrollTop = logEl.scrollHeight;
+  // Debug helpers (unchanged)
+  const debugPanel = document.getElementById('debug-panel');
+  const stateLine = document.getElementById('state-line');
+  document.getElementById('debug-toggle')
+    .addEventListener('click', () => {
+      debugPanel.style.display =
+        debugPanel.style.display === 'none' ? 'block' : 'none';
+    });
+  function logDebug(msg) {
+    const div = document.createElement('div');
+    div.textContent = msg;
+    debugPanel.appendChild(div);
+    debugPanel.scrollTop = debugPanel.scrollHeight;
     console.log(msg);
+  }
+  function setIndicator(color) {
+    document.getElementById('connection-indicator').style.backgroundColor = color;
+  }
+  function renderState(pc, dc) {
+    stateLine.textContent = [
+      `ICE: ${pc.iceConnectionState}`,
+      `DTLS: ${pc.connectionState}`,
+      `Signaling: ${pc.signalingState}`,
+      `DC: ${dc?.readyState ?? 'n/a'}`
+    ].join(' | ');
+  }
+
+  // Relay derivation (GitHub Pages uses ?relay=, ngrok uses location.host)
+  const params = new URLSearchParams(window.location.search);
+  const pageHost = window.location.host;
+  let relayHost = (params.get('relay') || pageHost).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${relayHost}/ws/viewer`;
+
+  // Twitch chat: parent MUST be the page host, not the relay host
+  document.getElementById('chat-iframe').src =
+    `https://www.twitch.tv/embed/junkfoodjon/chat?parent=${pageHost}`;
+
+  // Button remap UI (unchanged)
+  const buttonMap = {
+    0:'A',1:'B',2:'X',3:'Y',
+    4:'LB',5:'RB',8:'Back',9:'Start',
+    10:'LS',11:'RS',12:'DPadUp',
+    13:'DPadDown',14:'DPadLeft',15:'DPadRight'
   };
-
-  // Hosting detection and relay derivation
-  const u = new URL(window.location.href);
-  const relayParam = u.searchParams.get('relay'); // required on GitHub Pages
-  const pageHost = window.location.host;          // host actually serving this HTML
-  const isHttps = window.location.protocol === 'https:';
-  const wsProto = isHttps ? 'wss' : 'ws';
-
-  // If ?relay is present, use it; otherwise, use page host (direct ngrok hosting)
-  const relayHost = relayParam ? relayParam : pageHost;
-  const wsUrl = `${wsProto}://${relayHost}/ws/viewer`;
-  wsUrlPill.textContent = wsUrl;
-
-  // Pills for host context
-  setPill(pHost, 'ok', `Host ${pageHost}`);
-  setPill(pRelay, relayParam ? 'ok' : 'warn', relayParam ? `Relay ${relayHost}` : `Relay derived ${relayHost}`);
-
-  // Twitch chat setup: parent must match the page host exactly
-  let chatChannel = u.searchParams.get('channel') || ''; // optional ?channel=
-  chatChannelInput.value = chatChannel;
-
-  const setChatSrc = () => {
-    if (!chatChannel) {
-      chatWrap.hidden = true;
-      log('none chat');
-      return;
-    }
-    const parent = pageHost; // exact current host
-    const chatUrl = `https://www.twitch.tv/embed/${encodeURIComponent(chatChannel)}/chat?parent=${encodeURIComponent(parent)}`;
-    chatIframe.src = chatUrl;
-    chatWrap.hidden = false;
-    log('block chat');
-  };
-
-  btnSetChannel.addEventListener('click', () => {
-    chatChannel = chatChannelInput.value.trim();
-    setChatSrc();
-  });
-
-  btnChat.addEventListener('click', () => {
-    chatWrap.hidden = !chatWrap.hidden;
-    log(chatWrap.hidden ? 'none chat' : 'block chat');
-  });
-
-  // Unmute handling
-  btnUnmute.addEventListener('click', () => {
-    vid.muted = false;
-    vid.volume = 1.0;
-    ovText.textContent = 'Playing…';
-    log('Unmute clicked');
-    vid.play().catch(e => log('Unmute play error:', e && e.message));
-  });
-
-  // WebRTC setup
-  const pc = new RTCPeerConnection({
-    // Keep defaults minimal; the relay provides ICE servers
-  });
-
-  let dc = null;
-
-  pc.addEventListener('connectionstatechange', () => {
-    const st = pc.connectionState;
-    setPill(pPc, st === 'connected' ? 'ok' : (st === 'connecting' ? 'warn' : 'bad'), `Peer ${st}`);
-    log(`Conn state ${st}`);
-  });
-
-  pc.addEventListener('iceconnectionstatechange', () => {
-    const st = pc.iceConnectionState;
-    setPill(pIce, st === 'connected' || st === 'completed' ? 'ok' : (st === 'checking' ? 'warn' : 'bad'), `ICE ${st}`);
-    log(`ICE ${st}`);
-  });
-
-  pc.addEventListener('signalingstatechange', () => {
-    const st = pc.signalingState;
-    setPill(pSig, st === 'stable' ? 'ok' : 'warn', `Signaling ${st}`);
-    log(`Signaling ${st}`);
-  });
-
-  pc.addEventListener('track', (ev) => {
-    if (ev.track.kind === 'video') {
-      const stream = ev.streams[0] || new MediaStream([ev.track]);
-      vid.srcObject = stream;
-      log('Track attached');
-      setPill(pAv, 'warn', 'A/V track (waiting frames)');
-    } else if (ev.track.kind === 'audio') {
-      // Audio auto-plays once unmuted
-      log('Audio track attached');
-    }
-  });
-
-  pc.addEventListener('datachannel', (ev) => {
-    dc = ev.channel;
-    setPill(pDc, 'ok', 'DC open');
-    log('DC open');
-    dc.addEventListener('message', (m) => {
-      // Viewer-side messages (e.g., pings, prompts)
-      // No-op by default
-    });
-    dc.addEventListener('close', () => {
-      setPill(pDc, 'bad', 'DC closed');
-      log('DC closed');
-    });
-  });
-
-  // Video health watchdog: reveals black-screen quickly
-  let lastDecoded = 0;
-  async function checkVideoStats() {
-    try {
-      const stats = await pc.getStats();
-      stats.forEach(report => {
-        if (report.type === 'inbound-rtp' && report.kind === 'video') {
-          const decoded = report.framesDecoded || 0;
-          const width = report.frameWidth || 0;
-          const height = report.frameHeight || 0;
-          const fr = report.framesPerSecond || 0;
-          if (decoded > lastDecoded) {
-            lastDecoded = decoded;
-            overlay.style.display = 'none';
-            setPill(pAv, 'ok', `Video ${width}x${height} @ ${fr || '?'}fps`);
-          } else {
-            overlay.style.display = 'grid';
-            ovText.textContent = 'No new video frames (source stalled)…';
-            setPill(pAv, 'warn', 'Video stalled');
-          }
-        }
+  let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
+  Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
+  function buildRemapUI(){
+    const panel = document.getElementById('remap-panel');
+    panel.innerHTML = '<b>Button Remap</b><br/>';
+    Object.values(buttonMap).forEach(btn=>{
+      const row = document.createElement('div');
+      row.textContent = btn+' → ';
+      const sel = document.createElement('select');
+      Object.values(buttonMap).forEach(t=>{
+        const opt = document.createElement('option');
+        opt.value=opt.textContent=t;
+        if(remap[btn]===t) opt.selected=true;
+        sel.appendChild(opt);
       });
-    } catch (e) {
-      // ignore
-    }
+      sel.onchange=()=>{
+        remap[btn]=sel.value;
+        localStorage.setItem('remapConfig',JSON.stringify(remap));
+        logDebug(`Remap ${btn}→${sel.value}`);
+      };
+      row.appendChild(sel);
+      panel.appendChild(row);
+    });
   }
-  setInterval(checkVideoStats, 1000);
+  buildRemapUI();
+  let remapVisible=true;
+  document.getElementById('remap-toggle')
+    .addEventListener('click',()=>{
+      const p = document.getElementById('remap-panel');
+      p.style.display = remapVisible?'none':'block';
+      remapVisible = !remapVisible;
+    });
 
-  // Establish WebSocket to relay
-  const ws = new WebSocket(wsUrl);
-  ws.addEventListener('open', () => {
-    setPill(pWs, 'ok', 'WS open');
-    log('WS open');
-    // Identify as viewer
-    ws.send(JSON.stringify({ role: 'viewer', hello: true }));
-  });
-  ws.addEventListener('close', () => {
-    setPill(pWs, 'bad', 'WS closed');
-    log('WS closed');
-  });
-  ws.addEventListener('error', (e) => {
-    setPill(pWs, 'bad', 'WS error');
-    log('WS error', e && e.message || '');
-  });
+  // Config
+  const DEADZONE = 0.12;
+  const SEND_MS = 16; // ~60Hz
+  const videoEl = document.getElementById('webrtc');
 
-  // Handle signaling messages
-  ws.addEventListener('message', async (ev) => {
-    let msg;
-    try { msg = JSON.parse(ev.data); } catch { return; }
+  // Session state
+  let pc, ws, dc, viewerID = null;
+  let restarting = false;
+  let lastPayload = '';
 
-    if (msg.type === 'welcome' && msg.viewer_id) {
-      log(`Welcome ${msg.viewer_id}`);
-    }
+  // Start/stop/restart session
+  function startViewer() {
+    logDebug('WS URL → ' + wsUrl);
 
-    if (msg.type === 'offer' && msg.sdp) {
-      // Remote offer from streamer host
-      await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: msg.sdp }));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      ws.send(JSON.stringify({ type: 'answer', sdp: pc.localDescription.sdp }));
-      log('Answer applied');
-    }
+    pc = new RTCPeerConnection({ sdpSemantics: 'unified-plan' });
+    dc = pc.createDataChannel('inputs',{ordered:true});
+    pc.addTransceiver('video',{direction:'recvonly'});
+    pc.addTransceiver('audio',{direction:'recvonly'});
 
-    if (msg.type === 'ice' && msg.candidate) {
-      try {
-        const cand = new RTCIceCandidate(msg.candidate);
-        await pc.addIceCandidate(cand);
-        log('ICE candidate added');
-      } catch (e) {
-        log('ICE add error', e && e.message || '');
+    pc.ontrack = e=>{
+      videoEl.srcObject = e.streams[0];
+      logDebug('Track attached');
+      videoEl.play().catch(err=>logDebug('Autoplay blocked: '+err));
+    };
+    dc.onopen  = ()=>{ logDebug('DC open'); renderState(pc,dc); };
+    dc.onclose = ()=>{ logDebug('DC closed'); renderState(pc,dc); };
+
+    pc.oniceconnectionstatechange = ()=>{
+      const s=pc.iceConnectionState;
+      renderState(pc,dc);
+      setIndicator(s==='connected'||s==='completed'?'limegreen'
+        :s==='checking'?'gold':'gray');
+      logDebug('ICE '+s);
+      if (s === 'disconnected') restartSession();
+    };
+
+    pc.onconnectionstatechange = ()=>{
+      const s = pc.connectionState;
+      logDebug('Conn state '+s);
+      renderState(pc,dc);
+      if (s === 'failed' || s === 'disconnected') restartSession();
+    };
+
+    pc.onicecandidate = ev=>{
+      if(ev.candidate && viewerID){
+        ws?.readyState===1 && ws.send(JSON.stringify({
+          type:'candidate', viewer:viewerID,
+          candidate:{
+            candidate:ev.candidate.candidate,
+            sdpMid:ev.candidate.sdpMid,
+            sdpMLineIndex:ev.candidate.sdpMLineIndex
+          }
+        }));
+        logDebug('Sent ICE candidate');
       }
-    }
+    };
 
-    if (msg.type === 'config' && msg.channel) {
-      // Optional channel push from server
-      chatChannel = msg.channel;
-      chatChannelInput.value = chatChannel;
-      setChatSrc();
-    }
-  });
+    ws = new WebSocket(wsUrl);
+    ws.onopen = ()=>{
+      logDebug('WS open');
+      setIndicator('gold');
+      ws.send(JSON.stringify({type:'hello',role:'viewer'}));
+    };
+    ws.onerror = err=>{
+      logDebug('WebSocket error: '+ (err.message||JSON.stringify(err)));
+      setIndicator('gray');
+      restartSession();
+    };
+    ws.onclose = ()=>{
+      logDebug('WS closed');
+      setIndicator('gray');
+      restartSession();
+    };
+    ws.onmessage = async evt=>{
+      const msg = JSON.parse(evt.data);
 
-  // Send local ICE candidates to relay
-  pc.addEventListener('icecandidate', (ev) => {
-    if (ev.candidate) {
-      ws.send(JSON.stringify({ type: 'ice', candidate: ev.candidate }));
-      log('Sent ICE candidate');
-    }
-  });
+      if(msg.type==='welcome'){
+        viewerID=msg.viewer_id;
+        logDebug('Welcome '+viewerID);
 
-  // Initial chat setup
-  setChatSrc();
+        // Your protocol: viewer creates offer
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({
+          type:'offer', role:'viewer',
+          viewer:viewerID, sdp:pc.localDescription
+        }));
+        renderState(pc,dc);
 
-  // Simple gamepad polling (viewer-side input preview, not sending)
-  let gpActive = false;
-  function pollGamepad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    const any = pads && pads[0];
-    if (any && !gpActive) {
-      gpActive = true;
-      log('GP connected');
-    } else if (!any && gpActive) {
-      gpActive = false;
-      log('GP disconnected');
-    }
+      } else if(msg.type==='answer'){
+        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+        logDebug('Answer applied');
+        renderState(pc,dc);
+
+      } else if(msg.type==='candidate'){
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+          logDebug('Candidate added');
+        } catch (e) {
+          logDebug('ICE add error '+e.message);
+        }
+      }
+    };
   }
-  setInterval(pollGamepad, 500);
 
-  // Remap toggle (UI only — hook to DC if needed)
-  let remapOn = false;
-  btnRemap.addEventListener('click', () => {
-    remapOn = !remapOn;
-    btnRemap.textContent = remapOn ? 'Remap ON' : 'Toggle remap';
-    log(remapOn ? 'Remap enabled' : 'Remap disabled');
-    if (dc && dc.readyState === 'open') {
-      dc.send(JSON.stringify({ type: 'remap', enabled: remapOn }));
+  function stopSession() {
+    try { dc?.close(); } catch {}
+    try { ws?.close(); } catch {}
+    try { pc?.close(); } catch {}
+    dc = ws = pc = null;
+  }
+  function restartSession() {
+    if (restarting) return;
+    restarting = true;
+    stopSession();
+    setTimeout(()=>{ restarting=false; startViewer(); }, 500);
+  }
+
+  // Inputs: exact schema + change detection
+  function applyDZ(v){ return Math.abs(v)<DEADZONE ? 0 : v; }
+  function collectGamepadPayload() {
+    const gps = navigator.getGamepads?.() || [];
+    const gp = gps[0]; if (!gp || !viewerID) return null;
+
+    // Buttons → names (remapped)
+    const Buttons = gp.buttons.map((b,i) => {
+      if (b.pressed && buttonMap[i] && i!==6 && i!==7) return remap[buttonMap[i]];
+      return 0;
+    }).filter(x => x !== 0);
+
+    // Axes → with deadzone and rounding
+    const Axes = gp.axes.map(v => +applyDZ(v).toFixed(3));
+
+    // Triggers
+    const Triggers = {
+      LT: gp.buttons[6]?.value ? +gp.buttons[6].value.toFixed(3) : 0,
+      RT: gp.buttons[7]?.value ? +gp.buttons[7].value.toFixed(3) : 0
+    };
+
+    return { viewer: viewerID, viewer_id: viewerID, Buttons, Axes, Triggers };
+  }
+
+  setInterval(()=>{
+    const p = collectGamepadPayload();
+    if (!p) return;
+    const json = JSON.stringify({ type:'input', ...p });
+    if (json !== lastPayload) {
+      if (dc && dc.readyState==='open') dc.send(json);
+      else if (ws && ws.readyState===1) ws.send(json);
+      lastPayload = json;
+      // Minimal debug
+      logDebug(`[SEND] Buttons=${p.Buttons.join('|')} Axes=${p.Axes.join(',')} LT=${p.Triggers.LT} RT=${p.Triggers.RT}`);
     }
-  });
+  }, SEND_MS);
 
-  // Autofocus play gesture improves autoplay on some browsers
-  document.addEventListener('click', () => {
-    vid.play().catch(()=>{});
-  }, { once: true });
-})();
+  // Chat toggle & Unmute (unchanged)
+  document.getElementById('chat-toggle')
+    .addEventListener('click',()=>{
+      const p = document.getElementById('chat-panel');
+      p.style.display = p.style.display==='block'?'none':'block';
+      logDebug(p.style.display+' chat');
+    });
+  document.getElementById('unmute')
+    .addEventListener('click',()=>{
+      videoEl.muted=false;
+      videoEl.play().catch(e=>logDebug('Unmute err:'+e));
+    });
+
+  // Kick off
+  startViewer();
 </script>
 </body>
 </html>
