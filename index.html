@@ -8,16 +8,14 @@
       background: black; overflow: hidden;
     }
     #debug-toggle {
-      position: absolute; top: 10px; right: 10px;
-      z-index: 1000;
+      position: absolute; top: 10px; right: 10px; z-index: 1000;
     }
     #debug-panel {
       position: absolute; top: 40px; right: 10px;
       background: rgba(0,0,0,0.7); color: #0f0;
       font-family: monospace; font-size: 12px;
       padding: 5px; max-width: 340px; max-height: 240px;
-      overflow-y: auto; display: none;
-      z-index: 999;
+      overflow-y: auto; display: none; z-index: 999;
     }
     #connection-indicator {
       position: absolute; top: 10px; right: 60px;
@@ -31,7 +29,6 @@
       padding: 8px; max-height: 200px; overflow-y: auto;
       z-index: 1000;
     }
-    #remap-panel select { margin-left: 4px; }
     #remap-toggle {
       position: absolute; bottom: 10px; right: 10px;
       background: linear-gradient(145deg, #10b981, #059669);
@@ -52,47 +49,62 @@
       background: #0b0f14; border-left: 2px solid #222;
       display: none; z-index: 1000;
     }
-    #chat-panel iframe { width: 100%; height: 100%; border: none; }
-    #webrtc { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 0; }
-    #state-line { margin-top: 6px; white-space: pre-wrap; }
+    #chat-panel iframe {
+      width: 100%; height: 100%; border: none;
+    }
+    #webrtc {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: black; z-index: 0;
+    }
+    #state-line {
+      margin-top: 6px; white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
 
   <video id="webrtc" autoplay playsinline muted></video>
-  <button id="unmute" style="position:absolute;top:10px;left:10px;z-index:1001;">Unmute</button>
+  <button id="unmute"
+          style="position:absolute;top:10px;left:10px;z-index:1001;">
+    Unmute
+  </button>
 
   <div id="connection-indicator" title="Connection status"></div>
   <button id="debug-toggle">Toggle Debug</button>
   <div id="debug-panel">
     <div id="state-line"></div>
   </div>
+
   <div id="remap-panel"></div>
   <button id="remap-toggle">Remap</button>
   <button id="chat-toggle">Chat</button>
   <div id="chat-panel">
-    <iframe
-      src="https://www.twitch.tv/embed/junkfoodjon/chat?parent=localhost&parent=127.0.0.1&parent=complicatedly-lacier-cristine.ngrok-free.dev&parent=lunaristhicc.github.io"
-      scrolling="no">
-    </iframe>
+    <iframe id="chat-iframe" scrolling="no"></iframe>
   </div>
 
   <script>
     const debugPanel = document.getElementById('debug-panel');
     const toggleBtn = document.getElementById('debug-toggle');
     const stateLine = document.getElementById('state-line');
+
     toggleBtn.addEventListener('click', () => {
-      debugPanel.style.display = (debugPanel.style.display === 'none') ? 'block' : 'none';
+      debugPanel.style.display =
+        (debugPanel.style.display === 'none') ? 'block' : 'none';
     });
+
     function logDebug(msg) {
       const p = document.createElement('div');
       p.textContent = msg;
       debugPanel.appendChild(p);
       debugPanel.scrollTop = debugPanel.scrollHeight;
     }
+
     function setIndicator(color) {
-      document.getElementById("connection-indicator").style.backgroundColor = color;
+      document.getElementById('connection-indicator')
+              .style.backgroundColor = color;
     }
+
     function renderState(pc, dc) {
       const text = [
         `ICE: ${pc.iceConnectionState}`,
@@ -103,9 +115,6 @@
       stateLine.textContent = text;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    let relayDomain = params.get("relay");
-
     function startViewer(wsUrl) {
       logDebug("WS URL: " + wsUrl);
       const ws = new WebSocket(wsUrl);
@@ -114,133 +123,157 @@
       const buttonMap = {
         0: "A", 1: "B", 2: "X", 3: "Y",
         4: "LB", 5: "RB", 8: "Back", 9: "Start",
-        10: "LS", 11: "RS", 12: "DPadUp", 13: "DPadDown",
-        14: "DPadLeft", 15: "DPadRight"
+        10: "LS", 11: "RS", 12: "DPadUp",
+        13: "DPadDown", 14: "DPadLeft",
+        15: "DPadRight"
       };
 
       // --- Remap configuration ---
-      let remap = JSON.parse(localStorage.getItem("remapConfig") || "{}");
-      Object.values(buttonMap).forEach(btn => { if (!remap[btn]) remap[btn] = btn; });
+      let remap = JSON.parse(localStorage.getItem('remapConfig') || '{}');
+      Object.values(buttonMap).forEach(btn => {
+        if (!remap[btn]) remap[btn] = btn;
+      });
+
       function buildRemapUI() {
-        const panel = document.getElementById("remap-panel");
-        panel.innerHTML = "<b>Button Remap</b><br/>";
-        for (const btn of Object.values(buttonMap)) {
-          const row = document.createElement("div");
-          row.textContent = btn + " → ";
-          const select = document.createElement("select");
-          for (const target of Object.values(buttonMap)) {
-            const opt = document.createElement("option");
-            opt.value = target; opt.textContent = target;
+        const panel = document.getElementById('remap-panel');
+        panel.innerHTML = '<b>Button Remap</b><br/>';
+        Object.values(buttonMap).forEach(btn => {
+          const row = document.createElement('div');
+          row.textContent = btn + ' → ';
+          const select = document.createElement('select');
+          Object.values(buttonMap).forEach(target => {
+            const opt = document.createElement('option');
+            opt.value = target;
+            opt.textContent = target;
             if (remap[btn] === target) opt.selected = true;
             select.appendChild(opt);
-          }
+          });
           select.onchange = () => {
             remap[btn] = select.value;
-            localStorage.setItem("remapConfig", JSON.stringify(remap));
+            localStorage.setItem('remapConfig', JSON.stringify(remap));
             logDebug(`Remapped ${btn} → ${select.value}`);
           };
           row.appendChild(select);
           panel.appendChild(row);
-        }
+        });
       }
       buildRemapUI();
 
-      const remapToggle = document.getElementById("remap-toggle");
-      const remapPanel = document.getElementById("remap-panel");
+      const remapToggle = document.getElementById('remap-toggle');
+      const remapPanel = document.getElementById('remap-panel');
       let remapVisible = true;
-      remapToggle.addEventListener("click", () => {
-        remapPanel.style.display = remapVisible ? "none" : "block";
-        remapToggle.textContent = remapVisible ? "Remap" : "Hide Remap";
+      remapToggle.addEventListener('click', () => {
+        remapPanel.style.display = remapVisible ? 'none' : 'block';
+        remapToggle.textContent = remapVisible ? 'Remap' : 'Hide Remap';
         remapVisible = !remapVisible;
       });
-
       // --- WebRTC setup ---
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-        sdpSemantics: "unified-plan"
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        sdpSemantics: 'unified-plan'
       });
-      const webrtcVideo = document.getElementById("webrtc");
-      let dataChannel = pc.createDataChannel("inputs", { ordered: true });
+      const webrtcVideo = document.getElementById('webrtc');
+      const dataChannel = pc.createDataChannel('inputs', { ordered: true });
 
-      pc.addTransceiver("video", { direction: "recvonly" });
-      pc.addTransceiver("audio", { direction: "recvonly" });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
 
       pc.ontrack = (event) => {
         const [stream] = event.streams;
         webrtcVideo.srcObject = stream;
-        logDebug("WebRTC track attached");
-        webrtcVideo.play().catch(err => logDebug("Autoplay blocked: " + err));
+        logDebug('WebRTC track attached');
+        webrtcVideo
+          .play()
+          .catch(err => logDebug('Autoplay blocked: ' + err));
       };
+
       dataChannel.onopen = () => {
-        logDebug("DataChannel open");
+        logDebug('DataChannel open');
         renderState(pc, dataChannel);
       };
       dataChannel.onclose = () => {
-        logDebug("DataChannel closed");
+        logDebug('DataChannel closed');
         renderState(pc, dataChannel);
       };
-            pc.oniceconnectionstatechange = () => {
+
+      pc.oniceconnectionstatechange = () => {
         renderState(pc, dataChannel);
         const s = pc.iceConnectionState;
-        if (s === "connected" || s === "completed") setIndicator("limegreen");
-        else if (s === "checking") setIndicator("gold");
-        else setIndicator("gray");
-        logDebug("ICE state: " + s);
+        if (s === 'connected' || s === 'completed') setIndicator('limegreen');
+        else if (s === 'checking') setIndicator('gold');
+        else setIndicator('gray');
+        logDebug('ICE state: ' + s);
       };
 
       pc.onconnectionstatechange = () => {
         renderState(pc, dataChannel);
-        logDebug("Peer connection state: " + pc.connectionState);
+        logDebug('Peer connection state: ' + pc.connectionState);
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate && viewerID) {
-          ws.send(JSON.stringify({ type: "candidate", viewer: viewerID, candidate: event.candidate }));
-          logDebug("Sent ICE candidate");
+          ws.send(JSON.stringify({
+            type: 'candidate',
+            viewer: viewerID,
+            candidate: {
+              candidate: event.candidate.candidate,
+              sdpMid: event.candidate.sdpMid,
+              sdpMLineIndex: event.candidate.sdpMLineIndex
+            }
+          }));
+          logDebug('Sent ICE candidate');
         }
       };
 
       ws.onopen = () => {
-        logDebug("Connected to relay at " + wsUrl);
-        setIndicator("gold");
-        ws.send(JSON.stringify({ type: "hello", role: "viewer" }));
+        logDebug('Connected to relay at ' + wsUrl);
+        setIndicator('gold');
+        ws.send(JSON.stringify({ type: 'hello', role: 'viewer' }));
       };
 
       ws.onmessage = async (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === "welcome" && msg.viewer_id) {
+          if (msg.type === 'welcome' && msg.viewer_id) {
             viewerID = msg.viewer_id;
-            logDebug("Handshake complete. Viewer ID: " + viewerID);
+            logDebug('Handshake complete. Viewer ID: ' + viewerID);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "offer", role: "viewer", viewer: viewerID, sdp: pc.localDescription }));
+            ws.send(JSON.stringify({
+              type: 'offer',
+              role: 'viewer',
+              viewer: viewerID,
+              sdp: pc.localDescription
+            }));
             renderState(pc, dataChannel);
-          } else if (msg.type === "answer" && msg.sdp) {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-            logDebug("WebRTC answer applied");
+          } else if (msg.type === 'answer' && msg.sdp) {
+            await pc.setRemoteDescription(
+              new RTCSessionDescription(msg.sdp)
+            );
+            logDebug('WebRTC answer applied');
             renderState(pc, dataChannel);
-          } else if (msg.type === "candidate" && msg.candidate) {
-            await pc.addIceCandidate(msg.candidate);
-            logDebug("ICE candidate added");
+          } else if (msg.type === 'candidate' && msg.candidate) {
+            await pc.addIceCandidate(
+              new RTCIceCandidate(msg.candidate)
+            );
+            logDebug('ICE candidate added');
           }
         } catch (e) {
-          logDebug("Error parsing server message: " + e);
+          logDebug('Error parsing server message: ' + e);
         }
       };
 
       ws.onclose = () => {
-        logDebug("Disconnected from relay server.");
-        setIndicator("gray");
+        logDebug('Disconnected from relay server.');
+        setIndicator('gray');
       };
-
       ws.onerror = (err) => {
-        logDebug("WebSocket error: " + err);
-        setIndicator("gray");
+        logDebug('WebSocket error: ' + err);
+        setIndicator('gray');
       };
 
-      // --- Inputs ---
-      const POLL_MODE = "raf";
+      // --- Input polling ---
+      const POLL_MODE = 'raf';
       const POLL_INTERVAL_MS = 33;
       const AXIS_DEADZONE = 0.08;
       function applyDeadzone(v) {
@@ -256,7 +289,9 @@
             buttons.push(mapped);
           }
         });
-        const axes = gp.axes.map(v => parseFloat(applyDeadzone(v).toFixed(2)));
+        const axes = gp.axes.map(v =>
+          parseFloat(applyDeadzone(v).toFixed(2))
+        );
         const triggers = {
           LT: gp.buttons[6]?.value ?? axes[2] ?? 0.0,
           RT: gp.buttons[7]?.value ?? axes[5] ?? 0.0
@@ -265,7 +300,7 @@
       }
 
       function sendInput(payload) {
-        if (dataChannel && dataChannel.readyState === "open") {
+        if (dataChannel.readyState === 'open') {
           dataChannel.send(JSON.stringify(payload));
         } else if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(payload));
@@ -273,61 +308,70 @@
       }
 
       function pollGamepadsOnce() {
-        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-        if (gamepads[0] && viewerID) {
-          const payload = collectInputPayload(gamepads[0]);
+        const gps = navigator.getGamepads
+          ? navigator.getGamepads()
+          : [];
+        if (gps[0] && viewerID) {
+          const payload = collectInputPayload(gps[0]);
           sendInput(payload);
         }
       }
 
       function startPolling() {
-        if (POLL_MODE === "raf") {
-          const loop = () => { pollGamepadsOnce(); requestAnimationFrame(loop); };
+        if (POLL_MODE === 'raf') {
+          const loop = () => {
+            pollGamepadsOnce();
+            requestAnimationFrame(loop);
+          };
           requestAnimationFrame(loop);
         } else {
           setInterval(pollGamepadsOnce, POLL_INTERVAL_MS);
         }
       }
 
-      window.addEventListener("gamepadconnected", (e) => {
-        logDebug("Gamepad connected: " + e.gamepad.id);
+      window.addEventListener('gamepadconnected', (e) => {
+        logDebug('Gamepad connected: ' + e.gamepad.id);
         startPolling();
       });
-
-      window.addEventListener("gamepaddisconnected", (e) => {
-        logDebug("Gamepad disconnected: " + e.gamepad.id);
+      window.addEventListener('gamepaddisconnected', (e) => {
+        logDebug('Gamepad disconnected: ' + e.gamepad.id);
       });
 
       // --- Chat toggle ---
-      const chatToggle = document.getElementById("chat-toggle");
-      const chatPanel = document.getElementById("chat-panel");
-      chatToggle.addEventListener("click", () => {
-        if (chatPanel.style.display === "none" || chatPanel.style.display === "") {
-          chatPanel.style.display = "block";
-          logDebug("Chat panel opened");
-        } else {
-          chatPanel.style.display = "none";
-          logDebug("Chat panel closed");
-        }
+      const chatToggle = document.getElementById('chat-toggle');
+      const chatPanel = document.getElementById('chat-panel');
+      chatToggle.addEventListener('click', () => {
+        chatPanel.style.display =
+          chatPanel.style.display === 'none' ? 'block' : 'none';
+        logDebug(
+          chatPanel.style.display === 'block'
+            ? 'Chat panel opened'
+            : 'Chat panel closed'
+        );
       });
 
       // Unmute button
-      document.getElementById("unmute").addEventListener("click", () => {
+      document.getElementById('unmute').addEventListener('click', () => {
         webrtcVideo.muted = false;
-        webrtcVideo.play().catch(err => logDebug("Unmute/play error: " + err));
+        webrtcVideo
+          .play()
+          .catch(err => logDebug('Unmute/play error: ' + err));
       });
 
-      // Start polling immediately
+      // Start polling
       startPolling();
-    } // <-- end of startViewer
-
-    if (!relayDomain) {
-      logDebug("Missing ?relay=... in URL. Cannot connect.");
-    } else {
-      relayDomain = relayDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      const wsUrl = `wss://${relayDomain}/ws/viewer`;
-      startViewer(wsUrl);
     }
+
+    // --- Dynamic host & initialization ---
+    (function init() {
+      const host = window.location.host;
+      // Set chat iframe src dynamically
+      document.getElementById('chat-iframe').src =
+        `https://www.twitch.tv/embed/junkfoodjon/chat?parent=${host}`;
+      // Connect to relay
+      const wsUrl = `wss://${host}/ws/viewer`;
+      startViewer(wsUrl);
+    })();
   </script>
 </body>
 </html>
