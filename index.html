@@ -416,15 +416,13 @@
     log('Unmuted');
   });
 
-  // --- Fullscreen toggle ---
+  // --- Fullscreen toggle (fixed) ---
   btnFullscreen.addEventListener('click', () => {
     const wrap = document.getElementById('videoWrap');
     if (!document.fullscreenElement) {
       wrap.requestFullscreen().catch(err => log('Fullscreen error: ' + err));
-      btnFullscreen.textContent = 'Exit Fullscreen';
     } else {
       document.exitFullscreen();
-      btnFullscreen.textContent = 'Fullscreen';
     }
   });
 
@@ -446,7 +444,8 @@
   });
   vid.addEventListener('playing', () => {
     log('Video playing');
-    ovText.textContent = 'Streaming…';
+    // Hide overlay once video is streaming
+    document.getElementById('overlay').style.display = 'none';
   });
   vid.addEventListener('stalled', () => log('Video stalled'));
   vid.addEventListener('waiting', () => log('Video waiting'));
