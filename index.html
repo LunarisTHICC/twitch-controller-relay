@@ -158,12 +158,13 @@
     <span id="wsUrl" class="pill"></span>
   </footer>
 
-<script>
+<scr<script>
   const vid = document.getElementById('vid');
   const ovText = document.getElementById('ovText');
   const btnUnmute = document.getElementById('btnUnmute');
   const btnChat = document.getElementById('btnChat');
   const btnFullscreen = document.getElementById('btnFullscreen');
+  const btnDownloadLogs = document.getElementById('btnDownloadLogs'); // NEW
   const chatWrap = document.getElementById('chatWrap');
   const chatIframe = document.getElementById('chatIframe');
   const wsUrlPill = document.getElementById('wsUrl');
@@ -182,12 +183,30 @@
   const pRelay = document.getElementById('pRelay');
 
   const logEl = document.getElementById('log');
+  const logBuffer = [];
+
   function log(msg) {
     const t = new Date().toLocaleTimeString();
-    logEl.textContent += `[${t}] ${msg}\n`;
+    const line = `[${t}] ${msg}`;
+    logBuffer.push(line);
+    logEl.textContent += line + "\n";
     logEl.scrollTop = logEl.scrollHeight;
     console.log(msg);
   }
+
+  // Allow downloading logs
+  if (btnDownloadLogs) {
+    btnDownloadLogs.addEventListener('click', () => {
+      const blob = new Blob([logBuffer.join("\n")], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "viewer_logs.txt";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
   function setPill(pill, cls, text) {
     if (!pill) return;
     pill.classList.remove('ok', 'warn', 'bad');
@@ -212,7 +231,6 @@
   let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
   Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
 
-  // Populate dropdowns
   const allButtons = Object.values(buttonMap);
   allButtons.forEach(b=>{
     const opt1 = document.createElement('option');
@@ -244,95 +262,90 @@
     log('WS URL → ' + wsUrl);
     setPill(pWs, 'warn', 'WS: connecting');
 
-  pc = new RTCPeerConnection({
-    sdpSemantics: 'unified-plan',
-    iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
-    bundlePolicy: 'max-bundle',
-    rtcpMuxPolicy: 'require'
-  });
-  setPill(pSig, 'ok', 'Signaling: ready');
+    pc = new RTCPeerConnection({
+      sdpSemantics: 'unified-plan',
+      iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require'
+    });
+    setPill(pSig, 'ok', 'Signaling: ready');
 
-  // inbound stream container to handle Unified Plan cases where tracks arrive without streams
-  const inboundStream = new MediaStream();
+    const inboundStream = new MediaStream();
 
-  dc = pc.createDataChannel('inputs', { ordered: true });
-  pc.addTransceiver('video', { direction: 'recvonly' });
-  pc.addTransceiver('audio', { direction: 'recvonly' });
+    dc = pc.createDataChannel('inputs', { ordered: true });
+    pc.addTransceiver('video', { direction: 'recvonly' });
+    pc.addTransceiver('audio', { direction: 'recvonly' });
 
-  // Prefer H.264 codec if available
-  try {
-    const caps = RTCRtpReceiver.getCapabilities('video');
-    const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
-    const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
-    if (vTrans && h264.length) {
-      vTrans.setCodecPreferences(h264);
-      log('Codec preference set: H.264');
-    }
-  } catch (e) {
-    log('Codec preference error: ' + e);
-  }
-
-  // Robust ontrack: always attach tracks into a single MediaStream for the video element
-  pc.ontrack = e => {
     try {
-      // add the incoming track if not already present
-      if (!inboundStream.getTracks().includes(e.track)) {
-        inboundStream.addTrack(e.track);
+      const caps = RTCRtpReceiver.getCapabilities('video');
+      const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
+      const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
+      if (vTrans && h264.length) {
+        vTrans.setCodecPreferences(h264);
+        log('Codec preference set: H.264');
       }
-      // set the video element source to the inbound stream
-      if (vid.srcObject !== inboundStream) {
-        vid.srcObject = inboundStream;
-      }
-      ovText.textContent = 'Receiving video…';
-      setPill(pAv, 'ok', 'A/V: attached');
-      vid.muted = true;
-      vid.addEventListener('loadedmetadata', () => {
-        vid.play().then(()=>log('Autoplay started')).catch(err=>log('Autoplay error: '+err));
-      }, { once: true });
-    } catch (err) {
-      log('ontrack error: ' + err);
+    } catch (e) {
+      log('Codec preference error: ' + e);
     }
-  };
 
-  dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
-  dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
-
-  pc.oniceconnectionstatechange = () => {
-    const s = pc.iceConnectionState;
-    log('ICE ' + s);
-    let cls = 'warn';
-    if (s === 'connected' || s === 'completed') cls = 'ok';
-    else if (s === 'failed' || s === 'disconnected') cls = 'bad';
-    setPill(pIce, cls, `ICE: ${s}`);
-    if (s === 'failed' || s === 'disconnected') restartSession();
-  };
-
-  pc.onconnectionstatechange = () => {
-    const s = pc.connectionState;
-    log('Conn ' + s);
-    let cls = s === 'connected' ? 'ok' : (s === 'connecting' ? 'warn' : 'bad');
-    setPill(pDtls, cls, `DTLS: ${s}`);
-    setPill(pPc, cls, `Peer: ${s}`);
-    if (s === 'failed' || s === 'disconnected' || s === 'closed') restartSession();
-  };
-
-  pc.onicecandidate = ev => {
-    if (ev.candidate && viewerID && ws?.readyState === 1) {
-      ws.send(JSON.stringify({
-        type: 'candidate',
-        viewer: viewerID,
-        candidate: {
-          candidate: ev.candidate.candidate,
-          sdpMid: ev.candidate.sdpMid,
-          sdpMLineIndex: ev.candidate.sdpMLineIndex
+    pc.ontrack = e => {
+      try {
+        if (!inboundStream.getTracks().includes(e.track)) {
+          inboundStream.addTrack(e.track);
         }
-      }));
-      log('Sent ICE candidate');
-    }
-  };
+        if (vid.srcObject !== inboundStream) {
+          vid.srcObject = inboundStream;
+        }
+        ovText.textContent = 'Receiving video…';
+        setPill(pAv, 'ok', 'A/V: attached');
+        vid.muted = true;
+        vid.addEventListener('loadedmetadata', () => {
+          vid.play().then(()=>log('Autoplay started')).catch(err=>log('Autoplay error: '+err));
+        }, { once: true });
+      } catch (err) {
+        log('ontrack error: ' + err);
+      }
+    };
+
+    dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
+    dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
+
+    pc.oniceconnectionstatechange = () => {
+      const s = pc.iceConnectionState;
+      log('ICE ' + s);
+      let cls = 'warn';
+      if (s === 'connected' || s === 'completed') cls = 'ok';
+      else if (s === 'failed' || s === 'disconnected') cls = 'bad';
+      setPill(pIce, cls, `ICE: ${s}`);
+      if (s === 'failed' || s === 'disconnected') restartSession();
+    };
+
+    pc.onconnectionstatechange = () => {
+      const s = pc.connectionState;
+      log('Conn ' + s);
+      let cls = s === 'connected' ? 'ok' : (s === 'connecting' ? 'warn' : 'bad');
+      setPill(pDtls, cls, `DTLS: ${s}`);
+      setPill(pPc, cls, `Peer: ${s}`);
+      if (s === 'failed' || s === 'disconnected' || s === 'closed') restartSession();
+    };
+
+    pc.onicecandidate = ev => {
+      if (ev.candidate && viewerID && ws?.readyState === 1) {
+        ws.send(JSON.stringify({
+          type: 'candidate',
+          viewer: viewerID,
+          candidate: {
+            candidate: ev.candidate.candidate,
+            sdpMid: ev.candidate.sdpMid,
+            sdpMLineIndex: ev.candidate.sdpMLineIndex
+          }
+        }));
+        log('Sent ICE candidate');
+      }
+    };
 
     ws = new WebSocket(wsUrl);
-    ws.onopen = () => {
+        ws.onopen = () => {
       log('WS open');
       setPill(pWs, 'ok', 'WS: open');
       ws.send(JSON.stringify({ type: 'hello', role: 'viewer' }));
@@ -349,7 +362,7 @@
     };
     ws.onmessage = async evt => {
       const msg = JSON.parse(evt.data);
-      if (msg.type === 'pong') return; // PATCH: ignore relay heartbeat
+      if (msg.type === 'pong') return; // ignore relay heartbeat
       if (msg.type === 'welcome') {
         viewerID = msg.viewer_id;
         log('Welcome ' + viewerID);
@@ -377,7 +390,7 @@
       }
     };
 
-    // PATCH: Heartbeats to keep relay/ngrok and DC alive
+    // Heartbeats to keep relay/ngrok and DC alive
     setInterval(() => {
       if (ws && ws.readyState === 1) {
         ws.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
@@ -395,6 +408,7 @@
     vid.srcObject = null;
     dc = ws = pc = null;
   }
+
   function restartSession() {
     if (restarting) return;
     restarting = true;
@@ -442,7 +456,6 @@
     log('Unmuted');
   });
 
-  // --- Fullscreen toggle (fixed) ---
   btnFullscreen.addEventListener('click', () => {
     const wrap = document.getElementById('videoWrap');
     if (!document.fullscreenElement) {
@@ -452,7 +465,6 @@
     }
   });
 
-  // --- Chat channel set button ---
   document.getElementById('btnSetChannel').addEventListener('click', () => {
     const ch = document.getElementById('chatChannel').value.trim();
     if (!ch) {
@@ -470,13 +482,12 @@
   });
   vid.addEventListener('playing', () => {
     log('Video playing');
-    // Hide overlay once video is streaming
     document.getElementById('overlay').style.display = 'none';
   });
   vid.addEventListener('stalled', () => log('Video stalled'));
   vid.addEventListener('waiting', () => log('Video waiting'));
 
-  // --- Auto-recover: detect absent frames and restart session ---
+  // Auto-recover: detect absent frames and restart session
   let lastFrameTime = Date.now();
   vid.addEventListener('playing', () => { lastFrameTime = Date.now(); });
 
@@ -510,4 +521,5 @@
 </script>
 </body>
 </html>
+
 
