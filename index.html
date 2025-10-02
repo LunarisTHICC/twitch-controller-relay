@@ -238,12 +238,20 @@
       log('Codec preference error: ' + e);
     }
 
-    pc.ontrack = e => {
-      vid.srcObject = e.streams[0];
-      ovText.textContent = 'Receiving video…';
-      setPill(pAv, 'ok', 'A/V: attached');
-      vid.play().catch(err => log('Autoplay blocked: '+ err));
-    };
+// --- ontrack handler (patched) ---
+pc.ontrack = e => {
+  vid.srcObject = e.streams[0];
+  ovText.textContent = 'Receiving video…';
+  setPill(pAv, 'ok', 'A/V: attached');
+  vid.muted = true; // keep muted for autoplay
+
+  // Wait until metadata is loaded before calling play()
+  vid.addEventListener('loadedmetadata', () => {
+    vid.play()
+      .then(() => log('Autoplay started'))
+      .catch(err => log('Autoplay error: ' + err));
+  }, { once: true });
+};
 
     dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
     dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
@@ -333,11 +341,12 @@
   }
 
   function stopSession() {
-    try { dc?.close(); } catch {}
-    try { ws?.close(); } catch {}
-    try { pc?.close(); } catch {}
-    dc = ws = pc = null;
-  }
+  try { dc?.close(); } catch {}
+  try { ws?.close(); } catch {}
+  try { pc?.close(); } catch {}
+  vid.srcObject = null;   // <--- add this line
+  dc = ws = pc = null;
+}
   function restartSession() {
     if (restarting) return;
     restarting = true;
@@ -404,17 +413,17 @@
     log('Remap cycled: ' + JSON.stringify(order.map(k => `${k}:${remap[k]}`)));
   });
 
-  // --- Chat channel set button ---
-  document.getElementById('btnSetChannel').addEventListener('click', () => {
-    const ch = document.getElementById('chatChannel').value.trim();
-    if (!ch) {
-      log('⚠️ No channel entered for chat.');
-      return;
-    }
-    chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
-    chatWrap.removeAttribute('hidden');
-    log('Chat channel set: ' + ch);
-  });
+// --- Chat channel set button (patched) ---
+document.getElementById('btnSetChannel').addEventListener('click', () => {
+  const ch = document.getElementById('chatChannel').value.trim();
+  if (!ch) {
+    log('⚠️ No channel entered for chat.');
+    return;
+  }
+  chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
+  chatWrap.removeAttribute('hidden');
+  log('Chat channel set: ' + ch);
+});
 
   // --- Video render checks ---
   vid.addEventListener('loadedmetadata', () => {
