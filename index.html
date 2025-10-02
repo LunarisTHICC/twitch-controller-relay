@@ -476,6 +476,22 @@
   vid.addEventListener('stalled', () => log('Video stalled'));
   vid.addEventListener('waiting', () => log('Video waiting'));
 
+  // --- Auto-recover: detect absent frames and restart session ---
+  let lastFrameTime = Date.now();
+  vid.addEventListener('playing', () => { lastFrameTime = Date.now(); });
+
+  setInterval(() => {
+    if (vid.srcObject) {
+      const t = vid.currentTime;
+      if (t && t !== 0) lastFrameTime = Date.now();
+      if (Date.now() - lastFrameTime > 1200) {
+        log('No frames for >1200ms — restarting session to recover');
+        restartSession();
+        lastFrameTime = Date.now();
+      }
+    }
+  }, 500);
+
   let lastT = 0;
   setInterval(() => {
     if (vid.srcObject) {
@@ -494,3 +510,4 @@
 </script>
 </body>
 </html>
+
