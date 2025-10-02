@@ -186,7 +186,7 @@
     const t = new Date().toLocaleTimeString();
     logEl.textContent += `[${t}] ${msg}\n`;
     logEl.scrollTop = logEl.scrollHeight;
-  console.log(msg);
+    console.log(msg);
   }
   function setPill(pill, cls, text) {
     if (!pill) return;
@@ -334,6 +334,7 @@
     };
     ws.onmessage = async evt => {
       const msg = JSON.parse(evt.data);
+      if (msg.type === 'pong') return; // PATCH: ignore relay heartbeat
       if (msg.type === 'welcome') {
         viewerID = msg.viewer_id;
         log('Welcome ' + viewerID);
@@ -360,6 +361,16 @@
         }
       }
     };
+
+    // PATCH: Heartbeats to keep relay/ngrok and DC alive
+    setInterval(() => {
+      if (ws && ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
+      }
+      if (dc && dc.readyState === 'open') {
+        dc.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
+      }
+    }, 12000);
   }
 
   function stopSession() {
@@ -466,6 +477,5 @@
   // Kick off
   startViewer();
 </script>
-
 </body>
 </html>
