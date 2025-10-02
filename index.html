@@ -152,7 +152,6 @@
   </footer>
 
 <script>
-  // --- DOM refs (match existing IDs) ---
   const vid = document.getElementById('vid');
   const ovText = document.getElementById('ovText');
   const btnUnmute = document.getElementById('btnUnmute');
@@ -162,7 +161,6 @@
   const chatIframe = document.getElementById('chatIframe');
   const wsUrlPill = document.getElementById('wsUrl');
 
-  // Status pills
   const pSig = document.getElementById('pSig');
   const pIce = document.getElementById('pIce');
   const pDtls = document.getElementById('pDtls');
@@ -173,7 +171,6 @@
   const pHost = document.getElementById('pHost');
   const pRelay = document.getElementById('pRelay');
 
-  // Log
   const logEl = document.getElementById('log');
   function log(msg) {
     const t = new Date().toLocaleTimeString();
@@ -188,16 +185,12 @@
     if (text) pill.textContent = text;
   }
 
-  // --- Relay domain derivation ---
   const params = new URLSearchParams(window.location.search);
   const pageHost = window.location.host;
   let relayHost = (params.get('relay') || pageHost).replace(/^https?:\/\//, '').replace(/\/+$/, '');
   const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${relayHost}/ws/viewer`;
   wsUrlPill.textContent = wsUrl;
   setPill(pRelay, 'ok', `Relay: ${relayHost}`);
-
-  // Twitch chat iframe
-  chatIframe.src = `https://www.twitch.tv/embed/${params.get('channel') || ''}/chat?parent=${pageHost}`;
 
   // --- Remap UI state (simple toggle only) ---
   const buttonMap = {
@@ -209,16 +202,13 @@
   let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
   Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
 
-  // --- Config ---
   const DEADZONE = 0.12;
   const SEND_MS = 16; // ~60Hz
 
-  // --- Session state ---
   let pc, ws, dc, viewerID = null;
   let restarting = false;
   let lastPayload = '';
 
-  // --- Start/stop/restart session ---
   function startViewer() {
     log('WS URL → ' + wsUrl);
     setPill(pWs, 'warn', 'WS: connecting');
@@ -234,6 +224,19 @@
     dc = pc.createDataChannel('inputs', { ordered: true });
     pc.addTransceiver('video', { direction: 'recvonly' });
     pc.addTransceiver('audio', { direction: 'recvonly' });
+
+    // Prefer H.264 codec if available
+    try {
+      const caps = RTCRtpReceiver.getCapabilities('video');
+      const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
+      const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
+      if (vTrans && h264.length) {
+        vTrans.setCodecPreferences(h264);
+        log('Codec preference set: H.264');
+      }
+    } catch (e) {
+      log('Codec preference error: ' + e);
+    }
 
     pc.ontrack = e => {
       vid.srcObject = e.streams[0];
@@ -303,7 +306,6 @@
         log('Welcome ' + viewerID);
         setPill(pHost, 'ok', 'Host: ready');
 
-        // Viewer-initiated offer
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         ws.send(JSON.stringify({
@@ -326,8 +328,6 @@
         } catch (e) {
           log('ICE add error ' + e.message);
         }
-      } else if (msg.type === 'input') {
-        // Optional: any host echo can be logged here
       }
     };
   }
@@ -345,7 +345,6 @@
     setTimeout(() => { restarting = false; startViewer(); }, 500);
   }
 
-  // --- Inputs: exact schema (lowercase keys) + change detection ---
   function applyDZ(v){ return Math.abs(v) < DEADZONE ? 0 : v; }
 
   setInterval(() => {
@@ -380,7 +379,6 @@
         ws.send(payload);
       }
       lastPayload = payload;
-
       log(`[SEND] Buttons=${buttons.join('|')} Axes=${axes.join(',')} LT=${triggers.LT} RT=${triggers.RT}`);
     }
   }, SEND_MS);
@@ -399,13 +397,48 @@
   });
 
   btnRemap.addEventListener('click', () => {
-    // Simple toggle: cycle a common remap example for face buttons
     const order = ['A', 'B', 'X', 'Y'];
     const next = { A: 'B', B: 'X', X: 'Y', Y: 'A' };
     order.forEach(k => remap[k] = next[remap[k]] || 'A');
     localStorage.setItem('remapConfig', JSON.stringify(remap));
     log('Remap cycled: ' + JSON.stringify(order.map(k => `${k}:${remap[k]}`)));
   });
+
+  // --- Chat channel set button ---
+  document.getElementById('btnSetChannel').addEventListener('click', () => {
+    const ch = document.getElementById('chatChannel').value.trim();
+    if (!ch) {
+      log('⚠️ No channel entered for chat.');
+      return;
+    }
+    chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
+    chatWrap.removeAttribute('hidden');
+    log('Chat channel set: ' + ch);
+  });
+
+  // --- Video render checks ---
+  vid.addEventListener('loadedmetadata', () => {
+    log(`Video metadata: ${vid.videoWidth}x${vid.videoHeight}`);
+  });
+  vid.addEventListener('playing', () => {
+    log('Video playing');
+    ovText.textContent = 'Streaming…';
+  });
+  vid.addEventListener('stalled', () => log('Video stalled'));
+  vid.addEventListener('waiting', () => log('Video waiting'));
+
+  let lastT = 0;
+  setInterval(() => {
+    if (vid.srcObject) {
+      const t = vid.currentTime;
+      if (t && t !== lastT) {
+        setPill(pAv, 'ok', `A/V: frames`);
+        lastT = t;
+      } else {
+        setPill(pAv, 'warn', 'A/V: stalled');
+      }
+    }
+  }, 1000);
 
   // Kick off
   startViewer();
