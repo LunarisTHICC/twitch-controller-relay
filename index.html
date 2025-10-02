@@ -1,50 +1,85 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Twitch Controller Relay Viewer</title>
+  <title>WebRTC Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0f1116;
-      --panel: #151822;
-      --text: #e6e6e6;
-      --muted: #a3a3a3;
-      --accent: #7c8cff;
-      --ok: #44d19a;
-      --warn: #f5a524;
-      --bad: #ff5c5c;
-      --border: #222633;
     }
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      background: #0b0f14;
+      color: #dfe7ef;
     }
-    header, footer {
-      padding: 10px 12px;
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
+    header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #121824;
+      border-bottom: 1px solid #20283a;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 14px;
+      background: #2a3347;
+      border: 1px solid #3a4461;
+      color: #b7c1d6;
+      white-space: nowrap;
+    }
+    .pill.ok {
+      background: #15321f;
+      border-color: #1e6a33;
+      color: #a5e7b9;
+    }
+    .pill.warn {
+      background: #3a2a18;
+      border-color: #b57a28;
+      color: #ffd89a;
+    }
+    .pill.bad {
+      background: #3a1a1a;
+      border-color: #b52828;
+      color: #ff9a9a;
+    }
+    #statusRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    #wsUrl {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      color: #9fb2d1;
     }
     main {
       display: grid;
       grid-template-columns: 1fr 360px;
-      gap: 12px;
+      gap: 10px;
       padding: 12px;
     }
     #videoWrap {
       position: relative;
-      background: #000;
-      border: 1px solid var(--border);
+      background: #0f1320;
+      border: 1px solid #1d2436;
       border-radius: 8px;
       overflow: hidden;
-      min-height: 240px;
+      min-height: 360px;
     }
-    video {
+    #vid {
       width: 100%;
       height: auto;
+      display: block;
       background: #000;
     }
     #overlay {
@@ -52,474 +87,512 @@
       inset: 0;
       display: grid;
       place-items: center;
+      background: linear-gradient(180deg, rgba(10,14,21,0.75), rgba(10,14,21,0.85));
       pointer-events: none;
-      color: var(--muted);
-      font-size: 14px;
-      text-align: center;
-      padding: 8px;
     }
-    #pillbar {
-      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    #ovText {
+      font-size: 16px;
+      color: #c6d3ea;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
     }
-    .pill {
-      padding: 6px 10px; border-radius: 999px; font-size: 12px;
-      border: 1px solid var(--border); background: #0e1220; color: var(--muted);
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 0;
     }
-    .pill.ok { color: var(--ok); border-color: #224437; background: #15221d; }
-    .pill.warn { color: var(--warn); border-color: #4a3b1a; background: #1a1711; }
-    .pill.bad { color: var(--bad); border-color: #4a1f1f; background: #1a1111; }
-    button, .btn, select {
-      all: unset;
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 8px 12px; border-radius: 6px; cursor: pointer;
-      border: 1px solid var(--border); background: #121626; color: var(--text);
-      font-size: 13px;
+    button, input, select {
+      font: inherit;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #2a3347;
+      background: #172035;
+      color: #dfe7ef;
     }
-    button:hover, select:hover { background: #182044; }
-    #rightPanel {
-      border: 1px solid var(--border);
+    button:hover {
+      background: #1b2844;
+      border-color: #3a4461;
+      cursor: pointer;
+    }
+    input, select {
+      background: #111829;
+      border-color: #28324a;
+    }
+    #sidePanel {
+      display: grid;
+      grid-template-rows: min-content min-content 1fr min-content;
+      gap: 10px;
+    }
+    #chatWrap {
+      border: 1px solid #1d2436;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0d1322;
+      min-height: 260px;
+    }
+    #chatWrap[hidden] {
+      display: none;
+    }
+    #chatIframe {
+      width: 100%;
+      height: 260px;
+      border: 0;
+      background: #0d1322;
+    }
+    #logPanel {
+      display: grid;
+      grid-template-rows: min-content 1fr;
+      border: 1px solid #1d2436;
       border-radius: 8px;
       overflow: hidden;
     }
-    #rightHeader {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--panel); padding: 8px 10px;
+    #logHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #121824;
+      border-bottom: 1px solid #1d2436;
     }
-    #chatWrap { height: 480px; background: #0c0f18; border-top: 1px solid var(--border); }
-    iframe { width: 100%; height: 100%; border: 0; background: #0c0f18; }
     #log {
-      height: 180px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 12px; background: #0c0f18; border-top: 1px solid var(--border); padding: 8px;
+      margin: 0;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      background: #0b0f16;
+      color: #a6b6d3;
+      overflow: auto;
       white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 300px;
     }
-    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    #controls { display: flex; gap: 8px; flex-wrap: wrap; }
-    #unmuteHint { color: var(--muted); font-size: 12px; }
+    footer {
+      padding: 12px 14px;
+      color: #7a8fb2;
+      border-top: 1px solid #20283a;
+      background: #0e1524;
+    }
   </style>
 </head>
 <body>
+
   <header>
-    <div class="row" id="pillbar">
-      <span class="pill" id="pSig">Signaling</span>
-      <span class="pill" id="pIce">ICE</span>
-      <span class="pill" id="pDtls">DTLS</span>
-      <span class="pill" id="pPc">Peer</span>
-      <span class="pill" id="pDc">DC</span>
-      <span class="pill" id="pAv">A/V</span>
-      <span class="pill" id="pWs">WS</span>
-      <span class="pill" id="pHost">Host</span>
-      <span class="pill" id="pRelay">Relay</span>
+    <div id="statusRow">
+      <span id="pRelay" class="pill">Relay</span>
+      <span id="pWs" class="pill">WS</span>
+      <span id="pHost" class="pill">Host</span>
+      <span id="pSig" class="pill">Signaling</span>
+      <span id="pIce" class="pill">ICE</span>
+      <span id="pDtls" class="pill">DTLS</span>
+      <span id="pPc" class="pill">Peer</span>
+      <span id="pDc" class="pill">DC</span>
+      <span id="pAv" class="pill">A/V</span>
     </div>
+    <span id="wsUrl" class="pill" style="margin-left:auto">ws://</span>
   </header>
 
   <main>
-    <section id="videoPanel">
-      <div class="row" id="controls">
+    <section>
+      <div id="videoWrap">
+        <video id="vid" playsinline muted></video>
+        <div id="overlay">
+          <div id="ovText">Waiting for video…</div>
+        </div>
+      </div>
+
+      <div id="controls">
         <button id="btnUnmute">Unmute</button>
         <button id="btnChat">Toggle chat</button>
         <button id="btnFullscreen">Fullscreen</button>
-        <span id="unmuteHint">If muted, click Unmute to hear audio.</span>
+        <button id="btnDownloadLogs">Download logs</button>
+        <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px" />
+        <button id="btnSetChannel">Set chat channel</button>
       </div>
-      <div id="videoWrap">
-        <video id="vid" playsinline autoplay muted></video>
-        <div id="overlay">
-          <div id="ovText">Waiting for video frames…</div>
+
+      <section aria-label="Controller remap">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+          <label>Remap from
+            <select id="remapFrom"></select>
+          </label>
+          <label>to
+            <select id="remapTo"></select>
+          </label>
+          <button id="btnApplyRemap">Apply remap</button>
         </div>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <label class="pill">Remap:</label>
-        <select id="remapFrom"></select>
-        <span>→</span>
-        <select id="remapTo"></select>
-        <button id="btnApplyRemap">Apply</button>
-      </div>
-      <div id="log"></div>
+      </section>
     </section>
 
-    <aside id="rightPanel">
-      <div id="rightHeader">
-        <div>Twitch chat</div>
-        <div class="row">
-          <label class="row" style="gap:4px;">
-            <span class="pill">Channel:</span>
-            <input id="chatChannel" placeholder="twitch channel" style="all:unset;border:1px solid var(--border);padding:4px 8px;border-radius:6px;background:#0e1220;color:var(--text);width:160px;" />
-          </label>
-          <button id="btnSetChannel">Set</button>
-        </div>
-      </div>
+    <aside id="sidePanel">
       <div id="chatWrap" hidden>
-        <iframe id="chatIframe" referrerpolicy="no-referrer"></iframe>
+        <iframe id="chatIframe" title="Twitch chat"></iframe>
+      </div>
+
+      <div id="logPanel">
+        <div id="logHeader">
+          <strong>Viewer logs</strong>
+          <span style="opacity:.7">Scroll to view. Use “Download logs” to export.</span>
+        </div>
+        <pre id="log"></pre>
       </div>
     </aside>
   </main>
 
   <footer>
-    <span class="pill">Viewer</span>
-    <span id="wsUrl" class="pill"></span>
+    <small>Status indicators reflect last known state and auto-recover triggers.</small>
   </footer>
+    <script>
+    const vid = document.getElementById('vid');
+    const ovText = document.getElementById('ovText');
+    const btnUnmute = document.getElementById('btnUnmute');
+    const btnChat = document.getElementById('btnChat');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const btnDownloadLogs = document.getElementById('btnDownloadLogs');
+    const chatWrap = document.getElementById('chatWrap');
+    const chatIframe = document.getElementById('chatIframe');
+    const wsUrlPill = document.getElementById('wsUrl');
+    const remapFrom = document.getElementById('remapFrom');
+    const remapTo = document.getElementById('remapTo');
+    const btnApplyRemap = document.getElementById('btnApplyRemap');
 
-<scr<script>
-  const vid = document.getElementById('vid');
-  const ovText = document.getElementById('ovText');
-  const btnUnmute = document.getElementById('btnUnmute');
-  const btnChat = document.getElementById('btnChat');
-  const btnFullscreen = document.getElementById('btnFullscreen');
-  const btnDownloadLogs = document.getElementById('btnDownloadLogs'); // NEW
-  const chatWrap = document.getElementById('chatWrap');
-  const chatIframe = document.getElementById('chatIframe');
-  const wsUrlPill = document.getElementById('wsUrl');
-  const remapFrom = document.getElementById('remapFrom');
-  const remapTo = document.getElementById('remapTo');
-  const btnApplyRemap = document.getElementById('btnApplyRemap');
+    const pSig = document.getElementById('pSig');
+    const pIce = document.getElementById('pIce');
+    const pDtls = document.getElementById('pDtls');
+    const pPc = document.getElementById('pPc');
+    const pDc = document.getElementById('pDc');
+    const pAv = document.getElementById('pAv');
+    const pWs = document.getElementById('pWs');
+    const pHost = document.getElementById('pHost');
+    const pRelay = document.getElementById('pRelay');
 
-  const pSig = document.getElementById('pSig');
-  const pIce = document.getElementById('pIce');
-  const pDtls = document.getElementById('pDtls');
-  const pPc = document.getElementById('pPc');
-  const pDc = document.getElementById('pDc');
-  const pAv = document.getElementById('pAv');
-  const pWs = document.getElementById('pWs');
-  const pHost = document.getElementById('pHost');
-  const pRelay = document.getElementById('pRelay');
+    const logEl = document.getElementById('log');
+    const logBuffer = [];
 
-  const logEl = document.getElementById('log');
-  const logBuffer = [];
-
-  function log(msg) {
-    const t = new Date().toLocaleTimeString();
-    const line = `[${t}] ${msg}`;
-    logBuffer.push(line);
-    logEl.textContent += line + "\n";
-    logEl.scrollTop = logEl.scrollHeight;
-    console.log(msg);
-  }
-
-  // Allow downloading logs
-  if (btnDownloadLogs) {
-    btnDownloadLogs.addEventListener('click', () => {
-      const blob = new Blob([logBuffer.join("\n")], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "viewer_logs.txt";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  }
-
-  function setPill(pill, cls, text) {
-    if (!pill) return;
-    pill.classList.remove('ok', 'warn', 'bad');
-    if (cls) pill.classList.add(cls);
-    if (text) pill.textContent = text;
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const pageHost = window.location.host;
-  let relayHost = (params.get('relay') || pageHost).replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${relayHost}/ws/viewer`;
-  wsUrlPill.textContent = wsUrl;
-  setPill(pRelay, 'ok', `Relay: ${relayHost}`);
-
-  // --- Remap UI state ---
-  const buttonMap = {
-    0:'A',1:'B',2:'X',3:'Y',
-    4:'LB',5:'RB',8:'Back',9:'Start',
-    10:'LS',11:'RS',12:'DPadUp',
-    13:'DPadDown',14:'DPadLeft',15:'DPadRight'
-  };
-  let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
-  Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
-
-  const allButtons = Object.values(buttonMap);
-  allButtons.forEach(b=>{
-    const opt1 = document.createElement('option');
-    opt1.value = b; opt1.textContent = b;
-    remapFrom.appendChild(opt1);
-    const opt2 = document.createElement('option');
-    opt2.value = b; opt2.textContent = b;
-    remapTo.appendChild(opt2);
-  });
-
-  btnApplyRemap.addEventListener('click', () => {
-    const from = remapFrom.value;
-    const to = remapTo.value;
-    if (from && to) {
-      remap[from] = to;
-      localStorage.setItem('remapConfig', JSON.stringify(remap));
-      log(`Remap applied: ${from} → ${to}`);
+    function log(msg) {
+      const t = new Date().toLocaleTimeString();
+      const line = `[${t}] ${msg}`;
+      logBuffer.push(line);
+      logEl.textContent += line + "\n";
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(msg);
     }
-  });
 
-  const DEADZONE = 0.12;
-  const SEND_MS = 16; // ~60Hz
+    if (btnDownloadLogs) {
+      btnDownloadLogs.addEventListener('click', () => {
+        const blob = new Blob([logBuffer.join("\n")], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "viewer_logs.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
 
-  let pc, ws, dc, viewerID = null;
-  let restarting = false;
-  let lastPayload = '';
+    function setPill(pill, cls, text) {
+      if (!pill) return;
+      pill.classList.remove('ok', 'warn', 'bad');
+      if (cls) pill.classList.add(cls);
+      if (text) pill.textContent = text;
+    }
 
-  function startViewer() {
-    log('WS URL → ' + wsUrl);
-    setPill(pWs, 'warn', 'WS: connecting');
+    const params = new URLSearchParams(window.location.search);
+    const pageHost = window.location.host;
+    let relayHost = (params.get('relay') || pageHost).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${relayHost}/ws/viewer`;
+    wsUrlPill.textContent = wsUrl;
+    setPill(pRelay, 'ok', `Relay: ${relayHost}`);
 
-    pc = new RTCPeerConnection({
-      sdpSemantics: 'unified-plan',
-      iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
-      bundlePolicy: 'max-bundle',
-      rtcpMuxPolicy: 'require'
+    const buttonMap = {
+      0:'A',1:'B',2:'X',3:'Y',
+      4:'LB',5:'RB',8:'Back',9:'Start',
+      10:'LS',11:'RS',12:'DPadUp',
+      13:'DPadDown',14:'DPadLeft',15:'DPadRight'
+    };
+    let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
+    Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
+
+    const allButtons = Object.values(buttonMap);
+    allButtons.forEach(b=>{
+      const opt1 = document.createElement('option');
+      opt1.value = b; opt1.textContent = b;
+      remapFrom.appendChild(opt1);
+      const opt2 = document.createElement('option');
+      opt2.value = b; opt2.textContent = b;
+      remapTo.appendChild(opt2);
     });
-    setPill(pSig, 'ok', 'Signaling: ready');
 
-    const inboundStream = new MediaStream();
-
-    dc = pc.createDataChannel('inputs', { ordered: true });
-    pc.addTransceiver('video', { direction: 'recvonly' });
-    pc.addTransceiver('audio', { direction: 'recvonly' });
-
-    try {
-      const caps = RTCRtpReceiver.getCapabilities('video');
-      const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
-      const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
-      if (vTrans && h264.length) {
-        vTrans.setCodecPreferences(h264);
-        log('Codec preference set: H.264');
+    btnApplyRemap.addEventListener('click', () => {
+      const from = remapFrom.value;
+      const to = remapTo.value;
+      if (from && to) {
+        remap[from] = to;
+        localStorage.setItem('remapConfig', JSON.stringify(remap));
+        log(`Remap applied: ${from} → ${to}`);
       }
-    } catch (e) {
-      log('Codec preference error: ' + e);
-    }
+    });
 
-    pc.ontrack = e => {
+    const DEADZONE = 0.12;
+    const SEND_MS = 16; // ~60Hz
+    let pc, ws, dc, viewerID = null;
+    let restarting = false;
+    let lastPayload = '';
+
+    function startViewer() {
+      log('WS URL → ' + wsUrl);
+      setPill(pWs, 'warn', 'WS: connecting');
+
+      pc = new RTCPeerConnection({
+        sdpSemantics: 'unified-plan',
+        iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
+      });
+      setPill(pSig, 'ok', 'Signaling: ready');
+
+      const inboundStream = new MediaStream();
+
+      dc = pc.createDataChannel('inputs', { ordered: true });
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
       try {
-        if (!inboundStream.getTracks().includes(e.track)) {
-          inboundStream.addTrack(e.track);
+        const caps = RTCRtpReceiver.getCapabilities('video');
+        const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
+        const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
+        if (vTrans && h264.length) {
+          vTrans.setCodecPreferences(h264);
+          log('Codec preference set: H.264');
         }
-        if (vid.srcObject !== inboundStream) {
-          vid.srcObject = inboundStream;
-        }
-        ovText.textContent = 'Receiving video…';
-        setPill(pAv, 'ok', 'A/V: attached');
-        vid.muted = true;
-        vid.addEventListener('loadedmetadata', () => {
-          vid.play().then(()=>log('Autoplay started')).catch(err=>log('Autoplay error: '+err));
-        }, { once: true });
-      } catch (err) {
-        log('ontrack error: ' + err);
+      } catch (e) {
+        log('Codec preference error: ' + e);
       }
-    };
 
-    dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
-    dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
-
-    pc.oniceconnectionstatechange = () => {
-      const s = pc.iceConnectionState;
-      log('ICE ' + s);
-      let cls = 'warn';
-      if (s === 'connected' || s === 'completed') cls = 'ok';
-      else if (s === 'failed' || s === 'disconnected') cls = 'bad';
-      setPill(pIce, cls, `ICE: ${s}`);
-      if (s === 'failed' || s === 'disconnected') restartSession();
-    };
-
-    pc.onconnectionstatechange = () => {
-      const s = pc.connectionState;
-      log('Conn ' + s);
-      let cls = s === 'connected' ? 'ok' : (s === 'connecting' ? 'warn' : 'bad');
-      setPill(pDtls, cls, `DTLS: ${s}`);
-      setPill(pPc, cls, `Peer: ${s}`);
-      if (s === 'failed' || s === 'disconnected' || s === 'closed') restartSession();
-    };
-
-    pc.onicecandidate = ev => {
-      if (ev.candidate && viewerID && ws?.readyState === 1) {
-        ws.send(JSON.stringify({
-          type: 'candidate',
-          viewer: viewerID,
-          candidate: {
-            candidate: ev.candidate.candidate,
-            sdpMid: ev.candidate.sdpMid,
-            sdpMLineIndex: ev.candidate.sdpMLineIndex
-          }
-        }));
-        log('Sent ICE candidate');
-      }
-    };
-
-    ws = new WebSocket(wsUrl);
-        ws.onopen = () => {
-      log('WS open');
-      setPill(pWs, 'ok', 'WS: open');
-      ws.send(JSON.stringify({ type: 'hello', role: 'viewer' }));
-    };
-    ws.onerror = err => {
-      log('WebSocket error: ' + (err.message || JSON.stringify(err)));
-      setPill(pWs, 'bad', 'WS: error');
-      restartSession();
-    };
-    ws.onclose = () => {
-      log('WS closed');
-      setPill(pWs, 'bad', 'WS: closed');
-      restartSession();
-    };
-    ws.onmessage = async evt => {
-      const msg = JSON.parse(evt.data);
-      if (msg.type === 'pong') return; // ignore relay heartbeat
-      if (msg.type === 'welcome') {
-        viewerID = msg.viewer_id;
-        log('Welcome ' + viewerID);
-        setPill(pHost, 'ok', 'Host: ready');
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ws.send(JSON.stringify({
-          type: 'offer',
-          role: 'viewer',
-          viewer: viewerID,
-          sdp: { type: offer.type, sdp: offer.sdp }
-        }));
-        setPill(pSig, 'warn', 'Signaling: offer sent');
-      } else if (msg.type === 'answer') {
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-        log('Answer applied');
-        setPill(pSig, 'ok', 'Signaling: answer');
-      } else if (msg.type === 'candidate') {
+      pc.ontrack = e => {
         try {
-          await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-          log('Candidate added');
-        } catch (e) {
-          log('ICE add error ' + e.message);
+          if (!inboundStream.getTracks().includes(e.track)) {
+            inboundStream.addTrack(e.track);
+          }
+          if (vid.srcObject !== inboundStream) {
+            vid.srcObject = inboundStream;
+          }
+          ovText.textContent = 'Receiving video…';
+          setPill(pAv, 'ok', 'A/V: attached');
+          vid.muted = true;
+          vid.addEventListener('loadedmetadata', () => {
+            vid.play().then(()=>log('Autoplay started')).catch(err=>log('Autoplay error: '+err));
+          }, { once: true });
+        } catch (err) {
+          log('ontrack error: ' + err);
+        }
+      };
+
+      dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
+      dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
+
+      pc.oniceconnectionstatechange = () => {
+        const s = pc.iceConnectionState;
+        log('ICE ' + s);
+        let cls = 'warn';
+        if (s === 'connected' || s === 'completed') cls = 'ok';
+        else if (s === 'failed' || s === 'disconnected') cls = 'bad';
+        setPill(pIce, cls, `ICE: ${s}`);
+        if (s === 'failed' || s === 'disconnected') restartSession();
+      };
+
+      pc.onconnectionstatechange = () => {
+        const s = pc.connectionState;
+        log('Conn ' + s);
+        let cls = s === 'connected' ? 'ok' : (s === 'connecting' ? 'warn' : 'bad');
+        setPill(pDtls, cls, `DTLS: ${s}`);
+        setPill(pPc, cls, `Peer: ${s}`);
+        if (s === 'failed' || s === 'disconnected' || s === 'closed') restartSession();
+      };
+
+      pc.onicecandidate = ev => {
+        if (ev.candidate && viewerID && ws?.readyState === 1) {
+          ws.send(JSON.stringify({
+            type: 'candidate',
+            viewer: viewerID,
+            candidate: {
+              candidate: ev.candidate.candidate,
+              sdpMid: ev.candidate.sdpMid,
+              sdpMLineIndex: ev.candidate.sdpMLineIndex
+            }
+          }));
+          log('Sent ICE candidate');
+        }
+      };
+
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        log('WS open');
+        setPill(pWs, 'ok', 'WS: open');
+        ws.send(JSON.stringify({ type: 'hello', role: 'viewer' }));
+      };
+      ws.onerror = err => {
+        log('WebSocket error: ' + (err.message || JSON.stringify(err)));
+        setPill(pWs, 'bad', 'WS: error');
+        restartSession();
+      };
+      ws.onclose = () => {
+        log('WS closed');
+        setPill(pWs, 'bad', 'WS: closed');
+        restartSession();
+      };
+      ws.onmessage = async evt => {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'pong') return;
+        if (msg.type === 'welcome') {
+          viewerID = msg.viewer_id;
+          log('Welcome ' + viewerID);
+          setPill(pHost, 'ok', 'Host: ready');
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({
+            type: 'offer',
+            role: 'viewer',
+            viewer: viewerID,
+            sdp: { type: offer.type, sdp: offer.sdp }
+          }));
+          setPill(pSig, 'warn', 'Signaling: offer sent');
+        } else if (msg.type === 'answer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+          log('Answer applied');
+          setPill(pSig, 'ok', 'Signaling: answer');
+        } else if (msg.type === 'candidate') {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            log('Candidate added');
+          } catch (e) {
+            log('ICE add error ' + e.message);
+          }
+        }
+      };
+
+      setInterval(() => {
+        if (ws && ws.readyState === 1) {
+          ws.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
+        }
+        if (dc && dc.readyState === 'open') {
+          dc.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
+        }
+      }, 12000);
+    }
+
+    function stopSession() {
+      try { dc?.close(); } catch {}
+      try { ws?.close(); } catch {}
+      try { pc?.close(); } catch {}
+      vid.srcObject = null;
+      dc = ws = pc = null;
+    }
+
+    function restartSession() {
+      if (restarting) return;
+      restarting = true;
+      stopSession();
+      setTimeout(() => { restarting = false; startViewer(); }, 500);
+    }
+
+    function applyDZ(v){ return Math.abs(v) < DEADZONE ? 0 : v; }
+
+    setInterval(() => {
+      const gps = navigator.getGamepads?.() || [];
+      const gp = gps[0];
+      if (!gp || !viewerID) return;
+      const buttons = gp.buttons.map((b, i) => {
+        if (b.pressed && buttonMap[i] && i !== 6 && i !== 7) return remap[buttonMap[i]];
+        return 0;
+      }).filter(x => x !== 0);
+      const axes = gp.axes.map(v => +applyDZ(v).toFixed(3));
+      const triggers = {
+        LT: gp.buttons[6]?.value ? +gp.buttons[6].value.toFixed(3) : 0,
+        RT: gp.buttons[7]?.value ? +gp.buttons[7].value.toFixed(3) : 0
+      };
+      const payload = JSON.stringify({ type: 'input', viewer: viewerID, buttons, axes, triggers });
+      if (payload !== lastPayload) {
+        if (dc && dc.readyState === 'open') {
+          dc.send(payload);
+        } else if (ws && ws.readyState === 1) {
+          ws.send(payload);
+        }
+        lastPayload = payload;
+        log(`[SEND] Buttons=${buttons.join('|')} Axes=${axes.join(',')} LT=${triggers.LT} RT=${triggers.RT}`);
+      }
+    }, SEND_MS);
+
+    btnChat.addEventListener('click', () => {
+      const hidden = chatWrap.hasAttribute('hidden');
+      if (hidden) chatWrap.removeAttribute('hidden'); else chatWrap.setAttribute('hidden', '');
+      log(hidden ? 'Chat opened' : 'Chat closed');
+    });
+
+    btnUnmute.addEventListener('click', () => {
+      vid.muted = false;
+      vid.play().catch(e => log('Unmute err: ' + e));
+      log('Unmuted');
+    });
+
+    btnFullscreen.addEventListener('click', () => {
+      const wrap = document.getElementById('videoWrap');
+      if (!document.fullscreenElement) {
+        wrap.requestFullscreen().catch(err => log('Fullscreen error: ' + err));
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    document.getElementById('btnSetChannel').addEventListener('click', () => {
+      const ch = document.getElementById('chatChannel').value.trim();
+      if (!ch) {
+        log('⚠️ No channel entered for chat.');
+        return;
+      }
+      chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
+      chatWrap.removeAttribute('hidden');
+      log('Chat channel set: ' + ch);
+    });
+
+    vid.addEventListener('loadedmetadata', () => {
+      log(`Video metadata: ${vid.videoWidth}x${vid.videoHeight}`);
+    });
+    vid.addEventListener('playing', () => {
+      log('Video playing');
+      document.getElementById('overlay').style.display = 'none';
+    });
+    vid.addEventListener('stalled', () => log('Video stalled'));
+    vid.addEventListener('waiting', () => log('Video waiting'));
+
+    let lastFrameTime = Date.now();
+    vid.addEventListener('playing', () => { lastFrameTime = Date.now(); });
+
+    setInterval(() => {
+      if (vid.srcObject) {
+        const t = vid.currentTime;
+        if (t && t !== 0) lastFrameTime = Date.now();
+        if (Date.now() - lastFrameTime > 1200) {
+          log('No frames for >1200ms — restarting session to recover');
+          restartSession();
+          lastFrameTime = Date.now();
         }
       }
-    };
+    }, 500);
 
-    // Heartbeats to keep relay/ngrok and DC alive
+    let lastT = 0;
     setInterval(() => {
-      if (ws && ws.readyState === 1) {
-        ws.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
+      if (vid.srcObject) {
+        const t = vid.currentTime;
+        if (t && t !== lastT) {
+          setPill(pAv, 'ok', `A/V: frames`);
+          lastT = t;
+        } else {
+          setPill(pAv, 'warn', 'A/V: stalled');
+        }
       }
-      if (dc && dc.readyState === 'open') {
-        dc.send(JSON.stringify({ type: 'ping', viewer: viewerID }));
-      }
-    }, 12000);
-  }
+    }, 1000);
 
-  function stopSession() {
-    try { dc?.close(); } catch {}
-    try { ws?.close(); } catch {}
-    try { pc?.close(); } catch {}
-    vid.srcObject = null;
-    dc = ws = pc = null;
-  }
-
-  function restartSession() {
-    if (restarting) return;
-    restarting = true;
-    stopSession();
-    setTimeout(() => { restarting = false; startViewer(); }, 500);
-  }
-
-  function applyDZ(v){ return Math.abs(v) < DEADZONE ? 0 : v; }
-
-  setInterval(() => {
-    const gps = navigator.getGamepads?.() || [];
-    const gp = gps[0];
-    if (!gp || !viewerID) return;
-    const buttons = gp.buttons.map((b, i) => {
-      if (b.pressed && buttonMap[i] && i !== 6 && i !== 7) return remap[buttonMap[i]];
-      return 0;
-    }).filter(x => x !== 0);
-    const axes = gp.axes.map(v => +applyDZ(v).toFixed(3));
-    const triggers = {
-      LT: gp.buttons[6]?.value ? +gp.buttons[6].value.toFixed(3) : 0,
-      RT: gp.buttons[7]?.value ? +gp.buttons[7].value.toFixed(3) : 0
-    };
-    const payload = JSON.stringify({ type: 'input', viewer: viewerID, buttons, axes, triggers });
-    if (payload !== lastPayload) {
-      if (dc && dc.readyState === 'open') {
-        dc.send(payload);
-      } else if (ws && ws.readyState === 1) {
-        ws.send(payload);
-      }
-      lastPayload = payload;
-      log(`[SEND] Buttons=${buttons.join('|')} Axes=${axes.join(',')} LT=${triggers.LT} RT=${triggers.RT}`);
-    }
-  }, SEND_MS);
-
-  // --- Buttons ---
-  btnChat.addEventListener('click', () => {
-    const hidden = chatWrap.hasAttribute('hidden');
-    if (hidden) chatWrap.removeAttribute('hidden'); else chatWrap.setAttribute('hidden', '');
-    log(hidden ? 'Chat opened' : 'Chat closed');
-  });
-
-  btnUnmute.addEventListener('click', () => {
-    vid.muted = false;
-    vid.play().catch(e => log('Unmute err: ' + e));
-    log('Unmuted');
-  });
-
-  btnFullscreen.addEventListener('click', () => {
-    const wrap = document.getElementById('videoWrap');
-    if (!document.fullscreenElement) {
-      wrap.requestFullscreen().catch(err => log('Fullscreen error: ' + err));
-    } else {
-      document.exitFullscreen();
-    }
-  });
-
-  document.getElementById('btnSetChannel').addEventListener('click', () => {
-    const ch = document.getElementById('chatChannel').value.trim();
-    if (!ch) {
-      log('⚠️ No channel entered for chat.');
-      return;
-    }
-    chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
-    chatWrap.removeAttribute('hidden');
-    log('Chat channel set: ' + ch);
-  });
-
-  // --- Video render checks ---
-  vid.addEventListener('loadedmetadata', () => {
-    log(`Video metadata: ${vid.videoWidth}x${vid.videoHeight}`);
-  });
-  vid.addEventListener('playing', () => {
-    log('Video playing');
-    document.getElementById('overlay').style.display = 'none';
-  });
-  vid.addEventListener('stalled', () => log('Video stalled'));
-  vid.addEventListener('waiting', () => log('Video waiting'));
-
-  // Auto-recover: detect absent frames and restart session
-  let lastFrameTime = Date.now();
-  vid.addEventListener('playing', () => { lastFrameTime = Date.now(); });
-
-  setInterval(() => {
-    if (vid.srcObject) {
-      const t = vid.currentTime;
-      if (t && t !== 0) lastFrameTime = Date.now();
-      if (Date.now() - lastFrameTime > 1200) {
-        log('No frames for >1200ms — restarting session to recover');
-        restartSession();
-        lastFrameTime = Date.now();
-      }
-    }
-  }, 500);
-
-  let lastT = 0;
-  setInterval(() => {
-    if (vid.srcObject) {
-      const t = vid.currentTime;
-      if (t && t !== lastT) {
-        setPill(pAv, 'ok', `A/V: frames`);
-        lastT = t;
-      } else {
-        setPill(pAv, 'warn', 'A/V: stalled');
-      }
-    }
-  }, 1000);
-
-  // Kick off
-  startViewer();
-</script>
+    startViewer();
+  </script>
 </body>
 </html>
-
-
