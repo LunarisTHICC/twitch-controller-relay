@@ -244,77 +244,92 @@
     log('WS URL → ' + wsUrl);
     setPill(pWs, 'warn', 'WS: connecting');
 
-    pc = new RTCPeerConnection({
-      sdpSemantics: 'unified-plan',
-      iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
-      bundlePolicy: 'max-bundle',
-      rtcpMuxPolicy: 'require'
-    });
-    setPill(pSig, 'ok', 'Signaling: ready');
+  pc = new RTCPeerConnection({
+    sdpSemantics: 'unified-plan',
+    iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require'
+  });
+  setPill(pSig, 'ok', 'Signaling: ready');
 
-    dc = pc.createDataChannel('inputs', { ordered: true });
-    pc.addTransceiver('video', { direction: 'recvonly' });
-    pc.addTransceiver('audio', { direction: 'recvonly' });
+  // inbound stream container to handle Unified Plan cases where tracks arrive without streams
+  const inboundStream = new MediaStream();
 
-    // Prefer H.264 codec if available
-    try {
-      const caps = RTCRtpReceiver.getCapabilities('video');
-      const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
-      const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
-      if (vTrans && h264.length) {
-        vTrans.setCodecPreferences(h264);
-        log('Codec preference set: H.264');
-      }
-    } catch (e) {
-      log('Codec preference error: ' + e);
+  dc = pc.createDataChannel('inputs', { ordered: true });
+  pc.addTransceiver('video', { direction: 'recvonly' });
+  pc.addTransceiver('audio', { direction: 'recvonly' });
+
+  // Prefer H.264 codec if available
+  try {
+    const caps = RTCRtpReceiver.getCapabilities('video');
+    const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
+    const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
+    if (vTrans && h264.length) {
+      vTrans.setCodecPreferences(h264);
+      log('Codec preference set: H.264');
     }
+  } catch (e) {
+    log('Codec preference error: ' + e);
+  }
 
-    pc.ontrack = e => {
-      vid.srcObject = e.streams[0];
+  // Robust ontrack: always attach tracks into a single MediaStream for the video element
+  pc.ontrack = e => {
+    try {
+      // add the incoming track if not already present
+      if (!inboundStream.getTracks().includes(e.track)) {
+        inboundStream.addTrack(e.track);
+      }
+      // set the video element source to the inbound stream
+      if (vid.srcObject !== inboundStream) {
+        vid.srcObject = inboundStream;
+      }
       ovText.textContent = 'Receiving video…';
       setPill(pAv, 'ok', 'A/V: attached');
       vid.muted = true;
       vid.addEventListener('loadedmetadata', () => {
         vid.play().then(()=>log('Autoplay started')).catch(err=>log('Autoplay error: '+err));
       }, { once: true });
-    };
+    } catch (err) {
+      log('ontrack error: ' + err);
+    }
+  };
 
-    dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
-    dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
+  dc.onopen  = () => { log('DC open'); setPill(pDc, 'ok', 'DC: open'); };
+  dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
 
-    pc.oniceconnectionstatechange = () => {
-      const s = pc.iceConnectionState;
-      log('ICE ' + s);
-      let cls = 'warn';
-      if (s === 'connected' || s === 'completed') cls = 'ok';
-      else if (s === 'failed' || s === 'disconnected') cls = 'bad';
-      setPill(pIce, cls, `ICE: ${s}`);
-      if (s === 'failed' || s === 'disconnected') restartSession();
-    };
+  pc.oniceconnectionstatechange = () => {
+    const s = pc.iceConnectionState;
+    log('ICE ' + s);
+    let cls = 'warn';
+    if (s === 'connected' || s === 'completed') cls = 'ok';
+    else if (s === 'failed' || s === 'disconnected') cls = 'bad';
+    setPill(pIce, cls, `ICE: ${s}`);
+    if (s === 'failed' || s === 'disconnected') restartSession();
+  };
 
-    pc.onconnectionstatechange = () => {
-      const s = pc.connectionState;
-      log('Conn ' + s);
-      let cls = s === 'connected' ? 'ok' : (s === 'connecting' ? 'warn' : 'bad');
-      setPill(pDtls, cls, `DTLS: ${s}`);
-      setPill(pPc, cls, `Peer: ${s}`);
-      if (s === 'failed' || s === 'disconnected' || s === 'closed') restartSession();
-    };
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    log('Conn ' + s);
+    let cls = s === 'connected' ? 'ok' : (s === 'connecting' ? 'warn' : 'bad');
+    setPill(pDtls, cls, `DTLS: ${s}`);
+    setPill(pPc, cls, `Peer: ${s}`);
+    if (s === 'failed' || s === 'disconnected' || s === 'closed') restartSession();
+  };
 
-    pc.onicecandidate = ev => {
-      if (ev.candidate && viewerID && ws?.readyState === 1) {
-        ws.send(JSON.stringify({
-          type: 'candidate',
-          viewer: viewerID,
-          candidate: {
-            candidate: ev.candidate.candidate,
-            sdpMid: ev.candidate.sdpMid,
-            sdpMLineIndex: ev.candidate.sdpMLineIndex
-          }
-        }));
-        log('Sent ICE candidate');
-      }
-    };
+  pc.onicecandidate = ev => {
+    if (ev.candidate && viewerID && ws?.readyState === 1) {
+      ws.send(JSON.stringify({
+        type: 'candidate',
+        viewer: viewerID,
+        candidate: {
+          candidate: ev.candidate.candidate,
+          sdpMid: ev.candidate.sdpMid,
+          sdpMLineIndex: ev.candidate.sdpMLineIndex
+        }
+      }));
+      log('Sent ICE candidate');
+    }
+  };
 
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
