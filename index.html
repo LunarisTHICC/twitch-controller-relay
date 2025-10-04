@@ -36,143 +36,28 @@
       color: #b7c1d6;
       white-space: nowrap;
     }
-    .pill.ok {
-      background: #15321f;
-      border-color: #1e6a33;
-      color: #a5e7b9;
-    }
-    .pill.warn {
-      background: #3a2a18;
-      border-color: #b57a28;
-      color: #ffd89a;
-    }
-    .pill.bad {
-      background: #3a1a1a;
-      border-color: #b52828;
-      color: #ff9a9a;
-    }
-    #statusRow {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-    #wsUrl {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-      color: #9fb2d1;
-    }
-    main {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 10px;
-      padding: 12px;
-    }
-    #videoWrap {
-      position: relative;
-      background: #0f1320;
-      border: 1px solid #1d2436;
-      border-radius: 8px;
-      overflow: hidden;
-      min-height: 360px;
-    }
-    #vid {
-      width: 100%;
-      height: auto;
-      display: block;
-      background: #000;
-    }
-    #overlay {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(180deg, rgba(10,14,21,0.75), rgba(10,14,21,0.85));
-      pointer-events: none;
-    }
-    #ovText {
-      font-size: 16px;
-      color: #c6d3ea;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-    }
-    #controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 10px 0;
-    }
-    button, input, select {
-      font: inherit;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #2a3347;
-      background: #172035;
-      color: #dfe7ef;
-    }
-    button:hover {
-      background: #1b2844;
-      border-color: #3a4461;
-      cursor: pointer;
-    }
-    input, select {
-      background: #111829;
-      border-color: #28324a;
-    }
-    #sidePanel {
-      display: grid;
-      grid-template-rows: min-content min-content 1fr min-content;
-      gap: 10px;
-    }
-    #chatWrap {
-      border: 1px solid #1d2436;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #0d1322;
-      min-height: 260px;
-    }
-    #chatWrap[hidden] {
-      display: none;
-    }
-    #chatIframe {
-      width: 100%;
-      height: 260px;
-      border: 0;
-      background: #0d1322;
-    }
-    #logPanel {
-      display: grid;
-      grid-template-rows: min-content 1fr;
-      border: 1px solid #1d2436;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    #logHeader {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: #121824;
-      border-bottom: 1px solid #1d2436;
-    }
-    #log {
-      margin: 0;
-      padding: 10px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-      line-height: 1.4;
-      background: #0b0f16;
-      color: #a6b6d3;
-      overflow: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 300px;
-    }
-    footer {
-      padding: 12px 14px;
-      color: #7a8fb2;
-      border-top: 1px solid #20283a;
-      background: #0e1524;
-    }
+    .pill.ok { background: #15321f; border-color: #1e6a33; color: #a5e7b9; }
+    .pill.warn { background: #3a2a18; border-color: #b57a28; color: #ffd89a; }
+    .pill.bad { background: #3a1a1a; border-color: #b52828; color: #ff9a9a; }
+    #statusRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    #wsUrl { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; color: #9fb2d1; }
+    main { display: grid; grid-template-columns: 1fr 360px; gap: 10px; padding: 12px; }
+    #videoWrap { position: relative; background: #0f1320; border: 1px solid #1d2436; border-radius: 8px; overflow: hidden; min-height: 360px; }
+    #vid { width: 100%; height: auto; display: block; background: #000; }
+    #overlay { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(180deg, rgba(10,14,21,0.75), rgba(10,14,21,0.85)); pointer-events: none; }
+    #ovText { font-size: 16px; color: #c6d3ea; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+    #controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+    button, input, select { font: inherit; padding: 8px 10px; border-radius: 6px; border: 1px solid #2a3347; background: #172035; color: #dfe7ef; }
+    button:hover { background: #1b2844; border-color: #3a4461; cursor: pointer; }
+    input, select { background: #111829; border-color: #28324a; }
+    #sidePanel { display: grid; grid-template-rows: min-content min-content 1fr min-content; gap: 10px; }
+    #chatWrap { border: 1px solid #1d2436; border-radius: 8px; overflow: hidden; background: #0d1322; min-height: 260px; }
+    #chatWrap[hidden] { display: none; }
+    #chatIframe { width: 100%; height: 260px; border: 0; background: #0d1322; }
+    #logPanel { display: grid; grid-template-rows: min-content 1fr; border: 1px solid #1d2436; border-radius: 8px; overflow: hidden; }
+    #logHeader { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #121824; border-bottom: 1px solid #1d2436; }
+    #log { margin: 0; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; line-height: 1.4; background: #0b0f16; color: #a6b6d3; overflow: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; }
+    footer { padding: 12px 14px; color: #7a8fb2; border-top: 1px solid #20283a; background: #0e1524; }
   </style>
 </head>
 <body>
@@ -496,6 +381,10 @@
     }
 
     function applyDZ(v){ return Math.abs(v) < DEADZONE ? 0 : v; }
+
+    const SEND_MS = 16;
+    let lastSend = 0;
+    let lastPayload = '';
 
     setInterval(() => {
       const gps = navigator.getGamepads?.() || [];
