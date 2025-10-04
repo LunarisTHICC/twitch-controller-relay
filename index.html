@@ -5,36 +5,19 @@
   <title>WebRTC Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root {
-      color-scheme: dark;
-    }
+    :root { color-scheme: dark; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-      background: #0b0f14;
-      color: #dfe7ef;
+      background: #0b0f14; color: #dfe7ef;
     }
     header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: #121824;
-      border-bottom: 1px solid #20283a;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      background: #121824; border-bottom: 1px solid #20283a; position: sticky; top: 0; z-index: 1000;
     }
     .pill {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      line-height: 14px;
-      background: #2a3347;
-      border: 1px solid #3a4461;
-      color: #b7c1d6;
-      white-space: nowrap;
+      display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; line-height: 14px;
+      background: #2a3347; border: 1px solid #3a4461; color: #b7c1d6; white-space: nowrap;
     }
     .pill.ok { background: #15321f; border-color: #1e6a33; color: #a5e7b9; }
     .pill.warn { background: #3a2a18; border-color: #b57a28; color: #ffd89a; }
@@ -126,7 +109,7 @@
   <footer>
     <small>Status indicators reflect last known state and auto-recover triggers.</small>
   </footer>
-    <script>
+  <script>
     const vid = document.getElementById('vid');
     const ovText = document.getElementById('ovText');
     const btnUnmute = document.getElementById('btnUnmute');
@@ -152,7 +135,6 @@
 
     const logEl = document.getElementById('log');
     const logBuffer = [];
-
     function log(msg) {
       const t = new Date().toLocaleTimeString();
       const line = `[${t}] ${msg}`;
@@ -161,7 +143,6 @@
       logEl.scrollTop = logEl.scrollHeight;
       console.log(msg);
     }
-
     if (btnDownloadLogs) {
       btnDownloadLogs.addEventListener('click', () => {
         const blob = new Blob([logBuffer.join("\n")], { type: "text/plain" });
@@ -173,7 +154,6 @@
         URL.revokeObjectURL(url);
       });
     }
-
     function setPill(pill, cls, text) {
       if (!pill) return;
       pill.classList.remove('ok', 'warn', 'bad');
@@ -206,7 +186,6 @@
       opt2.value = b; opt2.textContent = b;
       remapTo.appendChild(opt2);
     });
-
     btnApplyRemap.addEventListener('click', () => {
       const from = remapFrom.value;
       const to = remapTo.value;
@@ -237,21 +216,23 @@
 
       const inboundStream = new MediaStream();
 
-      dc = pc.createDataChannel('inputs', { ordered: true });
-      pc.addTransceiver('video', { direction: 'recvonly' });
-      pc.addTransceiver('audio', { direction: 'recvonly' });
+      // Create transceivers and keep references for codec prefs
+      const vTrans = pc.addTransceiver('video', { direction: 'recvonly' });
+      const aTrans = pc.addTransceiver('audio', { direction: 'recvonly' });
 
+      // Prefer H.264 if available (helps with aiortc pipelines)
       try {
         const caps = RTCRtpReceiver.getCapabilities('video');
-        const h264 = caps.codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
-        const vTrans = pc.getTransceivers().find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
-        if (vTrans && h264.length) {
+        const h264 = (caps.codecs || []).filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
+        if (vTrans && vTrans.setCodecPreferences && h264.length) {
           vTrans.setCodecPreferences(h264);
           log('Codec preference set: H.264');
         }
       } catch (e) {
         log('Codec preference error: ' + e);
       }
+
+      dc = pc.createDataChannel('inputs', { ordered: true });
 
       pc.ontrack = e => {
         try {
@@ -381,10 +362,6 @@
     }
 
     function applyDZ(v){ return Math.abs(v) < DEADZONE ? 0 : v; }
-
-    const SEND_MS = 16;
-    let lastSend = 0;
-    let lastPayload = '';
 
     setInterval(() => {
       const gps = navigator.getGamepads?.() || [];
