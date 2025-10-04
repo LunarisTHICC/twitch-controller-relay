@@ -41,7 +41,7 @@
     #chatIframe { width: 100%; height: 260px; border: 0; background: #0d1322; }
     #logPanel { display: grid; grid-template-rows: min-content 1fr; border: 1px solid #1d2436; border-radius: 8px; overflow: hidden; }
     #logHeader { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #121824; border-bottom: 1px solid #1d2436; }
-    #log { margin: 0; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; line-height: 1.4; background: #0b0f14; color: #cbd5e1; height: 100%; overflow: auto; }
+    #log { margin: 0; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; line-height: 1.4; background: #0d1322; white-space: pre; overflow: auto; min-height: 260px; }
     footer { padding: 12px 14px; color: #7a8fb2; border-top: 1px solid #20283a; background: #0e1524; }
   </style>
 </head>
@@ -233,12 +233,27 @@
       const vTrans = pc.addTransceiver('video', { direction: 'recvonly' });
       pc.addTransceiver('audio', { direction: 'recvonly' });
 
+      // Codec selection: codec query param (vp8|h264), default VP8-first with H.264 fallback.
       try {
+        const want = (params.get('codec') || '').trim().toLowerCase();
         const caps = RTCRtpReceiver.getCapabilities('video');
-        const h264 = (caps.codecs || []).filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
-        if (vTrans && vTrans.setCodecPreferences && h264.length) {
-          vTrans.setCodecPreferences(h264);
-          log('Codec preference set: H.264');
+        const codecs = (caps.codecs || []);
+        const vp8  = codecs.filter(c => (c.mimeType || '').toLowerCase().includes('vp8'));
+        const h264 = codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
+
+        let prefs = [];
+        let msg = '';
+        if (want === 'vp8') {
+          prefs = vp8; msg = 'Codec preference set: force VP8';
+        } else if (want === 'h264') {
+          prefs = h264; msg = 'Codec preference set: force H.264';
+        } else {
+          prefs = [...vp8, ...h264]; msg = 'Codec preference set: VP8 first, H.264 fallback';
+        }
+
+        if (vTrans && vTrans.setCodecPreferences && prefs.length) {
+          vTrans.setCodecPreferences(prefs);
+          log(msg);
         }
       } catch (e) {
         log('Codec preference error: ' + e);
