@@ -157,7 +157,6 @@
     wsUrlPill.textContent = wsUrl;
     setPill(pRelay, 'ok', `Relay: ${relayHost}`);
 
-    // Transport indicator
     const tproto = (params.get('tproto') || '').toLowerCase();
     if (tproto === 'rtmps') setPill(pTransport, 'ok', 'Transport: WebRTC + RTMPS');
     else if (tproto === 'rtmp') setPill(pTransport, 'ok', 'Transport: WebRTC + RTMP');
@@ -181,8 +180,6 @@
       }
     });
 
-    const DEADZONE = 0.12;
-    const SEND_MS = 16; // ~60Hz
     let pc, ws, dc, viewerID = null;
     let restarting = false;
 
@@ -202,7 +199,6 @@
       const vTrans = pc.addTransceiver('video', { direction: 'recvonly' });
       pc.addTransceiver('audio', { direction: 'recvonly' });
 
-      // Codec selection: ?codec=vp8 | ?codec=h264 | default VP8-first fallback H.264
       try {
         const want = (params.get('codec') || '').trim().toLowerCase();
         const caps = RTCRtpReceiver.getCapabilities('video');
@@ -223,9 +219,9 @@
 
       pc.ontrack = e => {
         try {
+          log('ontrack: kind=' + e.track.kind);
           if (!inboundStream.getTracks().includes(e.track)) inboundStream.addTrack(e.track);
           if (vid.srcObject !== inboundStream) vid.srcObject = inboundStream;
-          ovText.textContent = 'Receiving video…';
           setPill(pAv, 'ok', 'A/V: attached');
           vid.muted = true;
           vid.addEventListener('loadedmetadata', () => {
@@ -295,41 +291,7 @@
     }
 
     function stopSession(){ try{dc?.close()}catch{} try{ws?.close()}catch{} try{pc?.close()}catch{} vid.srcObject=null; dc=ws=pc=null; }
-    function restartSession(){ if(restarting) return; restarting=true; stopSession(); setTimeout(()=>{ restarting=false; startViewer(); }, 500); }
-
-    function applyDZ(v){ return Math.abs(v) < 0.12 ? 0 : v; }
-    setInterval(() => {
-      const gps = navigator.getGamepads?.() || []; const gp = gps[0];
-      if (!gp || !viewerID) return;
-      const buttons = gp.buttons.map((b,i)=> b.pressed && i!==6 && i!==7 && buttonMap[i] ? buttonMap[i] : 0).filter(x=>x!==0);
-      const axes = gp.axes.map(v => +applyDZ(v).toFixed(3));
-      const triggers = { LT: gp.buttons[6]?.value ? +gp.buttons[6].value.toFixed(3) : 0, RT: gp.buttons[7]?.value ? +gp.buttons[7].value.toFixed(3) : 0 };
-      const payload = JSON.stringify({ type:'input', viewer:viewerID, buttons, axes, triggers });
-      if (payload !== window._lastPayload) {
-        if (dc && dc.readyState === 'open') dc.send(payload);
-        else if (ws && ws.readyState === 1) ws.send(payload);
-        window._lastPayload = payload;
-        log(`[SEND] Buttons=${buttons.join('|')} Axes=${axes.join(',')} LT=${triggers.LT} RT=${triggers.RT}`);
-      }
-    }, 16);
-
-    document.getElementById('btnChat').addEventListener('click', () => {
-      const hidden = chatWrap.hasAttribute('hidden');
-      if (hidden) chatWrap.removeAttribute('hidden'); else chatWrap.setAttribute('hidden','');
-      log(hidden ? 'Chat opened' : 'Chat closed');
-    });
-    btnUnmute.addEventListener('click', () => { vid.muted=false; vid.play().catch(e=>log('Unmute err: '+e)); log('Unmuted'); });
-    document.getElementById('btnSetChannel').addEventListener('click', () => {
-      const ch = document.getElementById('chatChannel').value.trim();
-      if (!ch) { log('⚠️ No channel entered for chat.'); return; }
-      chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
-      chatWrap.removeAttribute('hidden'); log('Chat channel set: ' + ch);
-    });
-
-    vid.addEventListener('loadedmetadata', () => { log(`Video metadata: ${vid.videoWidth}x${vid.videoHeight}`); });
-    vid.addEventListener('playing', () => { log('Video playing'); document.getElementById('overlay').style.display = 'none'; });
-    vid.addEventListener('stalled', () => log('Video stalled'));
-    vid.addEventListener('waiting', () => log('Video waiting'));
+    function restartSession(){ if(restarting) return; restarting=true; stopSession(); setTimeout(()=>{ restarting=false; startViewer(); }, 800); }
 
     let lastFrameTime = Date.now();
     vid.addEventListener('playing', () => { lastFrameTime = Date.now(); });
@@ -337,14 +299,17 @@
       if (vid.srcObject) {
         const t = vid.currentTime;
         if (t && t !== 0) lastFrameTime = Date.now();
-        if (Date.now() - lastFrameTime > 1200) { log('No frames for >1200ms — restarting session to recover'); restartSession(); lastFrameTime = Date.now(); }
+        if (Date.now() - lastFrameTime > 2000) { // relax threshold to avoid premature restarts
+          log('No frames for >2000ms — restarting session to recover');
+          restartSession(); lastFrameTime = Date.now();
+        }
       }
-    }, 500);
+    }, 600);
     let lastT = 0;
     setInterval(() => {
       if (vid.srcObject) {
         const t = vid.currentTime;
-        if (t && t !== lastT) { setPill(pAv, 'ok', `A/V: frames`); lastT = t; }
+        if (t && t !== lastT) { setPill(pAv, 'ok', 'A/V: frames'); lastT = t; }
         else { setPill(pAv, 'warn', 'A/V: stalled'); }
       }
     }, 1000);
