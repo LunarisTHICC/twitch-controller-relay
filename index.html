@@ -41,7 +41,7 @@
     #chatIframe { width: 100%; height: 260px; border: 0; background: #0d1322; }
     #logPanel { display: grid; grid-template-rows: min-content 1fr; border: 1px solid #1d2436; border-radius: 8px; overflow: hidden; }
     #logHeader { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #121824; border-bottom: 1px solid #1d2436; }
-    #log { margin: 0; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; line-height: 1.4; background: #0b111f; color: #a6b4d0; height: 260px; overflow: auto; }
+    #log { margin: 0; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; line-height: 1.4; background: #0b0f14; color: #cbd5e1; height: 100%; overflow: auto; }
     footer { padding: 12px 14px; color: #7a8fb2; border-top: 1px solid #20283a; background: #0e1524; }
   </style>
 </head>
@@ -379,9 +379,7 @@
       const gps = navigator.getGamepads?.() || [];
       const gp = gps[0];
       if (!gp || !viewerID) return;
-      const buttonMap = {
-        0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'
-      };
+      // use outer buttonMap
       const buttons = gp.buttons.map((b, i) => {
         if (b.pressed && buttonMap[i] && i !== 6 && i !== 7) return buttonMap[i];
         return 0;
@@ -403,7 +401,7 @@
       }
     }, 16);
 
-    btnChat.addEventListener('click', () => {
+    document.getElementById('btnChat').addEventListener('click', () => {
       const hidden = chatWrap.hasAttribute('hidden');
       if (hidden) chatWrap.removeAttribute('hidden'); else chatWrap.setAttribute('hidden', '');
       log(hidden ? 'Chat opened' : 'Chat closed');
@@ -474,9 +472,7 @@
       }
     }, 1000);
 
-    // WebSocket URL and start
-    const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${relayHost}/ws/viewer`;
-    wsUrlPill.textContent = wsUrl;
+    // Start viewer with the computed wsUrl
     startViewer();
   </script>
 </body>
