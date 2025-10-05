@@ -166,13 +166,12 @@
     wsUrlPill.textContent = wsUrl;
     setPill(pRelay, 'ok', `Relay: ${relayHost}`);
 
-    // Transport indicator
     const tproto = (params.get('tproto') || '').toLowerCase();
     if (tproto === 'rtmps') setPill(pTransport, 'ok', 'Transport: WebRTC + RTMPS');
     else if (tproto === 'rtmp') setPill(pTransport, 'ok', 'Transport: WebRTC + RTMP');
     else setPill(pTransport, 'ok', 'Transport: WebRTC');
 
-    // Controller remap UI
+    // Remap UI storage
     const buttonMap = { 0:'A',1:'B',2:'X',3:'Y', 4:'LB',5:'RB',8:'Back',9:'Start', 10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight' };
     let remap = JSON.parse(localStorage.getItem('remapConfig')||'{}');
     Object.values(buttonMap).forEach(b=>{ if(!remap[b]) remap[b]=b; });
@@ -191,7 +190,7 @@
       }
     });
 
-    // Debugger toggle
+    // Debugger toggle (clean UI)
     let clean = false;
     btnDebugger.addEventListener('click', () => {
       clean = !clean;
@@ -202,6 +201,82 @@
 
     let pc, ws, dc, viewerID = null;
     let restarting = false;
+
+    // Input sender (Gamepad), fallback to WS when DC not open
+    let inputTimer = null, lastInputPayload = '';
+    function sendInputPayload(obj) {
+      const s = JSON.stringify(obj);
+      if (s === lastInputPayload) return;
+      lastInputPayload = s;
+      if (dc && dc.readyState === 'open') dc.send(s);
+      else if (ws && ws.readyState === 1) ws.send(s);
+    }
+    function startInputSender() {
+      if (inputTimer) clearInterval(inputTimer);
+      inputTimer = setInterval(() => {
+        // Basic Gamepad read
+        const gp = navigator.getGamepads ? Array.from(navigator.getGamepads()).find(g=>g) : null;
+        const buttons = [];
+        const axes = [0,0,0,0];
+        const triggers = { LT:0, RT:0 };
+        if (gp) {
+          gp.buttons.forEach((b,i)=>{ if (b && b.pressed) { const name = buttonMap[i]; if (name) buttons.push(remap[name]||name);} });
+          axes[0] = gp.axes[0]||0; axes[1] = gp.axes[1]||0; axes[2] = gp.axes[2]||0; axes[3] = gp.axes[3]||0;
+          if (gp.buttons[6]) triggers.LT = gp.buttons[6].value||0;
+          if (gp.buttons[7]) triggers.RT = gp.buttons[7].value||0;
+        }
+        sendInputPayload({ type:'input', buttons, axes, triggers });
+      }, 33); // ~30Hz
+      log('Input sender started');
+    }
+    function stopInputSender(){ if (inputTimer) { clearInterval(inputTimer); inputTimer=null; log('Input sender stopped'); } }
+
+    function createDataChannel() {
+      if (!pc) return;
+      dc = pc.createDataChannel('inputs', { ordered: true });
+      wireDcHandlers();
+    }
+    function wireDcHandlers() {
+      dc.onopen  = () => { log('DC open');  setPill(pDc, 'ok', 'DC: open'); startInputSender(); };
+      dc.onclose = () => {
+        log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); stopInputSender();
+        // Do NOT restart session on DC close; attempt to recreate if the peer is still connected.
+        if (pc && pc.connectionState === 'connected') {
+          log('Recreating DataChannel…');
+          setTimeout(() => { try{ createDataChannel(); }catch(e){ log('DC recreate err '+e); } }, 300);
+        }
+      };
+    }
+
+    // Stats-based stall detection
+    let vBytesPrev = 0, vBytesTs = 0;
+    setInterval(async () => {
+      if (!pc || pc.connectionState !== 'connected') return;
+      try {
+        const stats = await pc.getStats();
+        let vBytes = 0;
+        stats.forEach(r => {
+          if (r.type === 'inbound-rtp' && r.kind === 'video' && !r.isRemote) {
+            vBytes += (r.bytesReceived || 0);
+          }
+        });
+        const now = performance.now();
+        if (vBytes > vBytesPrev) {
+          vBytesPrev = vBytes; vBytesTs = now;
+          setPill(pAv, 'ok', 'A/V: receiving');
+          // Keep trying to ensure playback
+          if (vid.paused) { vid.play().catch(()=>{}); }
+        } else {
+          const stalledFor = now - (vBytesTs || now);
+          if (stalledFor > 8000) {
+            log('Inbound video stalled >8s — restarting session');
+            vBytesPrev = 0; vBytesTs = now; restartSession();
+          } else {
+            setPill(pAv, 'warn', 'A/V: stalled');
+          }
+        }
+      } catch (e) {}
+    }, 1000);
 
     function startViewer() {
       log('WS URL → ' + wsUrl);
@@ -219,7 +294,7 @@
       const vTrans = pc.addTransceiver('video', { direction: 'recvonly' });
       pc.addTransceiver('audio', { direction: 'recvonly' });
 
-      // Codec preference: default H.264 first (more reliable on Windows aiortc), VP8 fallback.
+      // Codec preference: default H.264 first, VP8 fallback (override with ?codec=vp8 or ?codec=h264)
       try {
         const want = (params.get('codec') || '').trim().toLowerCase();
         const caps = RTCRtpReceiver.getCapabilities('video');
@@ -227,8 +302,8 @@
         const h264 = codecs.filter(c => (c.mimeType || '').toLowerCase().includes('h264'));
         const vp8  = codecs.filter(c => (c.mimeType || '').toLowerCase().includes('vp8'));
         let prefs = [], msg = '';
-        if (want === 'vp8')         { prefs = vp8;             msg = 'Codec preference set: force VP8'; }
-        else if (want === 'h264')   { prefs = h264;            msg = 'Codec preference set: force H.264'; }
+        if (want === 'vp8')         { prefs = vp8;              msg = 'Codec preference set: force VP8'; }
+        else if (want === 'h264')   { prefs = h264;             msg = 'Codec preference set: force H.264'; }
         else                        { prefs = [...h264, ...vp8]; msg = 'Codec preference set: H.264 first, VP8 fallback'; }
         if (vTrans && vTrans.setCodecPreferences && prefs.length) {
           vTrans.setCodecPreferences(prefs);
@@ -236,7 +311,7 @@
         }
       } catch (e) { log('Codec preference error: ' + e); }
 
-      dc = pc.createDataChannel('inputs', { ordered: true });
+      createDataChannel();
 
       pc.ontrack = e => {
         try {
@@ -250,9 +325,6 @@
           }, { once: true });
         } catch (err) { log('ontrack error: ' + err); }
       };
-
-      dc.onopen  = () => { log('DC open');  setPill(pDc, 'ok', 'DC: open'); };
-      dc.onclose = () => { log('DC closed'); setPill(pDc, 'bad', 'DC: closed'); };
 
       pc.oniceconnectionstatechange = () => {
         const s = pc.iceConnectionState;
@@ -305,38 +377,21 @@
         }
       };
 
+      // Heartbeats
       setInterval(() => {
         if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'ping', viewer:viewerID }));
         if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type:'ping', viewer:viewerID }));
       }, 12000);
     }
 
-    function stopSession(){ try{dc?.close()}catch{} try{ws?.close()}catch{} try{pc?.close()}catch{} vid.srcObject=null; dc=ws=pc=null; }
-    function restartSession(){ if(restarting) return; restarting=true; stopSession(); setTimeout(()=>{ restarting=false; startViewer(); }, 800); }
+    function stopSession(){ try{dc?.close()}catch{} try{ws?.close()}catch{} try{pc?.close()}catch{} vid.srcObject=null; stopInputSender(); dc=ws=pc=null; }
+    function restartSession(){ if(restarting) return; restarting=true; stopSession(); setTimeout(()=>{ restarting=false; startViewer(); }, 900); }
 
-    // Health monitor
-    let lastFrameTime = Date.now();
-    vid.addEventListener('playing', () => { lastFrameTime = Date.now(); });
-    setInterval(() => {
-      if (vid.srcObject) {
-        const t = vid.currentTime;
-        if (t && t !== 0) lastFrameTime = Date.now();
-        if (Date.now() - lastFrameTime > 2000) {
-          log('No frames for >2000ms — restarting session to recover');
-          restartSession(); lastFrameTime = Date.now();
-        }
-      }
-    }, 600);
-    let lastT = 0;
-    setInterval(() => {
-      if (vid.srcObject) {
-        const t = vid.currentTime;
-        if (t && t !== lastT) { setPill(pAv, 'ok', 'A/V: frames'); lastT = t; }
-        else { setPill(pAv, 'warn', 'A/V: stalled'); }
-      }
-    }, 1000);
+    // Playback helpers
+    btnUnmute.addEventListener('click', () => { vid.muted=false; vid.play().catch(e=>log('Unmute err: '+e)); log('Unmuted'); });
+    btnFullscreen.addEventListener('click', () => { (vid.requestFullscreen || document.body.requestFullscreen || function(){})(); });
 
-    // Chat embed
+    // Chat helpers
     document.getElementById('btnChat').addEventListener('click', () => {
       const hidden = chatWrap.hasAttribute('hidden');
       if (hidden) chatWrap.removeAttribute('hidden'); else chatWrap.setAttribute('hidden','');
@@ -348,10 +403,6 @@
       chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
       chatWrap.removeAttribute('hidden'); log('Chat channel set: ' + ch);
     });
-
-    // Unmute/Fullscreen
-    btnUnmute.addEventListener('click', () => { vid.muted=false; vid.play().catch(e=>log('Unmute err: '+e)); log('Unmuted'); });
-    btnFullscreen.addEventListener('click', () => { (vid.requestFullscreen || document.body.requestFullscreen || function(){})(); });
 
     startViewer();
   </script>
