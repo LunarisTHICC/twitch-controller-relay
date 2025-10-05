@@ -169,6 +169,9 @@
     wsUrlPill.textContent = wsUrl;
     setPill(pRelay, 'ok', `Relay: ${relayHost}`);
 
+    const forceTurn = ['1','true','yes'].includes((params.get('forceTurn') || '').toLowerCase());
+    if (forceTurn) setPill(pIce, 'ok', 'ICE: relay-only');
+
     const tproto = (params.get('tproto') || '').toLowerCase();
     if (tproto === 'rtmps') setPill(pTransport, 'ok', 'Transport: WebRTC + RTMPS');
     else if (tproto === 'rtmp') setPill(pTransport, 'ok', 'Transport: WebRTC + RTMP');
@@ -311,7 +314,8 @@
         sdpSemantics: 'unified-plan',
         iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }],
         bundlePolicy: 'max-bundle',
-        rtcpMuxPolicy: 'require'
+        rtcpMuxPolicy: 'require',
+        iceTransportPolicy: forceTurn ? 'relay' : 'all'
       });
       setPill(pSig, 'ok', 'Signaling: ready');
 
