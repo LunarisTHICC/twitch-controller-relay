@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { color-scheme: dark; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; background: #0b0f14; color: #dfe7ef; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; background:#0e1524; color:#dfe7ef; }
     header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#121824; border-bottom:1px solid #20283a; position:sticky; top:0; z-index:1000; flex-wrap:wrap; }
     .pill { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; line-height:14px; background:#2a3347; border:1px solid #3a4461; color:#b7c1d6; white-space:nowrap; }
     .pill.ok{ background:#15321f; border-color:#1e6a33; color:#a5e7b9; }
@@ -31,11 +31,9 @@
     #chatIframe{ width:100%; height:260px; border:0; background:#0d1322; }
     #logPanel{ display:grid; grid-template-rows:min-content 1fr; border:1px solid #1d2436; border-radius:8px; overflow:hidden; }
     #logHeader{ display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#121824; border-bottom:1px solid #1d2436; }
-    #log{ margin:0; padding:10px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; line-height:1.4; background:#0d1322; white-space:pre; overflow:auto; min-height:260px; }
+    #log{ margin:0; padding:10px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; line-height:1.4; background:#0d1322; white-space:pre; overflow:auto; }
     footer{ padding:12px 14px; color:#7a8fb2; border-top:1px solid #20283a; background:#0e1524; }
-    /* Clean mode: hide debug chrome */
-    body.clean header,
-    body.clean #sidePanel { display: none !important; }
+    body.clean header, body.clean #sidePanel { display: none !important; }
     body.clean #controls > :not(#btnDebugger) { display: none !important; }
     body.clean #controls { justify-content: flex-end; }
   </style>
@@ -61,7 +59,8 @@
   <main>
     <section>
       <div id="videoWrap">
-        <video id="vid" playsinline muted></video>
+        <!-- Ensure autoplay + muted for reliable autoplay -->
+        <video id="vid" playsinline muted autoplay></video>
         <div id="overlay">
           <div id="ovText">Waiting for video…</div>
         </div>
@@ -205,6 +204,7 @@
     });
 
     // Playback helpers and overlay logic
+    // Keep muted for autoplay; unmute button flips it and calls play()
     vid.autoplay = true;
     vid.playsInline = true;
     vid.muted = true;
@@ -323,7 +323,6 @@
       const vTrans = pc.addTransceiver('video', { direction: 'recvonly' });
       pc.addTransceiver('audio', { direction: 'recvonly' });
 
-      // Codec preference: default H.264 first, VP8 fallback (override with ?codec=vp8 or ?codec=h264)
       try {
         const want = (params.get('codec') || '').trim().toLowerCase();
         const caps = RTCRtpReceiver.getCapabilities('video');
@@ -411,6 +410,16 @@
         if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'ping', viewer:viewerID }));
         if (dc && dc.readyState === 'open') dc.send(JSON.stringify({ type:'ping', viewer:viewerID }));
       }, 12000);
+
+      // Auto-load chat if ?chat=channel is provided
+      const chatParam = (params.get('chat') || '').trim();
+      if (chatParam) {
+        const parentHost = pageHost; // e.g., lunaristhicc.github.io
+        chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(chatParam)}/chat?parent=${parentHost}`;
+        chatWrap.removeAttribute('hidden');
+        log('Chat channel set from URL: ' + chatParam);
+        document.getElementById('chatChannel').value = chatParam;
+      }
     }
 
     function stopSession(){ try{dc?.close()}catch{} try{ws?.close()}catch{} try{pc?.close()}catch{} vid.srcObject=null; stopInputSender(); dc=ws=pc=null; }
@@ -427,7 +436,8 @@
     document.getElementById('btnSetChannel').addEventListener('click', () => {
       const ch = document.getElementById('chatChannel').value.trim();
       if (!ch) { log('⚠️ No channel entered for chat.'); return; }
-      chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${pageHost}`;
+      const parentHost = pageHost;
+      chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parentHost}`;
       chatWrap.removeAttribute('hidden'); log('Chat channel set: ' + ch);
     });
 
