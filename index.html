@@ -8,7 +8,7 @@
     :root { --bg:#0e0e10; --panel:#18181b; --edge:#23232a; --fg:#efeff1; --muted:#b9b9c2; --accent:#9146ff; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; }
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans";}
     header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:0;z-index:10;flex-wrap:wrap}
-    .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df;white-space:nowrap}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
     .pill.ok{background:#15321f;border-color:#1e6a33;color:#a5e7b9}.pill.warn{background:#3a2a18;border-color:#b57a28;color:#ffd89a}.pill.bad{background:#3a1a1a;border-color:#b52828;color:#ff9a9a}
     #wsUrl{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#9fb2d1}
     main{display:grid;grid-template-columns:1fr 360px;gap:10px;padding:12px} @media(max-width:1000px){main{grid-template-columns:1fr}}
@@ -26,25 +26,19 @@
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
     #logHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#121824;border-bottom:1px solid #1d2436}
     #log{margin:0;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.4;background:#0d1322;white-space:pre;overflow:auto}
-    footer{padding:12px 14px;color:#7a8fb2;border-top:1px solid #20283a;background:#0e1524}
+    footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;color:#7a8fb2;border-top:1px solid #20283a;background:#0e1524}
+    #footerRight{margin-left:auto;display:flex;align-items:center;gap:8px}
+    #btnDebugger{padding:6px 10px;font-size:12px;opacity:.9} /* compact */
 
-    /* Clean mode: hide debug chrome */
+    /* Clean mode: hide debug chrome but keep Chat toggle and Volume controls visible */
     body.clean header, body.clean #sidePanel { display: none !important; }
-    body.clean #controls > :not(#btnDebugger) { display: none !important; }
-    body.clean #controls { justify-content: flex-end; }
+    body.clean #controls > :not(#btnChat):not(#volumeWrap) { display: none !important; }
+    body.clean #controls { justify-content: flex-start; padding: 10px 12px; }
   </style>
 </head>
 <body>
   <header>
-    <span id="pRelay" class="pill">Relay</span>
-    <span id="pWs" class="pill">WS</span>
-    <span id="pSig" class="pill">Signaling</span>
-    <span id="pIce" class="pill">ICE</span>
-    <span id="pDtls" class="pill">DTLS</span>
-    <span id="pPc" class="pill">Peer</span>
-    <span id="pDc" class="pill">DC</span>
-    <span id="pAv" class="pill">A/V</span>
-    <span id="pTransport" class="pill">Transport</span>
+    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
   </header>
 
@@ -56,257 +50,156 @@
       </div>
 
       <div id="controls">
-        <button id="btnDebugger" title="Toggle debug UI">Debugger</button>
-        <button id="btnUnmute">Unmute</button>
         <button id="btnChat">Toggle chat</button>
+        <div id="volumeWrap" style="display:flex;align-items:center;gap:6px">
+          <label for="vol" style="opacity:.8">Volume</label>
+          <input id="vol" type="range" min="0" max="100" value="0" style="width:160px">
+          <button id="btnMute">Unmute</button>
+        </div>
         <button id="btnFullscreen">Fullscreen</button>
         <button id="btnDownloadLogs">Download logs</button>
-        <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px" />
+        <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px"/>
         <button id="btnSetChannel">Set chat channel</button>
       </div>
     </section>
 
     <aside id="sidePanel">
-      <div id="chatWrap" hidden>
-        <iframe id="chatIframe" title="Twitch chat"></iframe>
-      </div>
-
-      <div id="logPanel">
-        <div id="logHeader">
-          <strong>Viewer logs</strong>
-          <span style="opacity:.7">Scroll to view. Use “Download logs” to export.</span>
-        </div>
-        <pre id="log"></pre>
-      </div>
+      <div id="chatWrap" hidden><iframe id="chatIframe" title="Twitch chat"></iframe></div>
+      <div id="logPanel"><div id="logHeader"><strong>Viewer logs</strong><span style="opacity:.7">Use “Download logs”.</span></div><pre id="log"></pre></div>
     </aside>
   </main>
 
   <footer>
     <small>Status indicators reflect last known state and auto-recover triggers.</small>
+    <div id="footerRight">
+      <button id="btnDebugger" title="Toggle debug UI">Debugger</button>
+    </div>
   </footer>
 
   <script>
-    // ---------- Logging + UI helpers ----------
-    const vid = document.getElementById('vid');
-    const overlay = document.getElementById('overlay');
-    const ovText = document.getElementById('ovText');
-    const logEl = document.getElementById('log');
-    const btnDebugger = document.getElementById('btnDebugger');
-
-    function log(m){ const t=new Date().toLocaleTimeString(); logEl.textContent += `[${t}] ${m}\n`; logEl.scrollTop = logEl.scrollHeight; }
+    const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
-    function showOverlay(text){ if (text) ovText.textContent=text; overlay.hidden=false; }
-    function hideOverlay(){ overlay.hidden=true; }
 
-    document.getElementById('btnDownloadLogs').onclick=()=>{const b=new Blob([logEl.textContent],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='viewer_logs.txt'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),250);};
-    document.getElementById('btnFullscreen').onclick=()=>{(vid.requestFullscreen||document.body.requestFullscreen||function(){})();};
-    btnDebugger.onclick=()=>{ document.body.classList.toggle('clean'); btnDebugger.textContent = document.body.classList.contains('clean')?'Debugger (show)':'Debugger'; };
-
-    // Chat
+    // Chat controls
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-    const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim();
-    if(savedCh) document.getElementById('chatChannel').value = savedCh;
+    const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim(); if(savedCh) document.getElementById('chatChannel').value = savedCh;
     document.getElementById('btnChat').onclick=()=>{ const h=chatWrap.hasAttribute('hidden'); if(h) chatWrap.removeAttribute('hidden'); else chatWrap.setAttribute('hidden',''); };
     document.getElementById('btnSetChannel').onclick=()=>{ const ch=document.getElementById('chatChannel').value.trim(); if(!ch) return; localStorage.setItem('twitchChatChannel',ch); chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${location.host}`; chatWrap.removeAttribute('hidden'); };
 
-    // Playback helpers
-    vid.autoplay = true; vid.playsInline = true; vid.muted = true;
-    function ensurePlay(){ const p=vid.play(); if (p && p.then) p.catch(()=>{}); }
-    document.getElementById('btnUnmute').onclick=async()=>{ try{ vid.muted=false; await vid.play(); log('Unmuted'); }catch(e){ log('Autoplay error: '+e.name); } };
+    // Video + volume/mute
+    const vid=document.getElementById('vid');
+    const vol=document.getElementById('vol');
+    const btnMute=document.getElementById('btnMute');
+    const overlay=document.getElementById('overlay'), ovText=document.getElementById('ovText');
 
-    // ---------- Connection parameters ----------
-    const params = new URLSearchParams(window.location.search);
-    const pageHost = window.location.host;
-    const relayHost = (params.get('relay') || pageHost).replace(/^https?:\/\//,'').replace(/\/+$/,'');
-    const wsUrl = `${location.protocol==='https:'?'wss':'ws'}://${relayHost}/ws/viewer`;
-    document.getElementById('wsUrl').textContent = wsUrl;
-    pill('pRelay','ok','Relay: '+relayHost);
-    pill('pTransport','ok','Transport: WebRTC');
+    function updateMuteButton(){ btnMute.textContent = vid.muted || vid.volume===0 ? 'Unmute' : 'Mute'; }
+    function ensurePlay(){ const p=vid.play(); if(p&&p.then)p.catch(()=>{}); }
 
-    // ---------- WebRTC wiring ----------
+    btnMute.onclick=async()=>{
+      try{
+        if(vid.muted || vid.volume===0){
+          vid.muted=false;
+          if (vid.volume===0) { vid.volume = Math.max(0.3, (parseInt(localStorage.getItem('viewerVolume')||'30',10)/100)); vol.value = Math.round(vid.volume*100); }
+          await vid.play();
+        } else {
+          vid.muted=true;
+        }
+      }catch(e){ log('Autoplay error: '+e.name); }
+      updateMuteButton();
+    };
+
+    vol.addEventListener('input', ()=>{
+      const v = Math.max(0, Math.min(100, parseInt(vol.value||'0',10)))/100;
+      vid.volume = v;
+      localStorage.setItem('viewerVolume', String(Math.round(v*100)));
+      if(v>0) vid.muted=false;
+      updateMuteButton();
+    });
+
+    // Initialize volume from storage (default 0 for autoplay safety)
+    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10)));
+    vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteButton();
+
+    document.getElementById('btnDownloadLogs').onclick=()=>{const b=new Blob([logEl.textContent],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='viewer_logs.txt'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),250);};
+    document.getElementById('btnFullscreen').onclick=()=>{(vid.requestFullscreen||document.body.requestFullscreen||function(){})();};
+    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); };
+
+    // Connection params
+    const params=new URLSearchParams(location.search);
+    const relayHost=(params.get('relay')||location.host).replace(/^https?:\/\//,'').replace(/\/+$/,'');
+    const wsUrl=`${location.protocol==='https:'?'wss':'ws'}://${relayHost}/ws/viewer`;
+    document.getElementById('wsUrl').textContent=wsUrl;
+    pill('pRelay','ok','Relay: '+relayHost); pill('pTransport','ok','Transport: WebRTC');
+
+    // WebRTC
     let pc, ws, dc, viewerID=null, restarting=false, hbTimer=null, stallTimer=null;
-    const inboundStream = new MediaStream();
-
-    function attachEvents(){
-      // Video element signals for UX
-      vid.addEventListener('playing', ()=>{ pill('pAv','ok','A/V: playing'); hideOverlay(); });
-      vid.addEventListener('waiting', ()=>{ pill('pAv','warn','A/V: waiting'); showOverlay('Buffering…'); });
-      vid.addEventListener('stalled', ()=>{ pill('pAv','warn','A/V: stalled'); showOverlay('Buffering…'); });
-    }
-    attachEvents();
+    const inbound=new MediaStream();
 
     function startViewer(){
-      log('WS URL → '+wsUrl); pill('pWs','', 'WS: connecting'); showOverlay('Connecting…');
+      log('WS URL → '+wsUrl); pill('pWs','','WS: connecting'); showOverlay('Connecting…');
 
-      pc = new RTCPeerConnection({
-        sdpSemantics: 'unified-plan',
-        iceServers: [{ urls: ['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478'] }],
-        bundlePolicy: 'max-bundle',
-        rtcpMuxPolicy: 'require'
-      });
+      pc=new RTCPeerConnection({iceServers:[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}], bundlePolicy:'max-bundle'});
+      const vTrans=pc.addTransceiver('video',{direction:'recvonly'}); pc.addTransceiver('audio',{direction:'recvonly'});
 
-      // Transceivers
-      const vTrans = pc.addTransceiver('video', { direction: 'recvonly' });
-      pc.addTransceiver('audio', { direction: 'recvonly' });
-
-      // Codec preference: H.264 first, VP8 fallback (or override ?codec=vp8/h264)
       try{
-        const want=(params.get('codec')||'').trim().toLowerCase();
-        const caps=RTCRtpReceiver.getCapabilities('video'); const codecs=(caps?.codecs)||[];
+        const want=(params.get('codec')||'').toLowerCase();
+        const caps=RTCRtpReceiver.getCapabilities('video'); const codecs=(caps&&caps.codecs)||[];
         const h264=codecs.filter(c=>(c.mimeType||'').toLowerCase().includes('h264'));
         const vp8 =codecs.filter(c=>(c.mimeType||'').toLowerCase().includes('vp8'));
         const prefs = want==='vp8'?vp8 : want==='h264'?h264 : [...h264,...vp8];
-        if (vTrans?.setCodecPreferences && prefs.length){ vTrans.setCodecPreferences(prefs); log('Codec preference set: H.264 first, VP8 fallback'); }
-      }catch(e){}
+        if(vTrans&&vTrans.setCodecPreferences&&prefs.length){ vTrans.setCodecPreferences(prefs); log('Codec preference set: H.264 first, VP8 fallback'); }
+      }catch{}
 
-      // DC for inputs (even if we mostly send from viewer → host)
-      dc = pc.createDataChannel('inputs');
-      dc.onopen  = ()=>{ pill('pDc','ok','DC: open'); };
-      dc.onclose = ()=>{ pill('pDc','bad','DC: closed'); };
+      dc=pc.createDataChannel('inputs'); dc.onopen=()=>pill('pDc','ok','DC: open'); dc.onclose=()=>pill('pDc','bad','DC: closed');
+      pc.ontrack=(e)=>{ if(!inbound.getTracks().includes(e.track)) inbound.addTrack(e.track); if(vid.srcObject!==inbound) vid.srcObject=inbound; pill('pAv','ok','A/V: attached'); hideOverlay(); ensurePlay(); };
+      pc.oniceconnectionstatechange=()=>{ const s=pc.iceConnectionState; pill('pIce', (s==='connected'||s==='completed')?'ok':(s==='failed'?'bad':'warn'), 'ICE: '+s); if(s==='failed'||s==='disconnected'){ showOverlay('Reconnecting…'); restartSoon(); } };
+      pc.onconnectionstatechange=()=>{ const s=pc.connectionState; pill('pPc', s==='connected'?'ok':(s==='failed'?'bad':'warn'), 'Peer: '+s); pill('pDtls', s==='connected'?'ok':(s==='failed'?'bad':'warn'), 'DTLS: '+s); if(s==='failed'||s==='disconnected'||s==='closed'){ showOverlay('Reconnecting…'); restartSoon(); } };
+      pc.onicecandidate=(ev)=>{ if(ev.candidate && viewerID && ws?.readyState===1){ ws.send(JSON.stringify({type:'candidate',viewer:viewerID,candidate:{candidate:ev.candidate.candidate,sdpMid:ev.candidate.sdpMid,sdpMLineIndex:ev.candidate.sdpMLineIndex}})); } };
 
-      pc.ontrack = (e)=>{
-        try {
-          log('ontrack: kind='+e.track.kind);
-          if(!inboundStream.getTracks().includes(e.track)) inboundStream.addTrack(e.track);
-          if(vid.srcObject!==inboundStream) vid.srcObject=inboundStream;
-          pill('pAv','ok','A/V: attached'); hideOverlay(); ensurePlay();
-        } catch (err) { log('ontrack error: '+err); }
+      ws=new WebSocket(wsUrl);
+      ws.onopen=()=>{ log('WS open'); pill('pWs','ok','WS: open'); ws.send(JSON.stringify({type:'hello',role:'viewer'})); startHeartbeats(); };
+      ws.onerror=()=>{ log('WS error'); pill('pWs','bad','WS: error'); restartSoon(); };
+      ws.onclose=()=>{ log('WS closed'); pill('pWs','bad','WS: closed'); restartSoon(); };
+      ws.onmessage=async(ev)=>{ const msg=JSON.parse(ev.data); if(msg.type==='pong') return;
+        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}})); pill('pSig','warn','Signaling: offer'); }
+        else if(msg.type==='answer'){ await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay(); }
+        else if(msg.type==='candidate'){ try{ await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }catch(e){ log('ICE add err '+e); } }
       };
 
-      pc.oniceconnectionstatechange = ()=>{
-        const s=pc.iceConnectionState;
-        pill('pIce', (s==='connected'||s==='completed')?'ok':(s==='failed'||s==='disconnected')?'bad':'warn', 'ICE: '+s);
-        if (s==='failed' || s==='disconnected'){ showOverlay('Reconnecting…'); restartSoon(); }
-      };
-      pc.onconnectionstatechange = ()=>{
-        const s=pc.connectionState;
-        pill('pPc', s==='connected'?'ok':(s==='connecting'?'warn':'bad'), 'Peer: '+s);
-        pill('pDtls', s==='connected'?'ok':(s==='connecting'?'warn':'bad'), 'DTLS: '+s);
-        if (s==='failed' || s==='disconnected' || s==='closed'){ showOverlay('Reconnecting…'); restartSoon(); }
-      };
-
-      pc.onicecandidate = (ev)=>{
-        if(ev.candidate && viewerID && ws?.readyState===1){
-          ws.send(JSON.stringify({type:'candidate',viewer:viewerID,candidate:{candidate:ev.candidate.candidate,sdpMid:ev.candidate.sdpMid,sdpMLineIndex:ev.candidate.sdpMLineIndex}}));
-        }
-      };
-
-      // WS signaling
-      ws = new WebSocket(wsUrl);
-      ws.onopen = ()=>{
-        log('WS open'); pill('pWs','ok','WS: open');
-        ws.send(JSON.stringify({ type:'hello', role:'viewer' }));
-        startHeartbeats();
-      };
-      ws.onerror = ()=>{ log('WebSocket error'); pill('pWs','bad','WS: error'); restartSoon(); };
-      ws.onclose = ()=>{ log('WS closed'); pill('pWs','bad','WS: closed'); restartSoon(); };
-
-      ws.onmessage = async (evt)=>{
-        const msg = JSON.parse(evt.data);
-        if (msg.type === 'pong') return;
-
-        if (msg.type === 'welcome') {
-          viewerID = msg.viewer_id;
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          ws.send(JSON.stringify({ type:'offer', role:'viewer', viewer:viewerID, sdp:{ type:offer.type, sdp:offer.sdp } }));
-          pill('pSig','warn','Signaling: offer sent');
-        } else if (msg.type === 'answer') {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-          log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay();
-        } else if (msg.type === 'candidate') {
-          try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }
-          catch (e) { log('ICE add err '+e); }
-        }
-      };
-
-      // Stall detector (bytesReceived watchdog)
       startStallDetector();
     }
 
-    function stopSession(){
-      try{ if (hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{}
-      try{ if (stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{}
-      try{ dc?.close(); }catch{}
-      try{ ws?.close(); }catch{}
-      try{ pc?.close(); }catch{}
-      vid.srcObject = null;
-      dc = ws = pc = null;
-    }
+    function showOverlay(text){ if(text) ovText.textContent=text; overlay.hidden=false; }
+    function hideOverlay(){ overlay.hidden=true; }
+    function startHeartbeats(){ if(hbTimer) clearInterval(hbTimer); hbTimer=setInterval(()=>{ try{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID})); if(dc&&dc.readyState==='open') dc.send(JSON.stringify({type:'ping'})); }catch{} }, 12000); }
+    function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); }, 900); }
+    function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?.close(); }catch{} try{ pc?.close(); }catch{} vid.srcObject=null; dc=ws=pc=null; }
 
-    function restartSoon(){
-      if (restarting) return;
-      restarting = true;
-      showOverlay('Reconnecting…');
-      setTimeout(()=>{ restarting=false; stopSession(); startViewer(); }, 900);
-    }
-
-    function startHeartbeats(){
-      if (hbTimer) clearInterval(hbTimer);
-      hbTimer = setInterval(()=>{ try{ if (ws && ws.readyState===1) ws.send(JSON.stringify({type:'ping', viewer:viewerID})); if (dc && dc.readyState==='open') dc.send(JSON.stringify({type:'ping'})); }catch{} }, 12000);
-    }
-
+    // Stall detector (bytesReceived watchdog)
     function startStallDetector(){
-      if (stallTimer) clearInterval(stallTimer);
-      let vBytesPrev = 0, vTs = performance.now();
-      stallTimer = setInterval(async ()=>{
-        if (!pc || pc.connectionState!=='connected') return;
-        try {
-          const stats = await pc.getStats();
-          let vBytes = 0;
-          stats.forEach(r=>{ if (r.type==='inbound-rtp' && r.kind==='video' && !r.isRemote) vBytes += (r.bytesReceived||0); });
-          const now = performance.now();
-          if (vBytes > vBytesPrev) {
-            vBytesPrev = vBytes; vTs = now;
-            pill('pAv','ok','A/V: receiving'); hideOverlay(); ensurePlay();
-          } else {
-            const stalledFor = now - vTs;
-            if (stalledFor > 8000) {
-              pill('pAv','bad','A/V: stalled'); showOverlay('Reconnecting…'); log('Inbound video stalled >8s — restarting session'); vBytesPrev = 0; vTs = now; restartSoon();
-            } else if (stalledFor > 2000) {
-              pill('pAv','warn','A/V: stalled'); showOverlay('Buffering…');
-            }
-          }
-        } catch {}
+      if(stallTimer) clearInterval(stallTimer);
+      let vBytesPrev=0, lastOk=performance.now();
+      stallTimer=setInterval(async()=>{
+        if(!pc || pc.connectionState!=='connected') return;
+        try{
+          const stats = await pc.getStats(); let vBytes=0;
+          stats.forEach(r=>{ if(r.type==='inbound-rtp' && r.kind==='video' && !r.isRemote) vBytes += (r.bytesReceived||0); });
+          const now=performance.now();
+          if(vBytes>vBytesPrev){ vBytesPrev=vBytes; lastOk=now; pill('pAv','ok','A/V: receiving'); hideOverlay(); ensurePlay(); }
+          else if(now-lastOk>8000){ pill('pAv','bad','A/V: stalled'); showOverlay('Reconnecting…'); restartSoon(); }
+          else if(now-lastOk>2000){ pill('pAv','warn','A/V: stalled'); showOverlay('Buffering…'); }
+        }catch{}
       }, 1000);
     }
 
-    // ---------- Gamepad input sender (30 Hz, DC/WS fallback) ----------
-    let inputTimer=null, lastPayload='';
-    const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
-
-    function sendInput(obj){
-      const s = JSON.stringify(obj);
-      if (s === lastPayload) return; // de-dup small jitter
-      lastPayload = s;
-      try{
-        if (dc && dc.readyState === 'open') dc.send(s);
-        else if (ws && ws.readyState === 1) ws.send(s);
-      }catch(e){}
-    }
-
-    function startInputs(){
-      if (inputTimer) return;
-      inputTimer = setInterval(()=>{
-        const gp = (navigator.getGamepads && Array.from(navigator.getGamepads()).find(g=>g)) || null;
-        const buttons=[], axes=[0,0,0,0], triggers={LT:0,RT:0};
-        if (gp){
-          gp.buttons.forEach((b,i)=>{ if(b && b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }});
-          axes[0]=gp.axes[0]||0; axes[1]=gp.axes[1]||0; axes[2]=gp.axes[2]||0; axes[3]=gp.axes[3]||0;
-          if(gp.buttons[6]) triggers.LT=gp.buttons[6].value||0;
-          if(gp.buttons[7]) triggers.RT=gp.buttons[7].value||0;
-        }
-        sendInput({type:'input', buttons, axes, triggers});
-      }, 33); // ~30 Hz
-      log('Input sender started');
-    }
+    // Input sender (30 Hz, DC/WS fallback)
+    let inputTimer=null,lastPayload=''; const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
+    function sendInput(o){ const s=JSON.stringify(o); if(s===lastPayload) return; lastPayload=s; try{ if(dc&&dc.readyState==='open') dc.send(s); else if(ws&&ws.readyState===1) ws.send(s); }catch{} }
+    function startInputs(){ if(inputTimer) return; inputTimer=setInterval(()=>{ const gp=(navigator.getGamepads&&Array.from(navigator.getGamepads()).find(g=>g))||null; const buttons=[], axes=[0,0,0,0], triggers={LT:0,RT:0}; if(gp){ gp.buttons.forEach((b,i)=>{ if(b&&b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }}); axes[0]=gp.axes[0]||0; axes[1]=gp.axes[1]||0; axes[2]=gp.axes[2]||0; axes[3]=gp.axes[3]||0; if(gp.buttons[6]) triggers.LT=gp.buttons[6].value||0; if(gp.buttons[7]) triggers.RT=gp.buttons[7].value||0; } sendInput({type:'input',buttons,axes,triggers}); },33); log('Input sender started'); }
     function stopInputs(){ if(inputTimer){ clearInterval(inputTimer); inputTimer=null; log('Input sender stopped'); } }
 
-    // ---------- Start ----------
-    showOverlay('Connecting…');
-    startViewer();
-    window.addEventListener('load', ()=>setTimeout(startInputs, 300));
-    window.addEventListener('beforeunload', ()=>{ stopInputs(); stopSession(); });
+    // Start
+    startViewer(); window.addEventListener('load', ()=>setTimeout(startInputs,300)); window.addEventListener('beforeunload', ()=>{ stopInputs(); stopSession(); });
   </script>
 </body>
 </html>
