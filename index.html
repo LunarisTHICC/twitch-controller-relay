@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <title>WebRTC Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Fonts for banner + buttons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Orbitron:wght@600&display=swap" rel="stylesheet">
@@ -23,7 +22,7 @@
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
     /* Debug header (hidden in clean) */
-    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
+    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid #23232a;position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
     .pill.ok{background:#15321f;border-color:#1e6a33;color:#a5e7b9}
     .pill.warn{background:#3a2a18;border-color:#b57a28;color:#ffd89a}
@@ -35,7 +34,7 @@
     body.chat-open #sidePanel{display:grid}
     body.chat-open main{ grid-template-columns:1fr var(--chat-w); }
 
-    /* Stable video box sizing */
+    /* Video box (stable size) */
     #videoWrap{position:relative;background:#0f1320;border:1px solid #1d2436;border-radius:8px;overflow:hidden;aspect-ratio:16/9;min-height:360px;contain:layout paint}
     #vid{width:100%;height:100%;display:block;background:#000;object-fit:contain;aspect-ratio:inherit}
     #overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,rgba(10,14,21,.65),rgba(10,14,21,.75));pointer-events:none;transition:opacity .15s}
@@ -66,7 +65,7 @@
     #chatWrap{border:1px solid #1d2436;border-radius:8px;overflow:hidden;background:#0d1322;min-height:320px}
     #chatIframe{width:100%;height:100%;min-height:320px;border:0;background:#0d1322}
 
-    /* Logs (debugger only) */
+    /* Logs (debugger) */
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
     #logHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#121824;border-bottom:1px solid #1d2436}
     #log{margin:0;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.4;background:#0d1322;white-space:pre;overflow:auto}
@@ -87,10 +86,9 @@
 </head>
 
 <body class="clean">
-  <!-- Banner with dynamic stats -->
+  <!-- Banner -->
   <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
-  <!-- Debug header -->
   <header>
     <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
@@ -144,16 +142,23 @@
     const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
 
-    // ----- Banner stats ( robust ) -----
+    // ----- Banner stats (prefer Host /meta; fall back to GitHub; always numbers) -----
     const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
-    function getLangs(){ return ['Python','HTML','CSS','JavaScript']; }
-    function readChatCount(){
+
+    function readChatCountLocal(){
       const url = new URL(location.href);
-      const fromUrl = url.searchParams.get('copilot_chats');
-      if(fromUrl && /^\d+$/.test(fromUrl)){ localStorage.setItem('copilotChatsTotal', fromUrl); return parseInt(fromUrl,10); }
+      const q = url.searchParams.get('copilot_chats');
+      if(q && /^\d+$/.test(q)){ localStorage.setItem('copilotChatsTotal', q); return parseInt(q,10); }
       const stored = localStorage.getItem('copilotChatsTotal');
-      return stored && /^\d+$/.test(stored) ? parseInt(stored,10) : 0; // default 0 not —
+      return stored && /^\d+$/.test(stored) ? parseInt(stored,10) : 0;
+    }
+    async function fetchMetaFromRelay(relay){
+      try{
+        const r=await fetch(`https://${relay}/meta`, {cache:'no-store', mode:'cors'});
+        if(!r.ok) throw 0;
+        return await r.json();
+      }catch{ return null; }
     }
     async function fetchLinesRaw(rawUrl){
       try{ const r=await fetch(rawUrl,{cache:'no-store',mode:'cors'}); if(!r.ok) throw 0; const t=await r.text(); return t.split(/\r?\n/).length; }catch{return 0}
@@ -163,19 +168,12 @@
         const api=`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=main`;
         const r=await fetch(api,{cache:'no-store'}); if(!r.ok) throw 0;
         const j=await r.json();
-        if(j.content && j.encoding==='base64'){
-          const txt = atob(j.content.replace(/\n/g,''));
-          return txt.split(/\r?\n/).length;
-        }
+        if(j.content && j.encoding==='base64'){ const txt = atob(j.content.replace(/\n/g,'')); return txt.split(/\r?\n/).length; }
         if(j.download_url){ return fetchLinesRaw(j.download_url); }
         return 0;
       }catch{return 0}
     }
-    async function calcLoc(){
-      const url = new URL(location.href);
-      const locParam = url.searchParams.get('loc');
-      if(locParam && /^\d+$/.test(locParam)) return parseInt(locParam,10);
-      // Try raw, then API
+    async function calcLocFallback(){
       const owner='LunarisTHICC', repo='offline';
       const paths=['Viewer.html','Doppelganger.py'];
       let total=0;
@@ -185,49 +183,57 @@
         if(n===0) n = await fetchLinesAPI(owner,repo,p);
         total += n;
       }
-      return total; // may be 0 if offline
+      return total;
     }
-    function bannerItem(text){
-      const span = document.createElement('span');
-      span.className = 'item';
-      const d1 = document.createElement('i'); d1.className='dot';
-      const d2 = document.createElement('i'); d2.className='dot';
-      const label = document.createElement('span'); label.textContent = text;
-      span.appendChild(d1); span.appendChild(label); span.appendChild(d2);
-      return span;
-    }
-    async function buildBanner(){
-      brandTrack.innerHTML = '';
+    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; const l=document.createElement('span'); l.textContent=text; s.append(d1,l,d2); return s; }
+    async function buildBanner(relayHost){
+      brandTrack.innerHTML='';
       const now=new Date(); const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
-      const totalChats = readChatCount();
-      let loc = await calcLoc();
-      if(!Number.isFinite(loc) || loc<0) loc = 0;
-      const items = [
+
+      // Prefer Host meta
+      let loc=0, chats=readChatCountLocal(), langs=['Python','HTML','CSS','JavaScript'];
+      const meta = await fetchMetaFromRelay(relayHost);
+      if(meta && typeof meta.loc==='number'){ loc = meta.loc; }
+      if(meta && typeof meta.copilot_chats==='number' && meta.copilot_chats>0){ chats = meta.copilot_chats; }
+      if(meta && Array.isArray(meta.languages) && meta.languages.length){ langs = meta.languages; }
+      if(loc===0){ loc = await calcLocFallback(); }
+
+      const texts = [
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
-        `Lines of code used (Viewer + Doppelganger): ${loc}`,
-        `Languages used: ${getLangs().join(', ')}`,
-        `Total chats with Copilot: ${totalChats}`,
+        `Lines of code used (Viewer + Doppelganger): ${Math.max(0, loc|0)}`,
+        `Languages used: ${langs.join(', ')}`,
+        `Total chats with Copilot: ${Math.max(0, chats|0)}`,
         `Local time: ${hh}:${mm}`,
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`
       ];
-      const row = document.createDocumentFragment();
-      for(let k=0;k<2;k++){ for(const t of items){ row.appendChild(bannerItem(t)); } }
-      brandTrack.appendChild(row);
+      const frag=document.createDocumentFragment();
+      for(let k=0;k<2;k++){ texts.forEach(t=>frag.appendChild(item(t))); }
+      brandTrack.appendChild(frag);
     }
-    buildBanner(); setInterval(buildBanner, 30000);
 
     // ----- Chat controls -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-    const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim(); if(savedCh) document.getElementById('chatChannel').value = savedCh;
-    function setChatSrc(ch){ if(!ch) return; const parent=location.host; chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}`; }
-    if(savedCh) setChatSrc(savedCh);
-    function toggleChat(){ const opening = !document.body.classList.contains('chat-open'); if(opening){ document.body.classList.add('chat-open'); chatWrap.hidden=false; } else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; } }
+    const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim();
+    function setChatSrc(ch){
+      if(!ch) return;
+      const parent=location.host;
+      chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}`;
+    }
+    function ensureChatChannel(){
+      const params = new URLSearchParams(location.search);
+      let ch = (params.get('channel')||'').trim() || savedCh;
+      if(!ch) ch = 'junkfoodjon'; // sensible default; change via ?channel= or the input box
+      localStorage.setItem('twitchChatChannel', ch);
+      setChatSrc(ch);
+      const input = document.getElementById('chatChannel'); if(input) input.value = ch;
+    }
+    function toggleChat(){ const open=!document.body.classList.contains('chat-open'); if(open){ document.body.classList.add('chat-open'); chatWrap.hidden=false; } else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; } }
     document.getElementById('btnChat').onclick=toggleChat;
     document.getElementById('btnSetChannel').onclick=()=>{ const ch=document.getElementById('chatChannel').value.trim(); if(!ch) return; localStorage.setItem('twitchChatChannel',ch); setChatSrc(ch); document.body.classList.add('chat-open'); chatWrap.hidden=false; };
 
-    // ----- Video + volume/mute + autoplay -----
+    // ----- Video + audio -----
     const vid=document.getElementById('vid'); const vol=document.getElementById('vol'); const btnMute=document.getElementById('btnMute');
     const padIconWrap=document.getElementById('padIconWrap'); const padIcon=document.getElementById('padIcon');
     const overlay=document.getElementById('overlay'), ovText=document.getElementById('ovText'); const videoWrap=document.getElementById('videoWrap');
@@ -236,11 +242,7 @@
     function updateMuteVisual(){ const muted=vid.muted||vid.volume===0; btnMute.classList.toggle('muted',muted); btnMute.setAttribute('aria-pressed', String(!muted)); }
 
     function lockAspectFromTrack(track){
-      try{
-        if(!track || !track.getSettings) return;
-        const st = track.getSettings(); const w = st.width||0, h = st.height||0;
-        if(w>0 && h>0){ videoWrap.style.aspectRatio = `${w} / ${h}`; }
-      }catch{}
+      try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{}
     }
 
     let autoUnmuted = false;
@@ -252,11 +254,18 @@
     vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.muted=false; updateMuteVisual(); });
     const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
 
+    // Fullscreen: button + double-click
+    function toggleFs(){
+      if(!document.fullscreenElement){
+        (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})().call(videoWrap);
+      }else{ (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})().call(document); }
+    }
     const btnFullscreen=document.getElementById('btnFullscreen');
-    btnFullscreen.onclick=()=>{ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||document.body.requestFullscreen||function(){})(); } else { document.exitFullscreen?.(); } };
+    btnFullscreen.onclick=toggleFs;
+    videoWrap.ondblclick=toggleFs;
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
 
-    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
+    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(relayHost); };
 
     // ----- Connection + robust reconnect -----
     const params=new URLSearchParams(location.search);
@@ -281,11 +290,21 @@
     }
 
     function applyLowPlayoutDelay(){
-      try{
-        pc.getReceivers?.().forEach(r=>{
-          try{ r.playoutDelayHint = 0.06; }catch{}
-        });
-      }catch{}
+      try{ pc.getReceivers?.().forEach(r=>{ try{ r.playoutDelayHint = 0.05; }catch{} }); }catch{}
+    }
+
+    let reofferTimer=null;
+    function armReofferWatchdog(){
+      clearTimeout(reofferTimer);
+      reofferTimer = setTimeout(async ()=>{
+        if(!pc || pc.remoteDescription) return;
+        log('No answer yet; sending re-offer');
+        try{
+          const offer=await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws?.readyState===1 && ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}}));
+        }catch{}
+      }, 2500);
     }
 
     function startViewer(){
@@ -326,8 +345,8 @@
       ws.onerror=()=>{ log('WS error'); pill('pWs','bad','WS: error'); restartSoon(); };
       ws.onclose=()=>{ log('WS closed'); pill('pWs','bad','WS: closed'); restartSoon(); };
       ws.onmessage=async(ev)=>{ const msg=JSON.parse(ev.data); if(msg.type==='pong') return;
-        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}})); pill('pSig','warn','Signaling: offer'); }
-        else if(msg.type==='answer'){ await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay(); }
+        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}})); pill('pSig','warn','Signaling: offer'); armReofferWatchdog(); }
+        else if(msg.type==='answer'){ await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay(); clearTimeout(reofferTimer); }
         else if(msg.type==='candidate'){ try{ await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }catch(e){ log('ICE add err '+e); } }
       };
 
@@ -369,7 +388,10 @@
     function stopInputs(){ if(inputTimer){ clearInterval(inputTimer); inputTimer=null; log('Input sender stopped'); } }
 
     // Start
+    const relayParam=(new URLSearchParams(location.search).get('relay')||'').trim();
+    ensureChatChannel();
     startViewer();
+    buildBanner(relayParam ? relayParam.replace(/^https?:\/\//,'').replace(/\/+$/,'') : location.host);
     window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; });
     window.addEventListener('beforeunload', ()=>{ stopInputs(); stopSession(); });
   </script>
