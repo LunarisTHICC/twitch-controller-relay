@@ -16,7 +16,7 @@
 
     /* Banner */
     #brandBanner{position:sticky; top:0; z-index:50; height:var(--banner-h); background:linear-gradient(90deg,rgba(12,10,22,.9),rgba(20,14,38,.9)); border-bottom:1px solid #241d3a; overflow:hidden; display:flex; align-items:center;}
-    #brandTrack{display:flex; gap:40px; align-items:center; white-space:nowrap; will-change:transform; animation:scrollX 38s linear infinite}
+    #brandTrack{display:flex; gap:40px; align-items:center; white-space:nowrap; will-change:transform; animation:scrollX 26s linear infinite}
     #brandTrack .item{font-family:"Orbitron",system-ui,sans-serif;font-size:14px;letter-spacing:1.4px;line-height:1;color:#e9e2ff;text-shadow:0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);display:flex;align-items:center;gap:10px}
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -155,7 +155,8 @@
     }
     async function fetchMetaFromRelay(relay){
       try{
-        const r=await fetch(`https://${relay}/meta`, {cache:'no-store', mode:'cors'});
+        const scheme = location.protocol === 'https:' ? 'https' : 'http';
+        const r=await fetch(`${scheme}://${relay}/meta`, {cache:'no-store', mode:'cors'});
         if(!r.ok) throw 0;
         return await r.json();
       }catch{ return null; }
@@ -191,7 +192,6 @@
       const now=new Date(); const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
 
-      // Prefer Host meta
       let loc=0, chats=readChatCountLocal(), langs=['Python','HTML','CSS','JavaScript'];
       const meta = await fetchMetaFromRelay(relayHost);
       if(meta && typeof meta.loc==='number'){ loc = meta.loc; }
@@ -224,7 +224,7 @@
     function ensureChatChannel(){
       const params = new URLSearchParams(location.search);
       let ch = (params.get('channel')||'').trim() || savedCh;
-      if(!ch) ch = 'junkfoodjon'; // sensible default; change via ?channel= or the input box
+      if(!ch) ch = 'junkfoodjon';
       localStorage.setItem('twitchChatChannel', ch);
       setChatSrc(ch);
       const input = document.getElementById('chatChannel'); if(input) input.value = ch;
@@ -240,10 +240,7 @@
 
     function ensurePlay(){ const p=vid.play(); if(p&&p.then)p.catch(()=>{}); }
     function updateMuteVisual(){ const muted=vid.muted||vid.volume===0; btnMute.classList.toggle('muted',muted); btnMute.setAttribute('aria-pressed', String(!muted)); }
-
-    function lockAspectFromTrack(track){
-      try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{}
-    }
+    function lockAspectFromTrack(track){ try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{} }
 
     let autoUnmuted = false;
     async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume===0) { vid.volume = Math.max(0.05, stored/100); vol.value=Math.round(vid.volume*100); } vid.muted=false; await vid.play(); }catch{} updateMuteVisual(); }
@@ -289,9 +286,7 @@
       }catch(e){ log('ICE restart error'); return false; }
     }
 
-    function applyLowPlayoutDelay(){
-      try{ pc.getReceivers?.().forEach(r=>{ try{ r.playoutDelayHint = 0.05; }catch{} }); }catch{}
-    }
+    function applyLowPlayoutDelay(){ try{ pc.getReceivers?.().forEach(r=>{ try{ r.playoutDelayHint = 0.05; }catch{} }); }catch{} }
 
     let reofferTimer=null;
     function armReofferWatchdog(){
@@ -397,4 +392,3 @@
   </script>
 </body>
 </html>
-
