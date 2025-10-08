@@ -21,7 +21,7 @@
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
     /* Debug header */
-    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid #23232a;position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
+    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
     .pill.ok{background:#15321f;border-color:#1e6a33;color:#a5e7b9}
     .pill.warn{background:#3a2a18;border-color:#b57a28;color:#ffd89a}
@@ -48,16 +48,9 @@
     input[type=range]{appearance:none;height:6px;background:#1d1931;border:1px solid #2b2350;width:160px;border-radius:999px}
     input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(145,70,255,.55);border:1px solid #fff1}
 
-    /* Icons */
-    #iconRow{display:flex;align-items:center;gap:8px}
-    #btnMute{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#1a1430;border:1px solid #2a2050;cursor:pointer}
-    #btnMute svg{width:20px;height:20px;fill:var(--accent);transition:opacity .15s,filter .15s}
-    #btnMute.muted svg{opacity:.45;filter:grayscale(.4) brightness(.8)}
-    #padIconWrap{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#141a12;border:1px solid #1f2b19}
-    #padIconWrap.off{background:#1b1b1e;border-color:#2a2a32}
-    #padIcon{width:22px;height:22px}
-    #padIcon.off path{fill:#8a8a98}
-    #padIcon.on path{fill:var(--ok);filter:drop-shadow(0 0 6px rgba(34,197,94,.65))}
+    /* Input blocking controls */
+    #policyRow{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#151525;border:1px solid #272740;border-radius:8px}
+    #policyRow label{opacity:.9}
 
     /* Side panel */
     #sidePanel{display:none;grid-template-rows:min-content 1fr;gap:10px}
@@ -78,7 +71,7 @@
     body.clean header{display:none!important}
     body.clean #logPanel{display:none!important}
     body.clean #controls>*{display:none}
-    body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow{display:flex}
+    body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow, body.clean #policyRow{display:flex}
     body:not(.clean) #btnFullscreen{display:none}
     .fs-active #videoWrap{box-shadow:0 0 0 2px var(--accent) inset}
   </style>
@@ -100,6 +93,7 @@
       </div>
       <div id="controls">
         <button id="btnChat" class="accent" title="Toggle Twitch chat">Twitch Chat</button>
+
         <div id="volumeWrap" style="display:flex;align-items:center;gap:8px">
           <label for="vol" style="opacity:.8">Volume</label>
           <input id="vol" type="range" min="0" max="100" value="0" />
@@ -118,6 +112,17 @@
             </div>
           </div>
         </div>
+
+        <div id="policyRow" title="Block selected controller inputs on the host">
+          <label>Block:</label>
+          <label><input type="checkbox" id="cbAbxy" /> ABXY</label>
+          <label><input type="checkbox" id="cbDpad" /> DPad</label>
+          <label><input type="checkbox" id="cbSticks" /> Sticks</label>
+          <label><input type="checkbox" id="cbTrig" /> Triggers</label>
+          <label><input type="checkbox" id="cbMeta" /> Start/Back</label>
+          <button id="btnApplyPolicy" class="accent">Apply</button>
+        </div>
+
         <button id="btnFullscreen" class="accent" title="Fullscreen">Fullscreen</button>
         <button id="btnDownloadLogs">Download logs</button>
         <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px"/>
@@ -193,7 +198,12 @@
     // ----- Chat -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
     const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim();
-    function setChatSrc(ch){ if(!ch) return; const parent=location.host; chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}`; }
+    function setChatSrc(ch){
+      if(!ch) return;
+      const parent=location.host;
+      // force dark theme
+      chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
+    }
     function ensureChatChannel(){
       const params = new URLSearchParams(location.search);
       let ch = (params.get('channel')||'').trim() || savedCh || 'junkfoodjon';
@@ -335,12 +345,48 @@
       sendInput({type:'input',buttons,axes,triggers}); },33); log('Input sender started'); }
     function stopInputs(){ if(inputTimer){ clearInterval(inputTimer); inputTimer=null; log('Input sender stopped'); } }
 
+    // Policy controls
+    const cbAbxy=document.getElementById('cbAbxy'), cbDpad=document.getElementById('cbDpad'), cbSticks=document.getElementById('cbSticks'), cbTrig=document.getElementById('cbTrig'), cbMeta=document.getElementById('cbMeta');
+    const btnApplyPolicy=document.getElementById('btnApplyPolicy');
+    async function loadPolicy(){
+      try{
+        const scheme = location.protocol === 'https:' ? 'https' : 'http';
+        const r=await fetch(`${scheme}://${relayHost}/api/input-policy`, {mode:'cors'});
+        const j=await r.json();
+        cbAbxy.checked=!!j.block_abxy; cbDpad.checked=!!j.block_dpad; cbSticks.checked=!!j.block_sticks; cbTrig.checked=!!j.block_triggers; cbMeta.checked=!!j.block_meta;
+      }catch(e){ log('Policy fetch failed'); }
+    }
+    async function applyPolicy(){
+      try{
+        const scheme = location.protocol === 'https:' ? 'https' : 'http';
+        const body={block_abxy:cbAbxy.checked, block_dpad:cbDpad.checked, block_sticks:cbSticks.checked, block_triggers:cbTrig.checked, block_meta:cbMeta.checked};
+        await fetch(`${scheme}://${relayHost}/api/input-policy`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+        log('Policy applied');
+      }catch(e){ log('Policy apply failed'); }
+    }
+    btnApplyPolicy.onclick=applyPolicy;
+
     // Start
     const relayParam=(new URLSearchParams(location.search).get('relay')||'').trim();
     ensureChatChannel();
     startViewer();
     buildBanner(relayParam ? relayParam.replace(/^https?:\/\//,'').replace(/\/+$/,'') : location.host);
-    window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; });
+    window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; loadPolicy(); });
+
+    // Instant download logs
+    document.getElementById('btnDownloadLogs').onclick=()=>{
+      try{
+        const blob = new Blob([logEl.textContent||''], {type:'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'viewer-log.txt';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }catch(e){ log('Download failed'); }
+    };
+
     window.addEventListener('beforeunload', ()=>{ stopInputs(); stopSession(); });
   </script>
 </body>
