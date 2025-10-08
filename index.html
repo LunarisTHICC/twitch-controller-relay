@@ -9,28 +9,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg:#0e0e10; --panel:#18181b; --edge:#23232a; --fg:#efeff1; --muted:#b9b9c2;
-      --accent:#9146ff; --accent-2:#772ce8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
-      --chat-w:360px; --banner-h:36px;
-    }
+    :root { --bg:#0e0e10; --panel:#18181b; --edge:#23232a; --fg:#efeff1; --muted:#b9b9c2; --accent:#9146ff; --accent-2:#772ce8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --chat-w:360px; --banner-h:36px; }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--fg);
-         font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans";}
-    /* Use Orbitron for interactive elements to match banner */
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans";}
     button, input, select, label { font-family:"Orbitron", system-ui, sans-serif; letter-spacing:0.4px; }
 
-    /* Sleek banner */
-    #brandBanner{position:sticky; top:0; z-index:50; height:var(--banner-h);
-      background:linear-gradient(90deg,rgba(12,10,22,.9),rgba(20,14,38,.9));
-      border-bottom:1px solid #241d3a; overflow:hidden; display:flex; align-items:center;}
+    /* Banner */
+    #brandBanner{position:sticky; top:0; z-index:50; height:var(--banner-h); background:linear-gradient(90deg,rgba(12,10,22,.9),rgba(20,14,38,.9)); border-bottom:1px solid #241d3a; overflow:hidden; display:flex; align-items:center;}
     #brandTrack{display:flex; gap:40px; align-items:center; white-space:nowrap; will-change:transform; animation:scrollX 26s linear infinite}
     #brandTrack .item{font-family:"Orbitron",system-ui,sans-serif;font-size:14px;letter-spacing:1.4px;line-height:1;color:#e9e2ff;text-shadow:0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);display:flex;align-items:center;gap:10px}
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
-    /* Debug status header (hidden in clean) */
+    /* Debug header (hidden in clean) */
     header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
     .pill.ok{background:#15321f;border-color:#1e6a33;color:#a5e7b9}
@@ -44,17 +36,8 @@
     body.chat-open main{ grid-template-columns:1fr var(--chat-w); }
 
     /* Stable video box sizing */
-    #videoWrap{
-      position:relative; background:#0f1320; border:1px solid #1d2436; border-radius:8px; overflow:hidden;
-      /* Start with conservative 16:9. We’ll adjust via JS to the real track ratio when known. */
-      aspect-ratio: 16 / 9;
-      min-height: 360px; contain: layout paint; /* contain reduces thrash on reconnect */
-    }
-    #vid{
-      width:100%; height:100%; display:block; background:#000; object-fit:contain;
-      /* Prevent Chrome from toggling intrinsic size during track switches */
-      aspect-ratio: inherit;
-    }
+    #videoWrap{position:relative;background:#0f1320;border:1px solid #1d2436;border-radius:8px;overflow:hidden;aspect-ratio:16/9;min-height:360px;contain:layout paint}
+    #vid{width:100%;height:100%;display:block;background:#000;object-fit:contain;aspect-ratio:inherit}
     #overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,rgba(10,14,21,.65),rgba(10,14,21,.75));pointer-events:none;transition:opacity .15s}
     #overlay[hidden]{display:none}
     #ovText{font-size:16px;color:#c6d3ea;text-shadow:0 1px 2px rgba(0,0,0,.6)}
@@ -78,12 +61,12 @@
     #padIcon.off path{fill:#8a8a98}
     #padIcon.on path{fill:var(--ok);filter:drop-shadow(0 0 6px rgba(34,197,94,.65))}
 
-    /* Side panel (chat + logs) */
+    /* Side panel */
     #sidePanel{display:none;grid-template-rows:min-content 1fr;gap:10px}
     #chatWrap{border:1px solid #1d2436;border-radius:8px;overflow:hidden;background:#0d1322;min-height:320px}
     #chatIframe{width:100%;height:100%;min-height:320px;border:0;background:#0d1322}
 
-    /* Viewer logs (debugger only) */
+    /* Logs (debugger only) */
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
     #logHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#121824;border-bottom:1px solid #1d2436}
     #log{margin:0;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.4;background:#0d1322;white-space:pre;overflow:auto}
@@ -93,24 +76,21 @@
     #footerRight{margin-left:auto;display:flex;align-items:center;gap:8px}
     #btnDebugger{padding:6px 10px;font-size:12px;opacity:.9}
 
-    /* CLEAN vs DEBUGGER */
+    /* Clean vs Debugger */
     body.clean header{display:none!important}
     body.clean #logPanel{display:none!important}
     body.clean #controls>*{display:none}
     body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow{display:flex}
     body:not(.clean) #btnFullscreen{display:none}
-
     .fs-active #videoWrap{box-shadow:0 0 0 2px var(--accent) inset}
   </style>
 </head>
 
 <body class="clean">
   <!-- Banner with dynamic stats -->
-  <div id="brandBanner" role="banner" aria-label="Credits banner">
-    <div id="brandTrack"></div>
-  </div>
+  <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
-  <!-- Debug status header (hidden in clean) -->
+  <!-- Debug header -->
   <header>
     <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
@@ -122,14 +102,12 @@
         <video id="vid" playsinline muted autoplay></video>
         <div id="overlay"><div id="ovText">Connecting…</div></div>
       </div>
-
       <div id="controls">
         <button id="btnChat" class="accent" title="Toggle Twitch chat">Twitch Chat</button>
         <div id="volumeWrap" style="display:flex;align-items:center;gap:8px">
           <label for="vol" style="opacity:.8">Volume</label>
           <input id="vol" type="range" min="0" max="100" value="0" />
           <div id="iconRow">
-            <!-- Purple speaker icon -->
             <button id="btnMute" class="muted" aria-label="Toggle mute" title="Toggle audio">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 10v4h4l5 4V6L7 10H3z"></path>
@@ -137,7 +115,6 @@
                 <path d="M18 12a8 8 0 0 0-2.1-5.4l1.4-1.4A10 10 0 0 1 20 12a10 10 0 0 1-2.7 6.8l-1.4-1.4A8 8 0 0 0 18 12z"></path>
               </svg>
             </button>
-            <!-- Controller presence icon -->
             <div id="padIconWrap" class="off" title="Controller status">
               <svg id="padIcon" class="off" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-3-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"></path>
@@ -145,10 +122,7 @@
             </div>
           </div>
         </div>
-        <!-- Fullscreen in clean mode only -->
         <button id="btnFullscreen" class="accent" title="Fullscreen">Fullscreen</button>
-
-        <!-- Debugger-only utilities (hidden by CSS in clean) -->
         <button id="btnDownloadLogs">Download logs</button>
         <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px"/>
         <button id="btnSetChannel">Set chat channel</button>
@@ -170,39 +144,48 @@
     const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
 
-    // ---------- Banner with dynamic stats (no duplication) ----------
-    const PROJECT_START = new Date('2025-09-29T00:00:00Z'); // adjust if needed
+    // ----- Banner stats ( robust ) -----
+    const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
-
     function getLangs(){ return ['Python','HTML','CSS','JavaScript']; }
     function readChatCount(){
       const url = new URL(location.href);
       const fromUrl = url.searchParams.get('copilot_chats');
       if(fromUrl && /^\d+$/.test(fromUrl)){ localStorage.setItem('copilotChatsTotal', fromUrl); return parseInt(fromUrl,10); }
       const stored = localStorage.getItem('copilotChatsTotal');
-      return stored && /^\d+$/.test(stored) ? parseInt(stored,10) : null;
+      return stored && /^\d+$/.test(stored) ? parseInt(stored,10) : 0; // default 0 not —
     }
-    async function fetchLines(url){
+    async function fetchLinesRaw(rawUrl){
+      try{ const r=await fetch(rawUrl,{cache:'no-store',mode:'cors'}); if(!r.ok) throw 0; const t=await r.text(); return t.split(/\r?\n/).length; }catch{return 0}
+    }
+    async function fetchLinesAPI(owner,repo,path){
       try{
-        const r=await fetch(url,{cache:'no-store',mode:'cors'});
-        if(!r.ok) throw 0;
-        const txt=await r.text();
-        return txt.split(/\r?\n/).length;
-      }catch{ return 0; }
+        const api=`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=main`;
+        const r=await fetch(api,{cache:'no-store'}); if(!r.ok) throw 0;
+        const j=await r.json();
+        if(j.content && j.encoding==='base64'){
+          const txt = atob(j.content.replace(/\n/g,''));
+          return txt.split(/\r?\n/).length;
+        }
+        if(j.download_url){ return fetchLinesRaw(j.download_url); }
+        return 0;
+      }catch{return 0}
     }
     async function calcLoc(){
-      // Prefer URL override (?loc=1234), else sum Viewer + Doppelganger (graceful fallback).
       const url = new URL(location.href);
       const locParam = url.searchParams.get('loc');
       if(locParam && /^\d+$/.test(locParam)) return parseInt(locParam,10);
-
-      const files = [
-        'https://raw.githubusercontent.com/LunarisTHICC/offline/main/Viewer.html',
-        'https://raw.githubusercontent.com/LunarisTHICC/offline/main/Doppelganger.py'
-      ];
-      let total = 0;
-      for(const u of files){ total += await fetchLines(u); }
-      return total;
+      // Try raw, then API
+      const owner='LunarisTHICC', repo='offline';
+      const paths=['Viewer.html','Doppelganger.py'];
+      let total=0;
+      for(const p of paths){
+        const raw=`https://raw.githubusercontent.com/${owner}/${repo}/main/${p}?t=${Date.now()}`;
+        let n = await fetchLinesRaw(raw);
+        if(n===0) n = await fetchLinesAPI(owner,repo,p);
+        total += n;
+      }
+      return total; // may be 0 if offline
     }
     function bannerItem(text){
       const span = document.createElement('span');
@@ -218,13 +201,14 @@
       const now=new Date(); const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
       const totalChats = readChatCount();
-      const loc = await calcLoc();
+      let loc = await calcLoc();
+      if(!Number.isFinite(loc) || loc<0) loc = 0;
       const items = [
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
-        `Lines of code used (Viewer + Doppelganger): ${loc>0?loc:'—'}`,
+        `Lines of code used (Viewer + Doppelganger): ${loc}`,
         `Languages used: ${getLangs().join(', ')}`,
-        `Total chats with Copilot: ${totalChats ?? '—'}`,
+        `Total chats with Copilot: ${totalChats}`,
         `Local time: ${hh}:${mm}`,
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`
       ];
@@ -234,80 +218,47 @@
     }
     buildBanner(); setInterval(buildBanner, 30000);
 
-    // ---------- Chat controls ----------
+    // ----- Chat controls -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
     const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim(); if(savedCh) document.getElementById('chatChannel').value = savedCh;
     function setChatSrc(ch){ if(!ch) return; const parent=location.host; chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}`; }
     if(savedCh) setChatSrc(savedCh);
-    function toggleChat(){
-      const opening = !document.body.classList.contains('chat-open');
-      if(opening){ document.body.classList.add('chat-open'); chatWrap.hidden=false; }
-      else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; }
-    }
+    function toggleChat(){ const opening = !document.body.classList.contains('chat-open'); if(opening){ document.body.classList.add('chat-open'); chatWrap.hidden=false; } else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; } }
     document.getElementById('btnChat').onclick=toggleChat;
     document.getElementById('btnSetChannel').onclick=()=>{ const ch=document.getElementById('chatChannel').value.trim(); if(!ch) return; localStorage.setItem('twitchChatChannel',ch); setChatSrc(ch); document.body.classList.add('chat-open'); chatWrap.hidden=false; };
 
-    // ---------- Video + volume/mute + autoplay ----------
-    const vid=document.getElementById('vid');
-    const vol=document.getElementById('vol');
-    const btnMute=document.getElementById('btnMute');
+    // ----- Video + volume/mute + autoplay -----
+    const vid=document.getElementById('vid'); const vol=document.getElementById('vol'); const btnMute=document.getElementById('btnMute');
     const padIconWrap=document.getElementById('padIconWrap'); const padIcon=document.getElementById('padIcon');
-    const overlay=document.getElementById('overlay'), ovText=document.getElementById('ovText');
-    const videoWrap=document.getElementById('videoWrap');
+    const overlay=document.getElementById('overlay'), ovText=document.getElementById('ovText'); const videoWrap=document.getElementById('videoWrap');
 
     function ensurePlay(){ const p=vid.play(); if(p&&p.then)p.catch(()=>{}); }
     function updateMuteVisual(){ const muted=vid.muted||vid.volume===0; btnMute.classList.toggle('muted',muted); btnMute.setAttribute('aria-pressed', String(!muted)); }
 
-    // Lock container aspect to real track dimensions once known to prevent Chrome resize jumps
     function lockAspectFromTrack(track){
       try{
         if(!track || !track.getSettings) return;
-        const st = track.getSettings();
-        const w = st.width||0, h = st.height||0;
-        if(w>0 && h>0){
-          videoWrap.style.aspectRatio = `${w} / ${h}`;
-        }
+        const st = track.getSettings(); const w = st.width||0, h = st.height||0;
+        if(w>0 && h>0){ videoWrap.style.aspectRatio = `${w} / ${h}`; }
       }catch{}
     }
 
-    // Auto‑unmute on first gesture or gamepad
     let autoUnmuted = false;
-    async function firstInteract(){
-      if(autoUnmuted) return;
-      autoUnmuted = true;
-      try{
-        const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10)));
-        if(vid.volume===0) { vid.volume = Math.max(0.05, stored/100); vol.value=Math.round(vid.volume*100); }
-        vid.muted=false; await vid.play();
-      }catch{}
-      updateMuteVisual();
-    }
+    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume===0) { vid.volume = Math.max(0.05, stored/100); vol.value=Math.round(vid.volume*100); } vid.muted=false; await vid.play(); }catch{} updateMuteVisual(); }
     ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev, firstInteract, {once:true, capture:true}));
     window.addEventListener('gamepadconnected', firstInteract, {once:true});
 
-    btnMute.onclick=async()=>{
-      try{
-        if(vid.muted || vid.volume===0){
-          vid.muted=false;
-          if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10))); vid.volume=Math.max(0.05, stored/100); vol.value=Math.round(vid.volume*100); }
-          await vid.play();
-        } else { vid.muted=true; }
-      }catch(e){ log('Autoplay error: '+e.name); }
-      updateMuteVisual();
-    };
+    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10))); vid.volume=Math.max(0.05, stored/100); vol.value=Math.round(vid.volume*100); } await vid.play(); } else { vid.muted=true; } }catch(e){ log('Autoplay error: '+e.name); } updateMuteVisual(); };
     vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.muted=false; updateMuteVisual(); });
-    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10)));
-    vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
+    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
 
-    // Fullscreen (hidden in debugger mode)
     const btnFullscreen=document.getElementById('btnFullscreen');
     btnFullscreen.onclick=()=>{ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||document.body.requestFullscreen||function(){})(); } else { document.exitFullscreen?.(); } };
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
 
-    // Debugger toggle
     document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
 
-    // ---------- Connection + robust reconnect ----------
+    // ----- Connection + robust reconnect -----
     const params=new URLSearchParams(location.search);
     const relayHost=(params.get('relay')||location.host).replace(/^https?:\/\//,'').replace(/\/+$/,'');
     const wsUrl=`${location.protocol==='https:'?'wss':'ws'}://${relayHost}/ws/viewer`;
@@ -315,7 +266,7 @@
     pill('pRelay','ok','Relay: '+relayHost); pill('pTransport','ok','Transport: WebRTC');
 
     let pc, ws, dc, viewerID=null, restarting=false, hbTimer=null, stallTimer=null;
-    let retryDelay = 700; // backoff base
+    let retryDelay = 700;
     const inbound=new MediaStream();
 
     async function iceRestart(){
@@ -327,6 +278,14 @@
         log('ICE restart attempt sent');
         return true;
       }catch(e){ log('ICE restart error'); return false; }
+    }
+
+    function applyLowPlayoutDelay(){
+      try{
+        pc.getReceivers?.().forEach(r=>{
+          try{ r.playoutDelayHint = 0.06; }catch{}
+        });
+      }catch{}
     }
 
     function startViewer(){
@@ -350,15 +309,13 @@
         if(!inbound.getTracks().includes(e.track)) inbound.addTrack(e.track);
         if(vid.srcObject!==inbound) vid.srcObject=inbound;
         pill('pAv','ok','A/V: attached'); hideOverlay(); ensurePlay();
-        if(e.track.kind==='video'){ lockAspectFromTrack(e.track); retryDelay = 700; } // reset backoff on good attach
+        if(e.track.kind==='video'){ lockAspectFromTrack(e.track); retryDelay = 700; }
+        applyLowPlayoutDelay();
       };
       pc.oniceconnectionstatechange=async()=>{
         const s=pc.iceConnectionState;
         pill('pIce', (s==='connected'||s==='completed')?'ok':(s==='failed'?'bad':'warn'), 'ICE: '+s);
-        if(s==='disconnected'){
-          // Try a quick ICE restart first; if it doesn’t recover, full restart will kick via stall watchdog
-          await iceRestart();
-        }
+        if(s==='disconnected'){ await iceRestart(); }
         if(s==='failed'){ showOverlay('Reconnecting…'); restartSoon(); }
       };
       pc.onconnectionstatechange=()=>{ const s=pc.connectionState; pill('pPc', s==='connected'?'ok':(s==='failed'?'bad':'warn'), 'Peer: '+s); pill('pDtls', s==='connected'?'ok':(s==='failed'?'bad':'warn'), 'DTLS: '+s); if(s==='failed'||s==='closed'){ showOverlay('Reconnecting…'); restartSoon(); } };
@@ -383,7 +340,6 @@
     function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5, 5000); }, retryDelay); }
     function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?.close(); }catch{} try{ pc?.close(); }catch{} vid.srcObject=null; dc=ws=pc=null; }
 
-    // Stall detector (prefers ICE restart first)
     function startStallDetector(){
       if(stallTimer) clearInterval(stallTimer);
       let vBytesPrev=0, lastOk=performance.now();
@@ -395,7 +351,6 @@
           const now=performance.now();
           if(vBytes>vBytesPrev){ vBytesPrev=vBytes; lastOk=now; pill('pAv','ok','A/V: receiving'); hideOverlay(); ensurePlay(); }
           else if(now-lastOk>4500){
-            // Attempt ICE restart once during a stall window
             const ok = await iceRestart();
             if(!ok || now-lastOk>8000){ pill('pAv','bad','A/V: stalled'); showOverlay('Reconnecting…'); restartSoon(); }
             else { pill('pAv','warn','A/V: restarting ICE…'); showOverlay('Buffering…'); }
@@ -404,7 +359,7 @@
       }, 1000);
     }
 
-    // Input sender + controller presence
+    // Inputs + presence
     let inputTimer=null,lastPayload=''; const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
     function sendInput(o){ const s=JSON.stringify(o); if(s===lastPayload) return; lastPayload=s; try{ if(dc&&dc.readyState==='open') dc.send(s); else if(ws&&ws.readyState===1) ws.send(s); }catch{} }
     function setPadPresent(on){ padIconWrap.classList.toggle('off',!on); padIcon.classList.toggle('off',!on); padIcon.classList.toggle('on',!!on); padIconWrap.title=on?"Controller detected":"No controller detected"; }
