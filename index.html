@@ -3,32 +3,46 @@
 <head>
   <meta charset="utf-8" />
   <title>WebRTC Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Oswald for intro, Montserrat/Orbitron for main UI -->
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Montserrat:wght@500;700&family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
-    :root { --bg:#0e0e10; --panel:#18181b; --edge:#23232a; --fg:#efeff1; --muted:#b9b9c2; --accent:#9146ff; --accent-2:#772ce8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --chat-w:360px; --banner-h:44px; }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans";}
-    button, input, select, label { font-family:"Orbitron", system-ui, sans-serif; letter-spacing:0.4px; }
+    :root {
+      --bg: #0e0e10; --panel: #18181b; --edge: #23232a; --fg: #efeff1; --muted: #b9b9c2;
+      --accent: #9146ff; --accent-2: #772ce8; --ok: #22c55e; --warn: #f59e0b; --bad: #ef4444;
+      --chat-w: 360px; --banner-h: 44px;
+      --header-h: 48px;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
+      overscroll-behavior-y: none;
+    }
+    body { min-height: 100vh; }
+
+    button, input, select, label { font-family: "Orbitron", system-ui, sans-serif; letter-spacing: 0.4px; }
 
     /* Banner */
-    #brandBanner{
-      position:relative; /* was sticky, now just relative */
-      top:0;
-      z-index:50;
-      height:var(--banner-h);
-      background:linear-gradient(90deg,rgba(12,10,22,.9),rgba(20,14,38,.9));
-      border-bottom:1px solid #241d3a;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      width:100%;
+    #brandBanner {
+      position: relative;
+      top: 0;
+      z-index: 50;
+      height: var(--banner-h);
+      background: linear-gradient(90deg, rgba(12,10,22,.9), rgba(20,14,38,.9));
+      border-bottom: 1px solid #241d3a;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      width: 100%;
     }
-    #brandTrack{display:flex; gap:40px; align-items:center; white-space:nowrap; will-change:transform; animation:scrollX 38s linear infinite}
-    #brandTrack .item{font-family:"Orbitron",system-ui,sans-serif;font-size:14px;letter-spacing:1.4px;line-height:1;color:#e9e2ff;text-shadow:0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
+    #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 26s linear infinite }
+    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
@@ -41,13 +55,59 @@
     #wsUrl{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#9fb2d1}
 
     /* Layout */
-    main{display:grid;grid-template-columns:1fr;gap:10px;padding:12px}
-    body.chat-open #sidePanel{display:grid}
+    html, body {
+      height: 100%;
+      min-height: 100%;
+    }
+    body, #root {
+      min-height: 100vh;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 12px;
+      box-sizing: border-box;
+      min-height: calc(100vh - var(--banner-h) - var(--header-h) - 60px);
+    }
+    body.chat-open #sidePanel{display:grid;}
     body.chat-open main{ grid-template-columns:1fr var(--chat-w); }
 
-    /* Video */
-    #videoWrap{position:relative;background:#0f1320;border:1px solid #1d2436;border-radius:8px;overflow:hidden;aspect-ratio:16/9;min-height:360px;contain:layout paint}
-    #vid{width:100%;height:100%;display:block;background:#000;object-fit:contain;aspect-ratio:inherit}
+    /* Responsive Video */
+    #videoWrap {
+      position: relative;
+      background: #0f1320;
+      border: 1px solid #1d2436;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      min-height: 180px;
+      max-height: calc(100vh - var(--banner-h) - var(--header-h) - 60px);
+      height: 65vw;
+      max-width: 100%;
+      width: 100%;
+      contain: layout paint;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    @media (max-width: 900px) {
+      #videoWrap { height: 48vw; min-height: 140px; }
+    }
+    @media (max-width: 700px) {
+      #videoWrap { height: 38vw; min-height: 90px; }
+    }
+    @media (max-width: 600px) {
+      #videoWrap { height: 30vw; min-height: 60px; }
+      main { padding: 5px; }
+    }
+    #vid { width: 100%; height: 100%; display: block; background: #000; object-fit: contain; aspect-ratio: inherit }
     #overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,rgba(10,14,21,.65),rgba(10,14,21,.75));pointer-events:none;transition:opacity .15s}
     #overlay[hidden]{display:none}
     #ovText{font-size:16px;color:#c6d3ea;text-shadow:0 1px 2px rgba(0,0,0,.6)}
@@ -62,8 +122,34 @@
 
     /* Side panel */
     #sidePanel{display:none;grid-template-rows:min-content 1fr;gap:10px}
-    #chatWrap{border:1px solid #1d2436;border-radius:8px;overflow:hidden;background:#0d1322;min-height:320px;display:flex;flex-direction:column;height:100%;}
-    #chatIframe{width:100%;height:100%;min-height:320px;flex:1 1 0;display:block;border:0;background:#0d1322;}
+    #chatWrap {
+      border: 1px solid #1d2436;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0d1322;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-width: 200px;
+      width: 100%;
+    }
+    #chatIframe {
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      flex: 1 1 0;
+      display: block;
+      border: 0;
+      background: #0d1322 !important;
+      color-scheme: dark;
+      color: #fff;
+    }
+    /* Force dark mode for Twitch chat iframe container */
+    .twitch-dark-bg {
+      background: #0d1322 !important;
+      color-scheme: dark !important;
+    }
 
     /* Logs (debugger) */
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
@@ -455,7 +541,6 @@
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
       const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const texts = [
-        // "Different architecture types used." was removed as requested
         `Local time: ${hh}:${mm}`,
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
         `Made by JunkfoodJon with CoPilot and GitHub`,
@@ -475,7 +560,9 @@
       const parent=location.hostname; // Twitch requires hostname, not host/port
       const ch='junkfoodjon';
       // Twitch dark mode, allow iframe to fill entire chatWrap flexbox area
+      // The "dark" param is necessary but Twitch may still use system color scheme, so force dark on wrapper
       chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
+      chatIframe.classList.add('twitch-dark-bg');
       chatIframe.style.background='#0d1322';
       chatIframe.style.height='100%';
       chatIframe.style.width='100%';
