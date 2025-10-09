@@ -42,12 +42,12 @@
       width: 100%;
     }
     #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 26s linear infinite }
-    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145[...]
+    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
     /* Debug header */
-    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid #1f1f23;position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
+    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
     .pill.ok{background:#15321f;border-color:#1e6a33;color:#a5e7b9}
     .pill.warn{background:#3a2a18;border-color:#b57a28;color:#ffd89a}
@@ -145,15 +145,18 @@
       color-scheme: dark;
       color: #fff;
     }
+    /* Force dark mode for Twitch chat iframe container */
     .twitch-dark-bg {
       background: #0d1322 !important;
       color-scheme: dark !important;
     }
 
+    /* Logs (debugger) */
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
     #logHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#121824;border-bottom:1px solid #1d2436}
     #log{margin:0;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.4;background:#0d1322;white-space:pre;overflow:auto}
 
+    /* Footer */
     footer{
       display:flex;
       align-items:center;
@@ -193,6 +196,7 @@
     #footerRight{margin-left:auto;display:flex;align-items:center;gap:8px}
     #btnDebugger{padding:6px 10px;font-size:12px;opacity:.9}
 
+    /* Connection Lost Overlay */
     #lostConnectionOverlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -240,6 +244,7 @@
       font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
       letter-spacing: 0.04em;
     }
+    /* Clean vs Debugger */
     body.clean header{display:none!important}
     body.clean #logPanel{display:none!important}
     body.clean #controls>*{display:none}
@@ -247,6 +252,7 @@
     body:not(.clean) #btnFullscreen{display:none}
     .fs-active #videoWrap{box-shadow:0 0 0 2px var(--accent) inset}
 
+    /* --- Animated Intro Styles --- */
     #intro-overlay {
       position: fixed;
       inset: 0;
@@ -339,7 +345,7 @@
   <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
   <header>
-    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DT[...]
+    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
   </header>
 
@@ -365,7 +371,7 @@
             </button>
             <div id="padIconWrap" class="off" title="Controller status">
               <svg id="padIcon" class="off" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1[...]
+                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
               </svg>
             </div>
           </div>
@@ -618,7 +624,7 @@
     // NOTE: Banner stats are now static per user request!
     const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
-    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot';[...]
+    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(' ')); s.appendChild(document.createTextNode(text)); s.appendChild(document.createTextNode(' ')); s.appendChild(d2); return s; }
     async function buildBanner(){
       brandTrack.innerHTML='';
       // Static stats per user request
@@ -679,15 +685,15 @@
     function lockAspectFromTrack(track){ try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{} }
 
     let autoUnmuted = false;
-    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume==[...]
+    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume===0&&stored>0){ vid.volume=stored/100; vol.value=stored; } vid.muted=false; updateMuteVisual(); ensurePlay(); }catch{} }
     ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev, firstInteract, {once:true, capture:true}));
 
-    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)[...]
-    vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.mu[...]
-    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual([...]
+    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)||30)); vid.volume=stored/100; vol.value=stored; } }else{ vid.muted=true; } updateMuteVisual(); ensurePlay(); }catch{} };
+    vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.muted=false; updateMuteVisual(); ensurePlay(); });
+    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
 
     // Fullscreen
-    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})[...]
+    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})?.call(videoWrap); } else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})?.call(document); } }
     document.getElementById('btnFullscreen').onclick=toggleFs;
     videoWrap.ondblclick=toggleFs;
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
@@ -782,7 +788,7 @@
       ws.onerror=()=>{ handleDisconnect("WebSocket error"); };
       ws.onclose=()=>{ handleDisconnect("WebSocket closed"); };
       ws.onmessage=async(ev)=>{ const msg=JSON.parse(ev.data); if(msg.type==='pong') return;
-        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.[...]
+        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}})); }
         else if(msg.type==='answer'){ await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay(); }
         else if(msg.type==='candidate'){ try{ await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }catch(e){ log('ICE add err '+e); } }
       };
@@ -795,9 +801,9 @@
 
     function showOverlay(text){ if(text) ovText.textContent=text; overlay.hidden=false; }
     function hideOverlay(){ overlay.hidden=true; }
-    function startHeartbeats(){ if(hbTimer) clearInterval(hbTimer); hbTimer=setInterval(()=>{ try{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID})); if(dc&&dc.readyStat[...]
-    function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5,[...]
-    function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?[...]
+    function startHeartbeats(){ if(hbTimer) clearInterval(hbTimer); hbTimer=setInterval(()=>{ try{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID})); if(dc&&dc.readyState==='open') dc.send(JSON.stringify({type:'ping',viewer:viewerID})); }catch{} }, 2500); }
+    function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5, 5000); }, retryDelay); }
+    function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?.close(); }catch{} try{ pc?.close(); }catch{} }
 
     function startStallDetector(){
       if(stallTimer) clearInterval(stallTimer);
@@ -815,6 +821,7 @@
       }, 1000);
     }
 
+<!-- ... (all your original unchanged code above) ... -->
     // Inputs (send only)
     let inputTimer=null,lastPayload='';
     const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
@@ -836,9 +843,9 @@
         log("[SEND ERROR] " + e);
       }
     }
-    // --- Stick drift fix: zero axes within deadzone threshold ---
+    // ----------- Stick drift fix: deadzone filtering -----------
     function filterStickDrift(val, threshold=0.12) {
-      return (Math.abs(val) < threshold) ? 0 : val;
+      return Math.abs(val) < threshold ? 0 : val;
     }
     function startInputs(){
       if(inputTimer) return;
@@ -848,6 +855,7 @@
         const buttons=[],axes=[0,0,0,0],triggers={LT:0,RT:0};
         if(gp){
           gp.buttons.forEach((b,i)=>{ if(b&&b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }});
+          // Only this section is changed for stick drift fix:
           axes[0]=filterStickDrift(gp.axes[0]||0);
           axes[1]=filterStickDrift(gp.axes[1]||0);
           axes[2]=filterStickDrift(gp.axes[2]||0);
@@ -858,6 +866,7 @@
       },33);
       log('Input sender started');
     }
+<!-- ... (all your original unchanged code below) ... -->
 
     // Start
     setChatSrc();
