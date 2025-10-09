@@ -975,107 +975,107 @@
       }, 1000);
     }
 
-    // Inputs (send only)
-    let inputTimer=null,lastPayload='';
-    const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
-    function sendInput(o){
-      const s = JSON.stringify(o);
-      if(s === lastPayload) return;
-      lastPayload = s;
-      try {
-        if(dc && dc.readyState === 'open') {
-          log("[SEND] DataChannel: " + s);
-          dc.send(s);
-        } else if(ws && ws.readyState === 1) {
-          log("[SEND] WebSocket: " + s);
-          ws.send(s);
-        } else {
-          log("[SEND] No channel open for input: " + s);
-        }
-      } catch(e) {
-        log("[SEND ERROR] " + e);
-      }
-    }
+	// Inputs (send only)
+	let inputTimer = null, lastPayload = '';
+	const buttonMap = {0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
+
+	// Only cache after a successful send (fixes “no channel yet” dedupe bug)
+	function sendInput(o){
+	  const s = JSON.stringify(o);
+	  const canSendDC = (dc && dc.readyState === 'open');
+	  const canSendWS = (ws && ws.readyState === 1);
+
+	  if (!canSendDC && !canSendWS) {
+		// No channel yet; don't cache s so we retry next tick when a channel opens
+		return;
+	  }
+	  if (s === lastPayload) return;
+
+	  try {
+		if (canSendDC) {
+		  log("[SEND] DataChannel: " + s);
+		  dc.send(s);
+		  lastPayload = s;
+		} else if (canSendWS) {
+		  log("[SEND] WebSocket: " + s);
+		  ws.send(s);
+		  lastPayload = s;
+		}
+	  } catch (e) {
+		log("[SEND ERROR] " + e);
+	  }
+	}
+
 	function startInputs(){
-	  if(inputTimer) return;
+	  if (inputTimer) return;
 
-	  // Keep a filtered state for smoothing
-	  let filt = [0,0,0,0];
-
-	  // Helpers
-	  const clamp1 = (v)=> Math.max(-1, Math.min(1, v || 0));
-	  const smooth = (prev, curr, a)=> prev*(1-a) + curr*a;
-	  const q = (v)=> Math.round(v*100)/100; // 2 decimals
-
-	  // Soft deadzone shaping: zero inside dz; outside, rescale 0..1 smoothly
-	  const shapeDeadzone = (v, dz)=>{
+	  const DZ = 0.06;
+	  const clamp1 = v => Math.max(-1, Math.min(1, v || 0));
+	  const q = v => Math.round(v*100)/100;
+	  const shapeDeadzone = (v) => {
 		const m = Math.abs(v);
-		if(m <= dz) return 0;
+		if (m <= DZ) return 0;
 		const s = Math.sign(v);
-		return s * ((m - dz) / (1 - dz));
+		return s * ((m - DZ) / (1 - DZ));
 	  };
 
 	  inputTimer = setInterval(()=>{
-		const gps=(navigator.getGamepads&&Array.from(navigator.getGamepads()).filter(Boolean))||[];
-		const gp=gps.find(g=>g&&g.connected)||null;
+		const gps = (navigator.getGamepads && Array.from(navigator.getGamepads()).filter(Boolean)) || [];
+		const gp = gps.find(g => g && g.connected) || null;
 
-		const buttons=[], triggers={LT:0,RT:0};
+		const buttons = [];
+		const triggers = { LT:0, RT:0 };
 		let lx=0, ly=0, rx=0, ry=0;
 
-		if(gp){
+		if (gp) {
 		  // Buttons
 		  gp.buttons.forEach((b,i)=>{
-			if(b && (b.pressed || (typeof b.value==='number' && b.value>0.5))){
-			  const n=buttonMap[i]; if(n) buttons.push(n);
+			if (b && (b.pressed || (typeof b.value==='number' && b.value>0.5))) {
+			  const n = buttonMap[i];
+			  if (n) buttons.push(n);
 			}
 		  });
 
-		  // Raw axes (default indices 0..3)
+		  // Axes (standard indices like older viewer)
 		  lx = clamp1(gp.axes[0]);
 		  ly = clamp1(gp.axes[1]);
 		  rx = clamp1(gp.axes[2]);
 		  ry = clamp1(gp.axes[3]);
 
-		  // Deadzone + shape
-		  const dz = Math.max(0, Math.min(0.25, (axisCfg?.deadzone ?? 0.06)));
-		  let sx  = shapeDeadzone(lx, dz);
-		  let sy  = shapeDeadzone(ly, dz);
-		  let sx2 = shapeDeadzone(rx, dz);
-		  let sy2 = shapeDeadzone(ry, dz);
-
-		  // Freeze-in-deadzone smoothing
-		  if(axisCfg?.smoothOn){
-			const a = Math.max(0, Math.min(1, axisCfg.smoothAlpha ?? 0.35));
-			filt[0] = (sx  === 0) ? 0 : smooth(filt[0], sx,  a);
-			filt[1] = (sy  === 0) ? 0 : smooth(filt[1], sy,  a);
-			filt[2] = (sx2 === 0) ? 0 : smooth(filt[2], sx2, a);
-			filt[3] = (sy2 === 0) ? 0 : smooth(filt[3], sy2, a);
-		  } else {
-			filt[0]=sx; filt[1]=sy; filt[2]=sx2; filt[3]=sy2;
-		  }
+		  // Minimal deadzone shaping (like before, but prevents drift)
+		  lx = shapeDeadzone(lx);
+		  ly = shapeDeadzone(ly);
+		  rx = shapeDeadzone(rx);
+		  ry = shapeDeadzone(ry);
 
 		  // Triggers (0..1)
-		  if(gp.buttons[6]) triggers.LT = Math.max(0, Math.min(1, gp.buttons[6].value||0));
-		  if(gp.buttons[7]) triggers.RT = Math.max(0, Math.min(1, gp.buttons[7].value||0));
+		  if (gp.buttons[6]) triggers.LT = Math.max(0, Math.min(1, gp.buttons[6].value||0));
+		  if (gp.buttons[7]) triggers.RT = Math.max(0, Math.min(1, gp.buttons[7].value||0));
 		}
 
 		// Apply button remap + dedupe
 		const remapped = [];
 		const seen = new Set();
-		for(const phys of buttons){
+		for (const phys of buttons) {
 		  const virtualName = (remap[phys] ?? phys);
-		  if(virtualName && !seen.has(virtualName)){
+		  if (virtualName && !seen.has(virtualName)) {
 			seen.add(virtualName);
 			remapped.push(virtualName);
 		  }
 		}
 
-		const axes = [ q(filt[0]), q(filt[1]), q(filt[2]), q(filt[3]) ];
-		sendInput({type:'input', buttons: remapped, axes, triggers});
+		const axes = [ q(lx), q(ly), q(rx), q(ry) ];
+
+		// Minimal payload (old-style): include buttons/axes/triggers; host accepts without a type field
+		sendInput({ buttons: remapped, axes, triggers });
 	  }, 33);
 
-	  log('Input sender started (freeze-in-deadzone smoothing)');
+	  log('Input sender started');
 	}
+
+	// Kick off after load and when a gamepad is first seen (Chrome needs a wake press)
+	window.addEventListener('load', () => { setTimeout(startInputs, 300); });
+	window.addEventListener('gamepadconnected', () => { setTimeout(startInputs, 0); });
 
     // Start
     setChatSrc();
