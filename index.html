@@ -13,7 +13,7 @@
       --bg: #0e0e10; --panel: #18181b; --edge: #23232a; --fg: #efeff1; --muted: #b9b9c2;
       --accent: #9146ff; --accent-2: #772ce8; --ok: #22c55e; --warn: #f59e0b; --bad: #ef4444;
       --chat-w: 360px; --banner-h: 44px;
-      --header-h: 48px;
+      --header-h: 29px; /* Reduced header height by ~40% */
     }
     html, body {
       height: 100%;
@@ -42,29 +42,38 @@
       width: 100%;
     }
     #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 26s linear infinite }
-    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
+    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.18); }
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
     /* Debug header */
-    header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
-    .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
+    header{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: #1f1f23;
+      border-bottom: 1px solid var(--edge);
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: var(--banner-h);
+      z-index: 30;
+      flex-wrap: wrap;
+      height: var(--header-h);
+      min-height: var(--header-h);
+      transition: top 0.2s;
+    }
+    body.clean header{display:none!important}
+    .pill{display:inline-block;padding:3px 7px;border-radius:999px;font-size:11px;line-height:13px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
     .pill.ok{background:#15321f;border-color:#1e6a33;color:#a5e7b9}
     .pill.warn{background:#3a2a18;border-color:#b57a28;color:#ffd89a}
     .pill.bad{background:#3a1a1a;border-color:#b52828;color:#ff9a9a}
-    #wsUrl{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#9fb2d1}
+    #wsUrl{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#9fb2d1}
 
     /* Layout */
-    html, body {
-      height: 100%;
-      min-height: 100%;
-    }
-    body, #root {
-      min-height: 100vh;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-    }
+    html, body { height: 100%; min-height: 100%; }
+    body, #root { min-height: 100vh; width: 100%; margin: 0; padding: 0; }
     main {
       display: grid;
       grid-template-columns: 1fr;
@@ -120,6 +129,56 @@
     input[type=range]{appearance:none;height:6px;background:#1d1931;border:1px solid #2b2350;width:160px;border-radius:999px}
     input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(145,70,255,.55);border:1px solid #fff1}
 
+    /* Remapper Dropdown */
+    #remapDropdown {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 44px;
+      min-width: 250px;
+      z-index: 101;
+      background: #18181b;
+      border: 1px solid #23232a;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(145,70,255,0.12);
+      padding: 18px 18px 12px 18px;
+      color: #ece8ff;
+      font-family: "Orbitron",system-ui,sans-serif;
+      font-size: 14px;
+      gap: 12px;
+      flex-direction: column;
+      transition: opacity 0.2s;
+    }
+    #remapDropdown.open { display: flex; }
+    #remapDropdown label {
+      margin: 0 6px 0 0;
+      color: #bdb8e5;
+      font-size: 13px;
+    }
+    #remapDropdown .remap-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 7px;
+      gap: 9px;
+    }
+    #remapDropdown select {
+      min-width: 80px;
+      background: #23232a; color: #efeff1;
+      border: 1px solid #2a2a32; border-radius: 6px; padding: 4px 7px;
+    }
+    #remapDropdown .close-remap {
+      align-self: flex-end;
+      margin-top: 8px;
+      font-size: 13px;
+      background: #2b2b38;
+      color: #efeff1;
+      border: 1px solid #3a3a4a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-left: auto;
+    }
+    #remapDropdown .close-remap:hover { background: #343446; }
+
     /* Side panel */
     #sidePanel{display:none;grid-template-rows:min-content 1fr;gap:10px}
     #chatWrap {
@@ -152,105 +211,135 @@
     }
 
     /* Logs (debugger) */
-    #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
-    #logHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#121824;border-bottom:1px solid #1d2436}
-    #log{margin:0;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.4;background:#0d1322;white-space:pre;overflow:auto}
-
-    /* Footer */
-    footer{
+    #logPanel{
+      display:grid;
+      grid-template-rows:min-content 1fr;
+      border:1px solid #1d2436;
+      border-radius:8px;
+      overflow:hidden;
+      background: #121824;
+      min-height: 180px;
+      max-height: 290px;
+      height: 290px;
+      position: relative;
+      margin-bottom: 0;
+    }
+    #logHeader{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
-      padding:12px 14px;
-      color:#7a8fb2;
-      border-top:1px solid #20283a;
-      background:#0e1524
+      padding:8px 10px;
+      background:#121824;
+      border-bottom:1px solid #1d2436;
+      min-height: 35px;
     }
-    #footerNoticeWrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    #footerNoticeWrap .footer-eye-btn {
-      background: none;
+    #log{
+      margin:0;
+      padding:10px;
+      font-family:ui-monospace,Menlo,Consolas,monospace;
+      font-size:12px;
+      line-height:1.4;
+      background:#0d1322;
+      white-space:pre;
+      overflow-y:auto;
+      overflow-x:auto;
+      height: 100%;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: #772ce8 #121824;
       border: none;
-      padding: 0;
-      margin-right: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: filter 0.2s;
+      border-radius: 0 0 8px 8px;
     }
-    #footerNoticeWrap .footer-eye-btn:hover {
-      filter: drop-shadow(0 0 8px #9146ff);
-      opacity: 0.9;
-    }
-    #footerNoticeText {
-      font-size: 0.98em;
-      color: #aeb6d3;
-      font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
-      letter-spacing: 0.04em;
-    }
-    #footerRight{margin-left:auto;display:flex;align-items:center;gap:8px}
-    #btnDebugger{padding:6px 10px;font-size:12px;opacity:.9}
-
-    /* Connection Lost Overlay */
-    #lostConnectionOverlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(10,10,16,0.97);
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    #lostConnectionMsg {
-      font-size: 1.5em;
-      color: #fff;
-      margin-bottom: 1em;
-      text-align: center;
-      font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
-      text-shadow: 0 2px 18px #000;
-    }
-    #lostConnectionOverlay .footer-eye-btn {
-      margin-bottom: 1em;
-      filter: drop-shadow(0 0 4px #9146ff);
-    }
-    #reconnectBtn {
-      background: linear-gradient(180deg,#9146ff,#772ce8);
-      border: none;
-      color: #fff;
+    #log::-webkit-scrollbar {
+      width: 8px;
+      background: #18181b;
       border-radius: 8px;
-      padding: 0.5em 1.7em;
-      font-size: 1.12em;
-      font-family: 'Orbitron',sans-serif;
+    }
+    #log::-webkit-scrollbar-thumb {
+      background: #772ce8;
+      border-radius: 8px;
+      min-height: 22px;
+    }
+    #log::-webkit-scrollbar-thumb:hover {
+      background: #9146ff;
+    }
+
+    /* Footer */
+    footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;color:#7a8fb2;border-top:1px solid #20283a;background:#0e1524}
+    #footerRight{margin-left:auto;display:flex;align-items:center;gap:8px}
+    /* Remove debugger button */
+    #btnDebugger{display:none!important}
+
+    /* Eye Button */
+    #eyeToggleWrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: calc(var(--header-h) * 1.1);
+      width: 50px;
+      margin-right: 8px;
       cursor: pointer;
-      letter-spacing: 0.06em;
-      margin: 0 0.5em;
-      box-shadow: 0 2px 14px #9146ff55;
-      transition: background 0.15s;
+      user-select: none;
     }
-    #reconnectBtn:hover {
-      background: linear-gradient(180deg,#a86afe,#a95cff);
-      filter: brightness(1.08);
+    #eyeToggle {
+      width: 30px;
+      height: 23px;
+      display: block;
+      transition: filter 0.18s;
+      filter: drop-shadow(0 0 6px #9146ff50);
     }
-    #reconnectCountdown {
-      font-size: 1.12em;
-      margin-top: 0.7em;
-      color: #aeb6d3;
-      font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
-      letter-spacing: 0.04em;
+    #eyeToggle:active { filter: brightness(1.18); }
+
+    /* Remap icon button */
+    #remapBtn {
+      background: linear-gradient(180deg,var(--accent),var(--accent-2));
+      border: 1px solid #5f37d6;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(145,70,255,.19),inset 0 0 0 1px rgba(255,255,255,.05);
+      border-radius: 8px;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 3px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: filter 0.1s;
+      position: relative;
+      z-index: 101;
+      padding: 0;
     }
-    /* Clean vs Debugger */
-    body.clean header{display:none!important}
-    body.clean #logPanel{display:none!important}
-    body.clean #controls>*{display:none}
-    body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow{display:flex}
-    body:not(.clean) #btnFullscreen{display:none}
-    .fs-active #videoWrap{box-shadow:0 0 0 2px var(--accent) inset}
+    #remapBtn svg { width: 22px; height: 22px; }
+    #remapBtn:hover { filter: brightness(1.08); }
+
+    /* Controls and volume fix */
+    #iconRow {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    #btnMute {
+      margin-top: 0 !important;
+      position: relative;
+      top: 0;
+      transition: none;
+    }
+    body.clean #btnMute { margin-top: 0 !important; top: 0; }
+    body:not(.clean) #btnMute { margin-top: 0 !important; top: 0; }
+
+    /* Ensure controls are always in grid */
+    #controls {
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+    /* Debug header fix: only fixed in debugger mode */
+    header {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: var(--banner-h);
+      z-index: 30;
+    }
+    body.clean header { display: none !important; }
 
     /* --- Animated Intro Styles --- */
     #intro-overlay {
@@ -271,10 +360,10 @@
       flex-direction: row;
       justify-content: center;
       align-items: center;
-      min-height: 200px;
-      gap: 60px;
+      min-height: 120px; /* 200 -> 120px */
+      gap: 36px; /* 60 -> 36px */
       position: relative;
-      width: 340px;
+      width: 210px; /* 340 -> 210px */
       max-width: 90vw;
       margin: 0 auto;
     }
@@ -286,22 +375,20 @@
       justify-content: center;
       opacity: 0;
     }
-    .eye-wrap.visible {
-      opacity: 1;
-    }
+    .eye-wrap.visible { opacity: 1; }
     .eye-svg {
-      width: 120px;
-      height: 80px;
+      width: 72px; /* 120 -> 72px */
+      height: 48px; /* 80 -> 48px */
       display: block;
     }
     #intro-text {
       color: #e5e5e5;
-      font-size: 3.0rem;
+      font-size: 1.8rem; /* 3.0rem -> 1.8rem */
       font-family: 'Oswald', 'Arial Narrow', Arial, Helvetica, sans-serif;
       font-weight: 700;
       letter-spacing: 0.12em;
       opacity: 0;
-      margin-top: 6px;
+      margin-top: 4px;
       background: none;
       transition: opacity 2s;
       text-align: center;
@@ -310,25 +397,11 @@
       text-shadow: 0 1px 4px rgba(0,0,0,0.18);
       text-transform: uppercase;
     }
-    #intro-overlay.fade-out {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 1s;
-    }
+    #intro-overlay.fade-out { opacity: 0; pointer-events: none; transition: opacity 1s; }
     @media (max-width: 600px) {
-      #eyes-container {
-        min-height: 120px;
-        gap: 24px;
-        width: 160px;
-      }
-      .eye-svg {
-        width: 68px;
-        height: 48px;
-      }
-      #intro-text {
-        font-size: 1.6rem;
-        margin-top: 4px;
-      }
+      #eyes-container { min-height: 72px; gap: 14px; width: 100px;}
+      .eye-svg { width: 36px; height: 24px; }
+      #intro-text { font-size: 1.0rem; margin-top: 2px; }
     }
     /* --- End Animated Intro --- */
   </style>
@@ -344,8 +417,16 @@
 
   <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
+  <!-- Eye toggle, remap button inline with controls -->
   <header>
-    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
+    <div id="eyeToggleWrap" title="Toggle debugger / clean mode">
+      <svg id="eyeToggle" viewBox="0 0 120 80" fill="none">
+        <ellipse cx="60" cy="40" rx="36" ry="16" stroke="#e5e5e5" stroke-width="4" fill="#181818"/>
+        <ellipse cx="60" cy="40" rx="12" ry="12" fill="#e5e5e5"/>
+        <ellipse cx="60" cy="40" rx="5" ry="5" fill="#1a1a1a"/>
+      </svg>
+    </div>
+    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pDc" class="pill">DC</span><span id="pPc" class="pill">Peer</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
   </header>
 
@@ -355,9 +436,15 @@
         <video id="vid" playsinline muted autoplay></video>
         <div id="overlay"><div id="ovText">Connecting…</div></div>
       </div>
-      <div id="controls">
-        <button id="btnChat" class="accent" title="Toggle Twitch chat">Twitch Chat</button>
-
+      <div id="controls" style="position:relative;align-items:center;">
+        <button id="remapBtn" class="accent" title="Remap controller buttons" aria-haspopup="true" aria-controls="remapDropdown" aria-expanded="false">
+          <!-- Gamepad icon SVG -->
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-12 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+          </svg>
+        </button>
+        <div id="remapDropdown" tabindex="-1"></div>
+        <button id="btnChat" class="accent" title="Toggle Twitch chat" style="margin-left:2px;">Twitch Chat</button>
         <div id="volumeWrap" style="display:flex;align-items:center;gap:8px">
           <label for="vol" style="opacity:.8">Volume</label>
           <input id="vol" type="range" min="0" max="100" value="0" />
@@ -371,12 +458,11 @@
             </button>
             <div id="padIconWrap" class="off" title="Controller status">
               <svg id="padIcon" class="off" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-12 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
               </svg>
             </div>
           </div>
         </div>
-
         <button id="btnFullscreen" class="accent" title="Fullscreen">Fullscreen</button>
         <button id="btnDownloadLogs">Download logs</button>
       </div>
@@ -389,23 +475,13 @@
   </main>
 
   <footer>
-    <div id="footerNoticeWrap">
-      <button class="footer-eye-btn" tabindex="-1" aria-label="Animated Eye" style="background:none;border:none;outline:none;padding:0;">
-        <svg class="eye-svg" viewBox="0 0 120 80" width="34" height="24">
-          <ellipse class="eyeball" cx="60" cy="40" rx="28" ry="18" stroke="#e5e5e5" stroke-width="3" fill="#181818"/>
-          <ellipse class="iris" cx="60" cy="40" rx="10" ry="10" fill="#e5e5e5"/>
-          <ellipse class="pupil" cx="60" cy="40" rx="5" ry="5" fill="#1a1a1a"/>
-        </svg>
-      </button>
-      <span id="footerNoticeText">Not affiliated by Twitch and all code complies with ToS.</span>
-    </div>
-    <div id="footerRight"><button id="btnDebugger" title="Toggle debug UI">Debugger</button></div>
+    <small>Status indicators reflect last known state and auto-recover triggers.</small>
+    <div id="footerRight"></div>
   </footer>
 
   <!-- Scripts: Animated Intro (runs first), then Viewer scripts -->
   <script>
     // --- Animated Intro JS ---
-    // Use #e5e5e5 for all "white" lines (10% darker than #fff)
     function getEyeSVG(rx = 50, ry = 30, pupilDx = 0, pupilDy = 0, eyelidOpacity = 0) {
       return `
 <svg class="eye-svg" viewBox="0 0 120 80" fill="none">
@@ -498,7 +574,7 @@
       const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
       const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
       const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-      const leftStartOffset = 40;
+      const leftStartOffset = 24; // 40 reduced for smaller eye
       const leftEndOffset = 0;
 
       // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
@@ -615,7 +691,7 @@
     });
   </script>
   <script>
-    // --- Viewer.html JS: all original code below, with connection lost overlay logic added ---
+    // --- Viewer.html JS: all original code below, runs with no change ---
 
     const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
@@ -624,7 +700,7 @@
     // NOTE: Banner stats are now static per user request!
     const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
-    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(' ')); s.appendChild(document.createTextNode(text)); s.appendChild(document.createTextNode(' ')); s.appendChild(d2); return s; }
+    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(' '+text+' ')); s.appendChild(d2); return s; }
     async function buildBanner(){
       brandTrack.innerHTML='';
       // Static stats per user request
@@ -685,20 +761,30 @@
     function lockAspectFromTrack(track){ try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{} }
 
     let autoUnmuted = false;
-    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume===0&&stored>0){ vid.volume=stored/100; vol.value=stored; } vid.muted=false; updateMuteVisual(); ensurePlay(); }catch{} }
+    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume==[...]
     ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev, firstInteract, {once:true, capture:true}));
 
-    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)||30)); vid.volume=stored/100; vol.value=stored; } }else{ vid.muted=true; } updateMuteVisual(); ensurePlay(); }catch{} };
-    vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.muted=false; updateMuteVisual(); ensurePlay(); });
-    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
+    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)[...]
+    vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.mu[...]
+    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual([...]
 
     // Fullscreen
-    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})?.call(videoWrap); } else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})?.call(document); } }
+    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})[...]
     document.getElementById('btnFullscreen').onclick=toggleFs;
     videoWrap.ondblclick=toggleFs;
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
 
-    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
+    // ----- Eye icon toggles debugger mode -----
+    document.getElementById('eyeToggleWrap').onclick = function() {
+      document.body.classList.toggle('clean');
+      buildBanner();
+    };
+
+    // ----- Remove Debugger Button -----
+    // Removed #btnDebugger from footer and all logic
+
+    // ----- Fix mute button position -----
+    // Already handled by CSS above
 
     // ----- Connection -----
     const params=new URLSearchParams(location.search);
@@ -710,49 +796,6 @@
     let pc, ws, dc, viewerID=null, restarting=false, hbTimer=null, stallTimer=null;
     let retryDelay = 700;
     const inbound=new MediaStream();
-
-    // --- Connection lost/reconnect overlay logic ---
-    let isDisconnected = false;
-    function handleDisconnect(reason) {
-      if (isDisconnected) return;
-      isDisconnected = true;
-      log("[CONNECTION LOST] " + reason);
-      // Remove any old overlay
-      if (document.getElementById('lostConnectionOverlay')) {
-        document.getElementById('lostConnectionOverlay').remove();
-      }
-      // Create overlay
-      const overlay = document.createElement('div');
-      overlay.id = 'lostConnectionOverlay';
-      overlay.innerHTML = `
-        <button class="footer-eye-btn" tabindex="-1" aria-label="Animated Eye" style="margin-bottom:1.4em;">
-          <svg class="eye-svg" viewBox="0 0 120 80" width="54" height="38">
-            <ellipse class="eyeball" cx="60" cy="40" rx="28" ry="18" stroke="#e5e5e5" stroke-width="3" fill="#181818"/>
-            <ellipse class="iris" cx="60" cy="40" rx="10" ry="10" fill="#e5e5e5"/>
-            <ellipse class="pupil" cx="60" cy="40" rx="5" ry="5" fill="#1a1a1a"/>
-          </svg>
-        </button>
-        <div id="lostConnectionMsg">
-          Connection to stream host lost.<br>
-          Please reload or <button id="reconnectBtn">Reconnect</button>
-        </div>
-        <div id="reconnectCountdown">Auto-reloading in <span id="reconnectCount">5</span> seconds...</div>
-      `;
-      document.body.appendChild(overlay);
-      let seconds = 5;
-      const countdownEl = document.getElementById('reconnectCount');
-      const timer = setInterval(() => {
-        seconds--;
-        if (countdownEl) countdownEl.textContent = seconds;
-        if (seconds <= 0) {
-          clearInterval(timer);
-          location.reload();
-        }
-      }, 1000);
-      document.getElementById('reconnectBtn').onclick = () => location.reload();
-    }
-
-    // --- End overlay logic ---
 
     function startViewer(){
       log('WS URL → '+wsUrl); pill('pWs','','WS: connecting'); showOverlay('Connecting…');
@@ -776,34 +819,28 @@
         pill('pAv','ok','A/V: attached'); hideOverlay(); ensurePlay();
         if(e.track.kind==='video'){ lockAspectFromTrack(e.track); retryDelay = 700; }
       };
-      pc.oniceconnectionstatechange=()=>{ const s=pc.iceConnectionState; pill('pIce', (s==='connected'||s==='completed')?'ok':(s==='failed'?'bad':'warn'), 'ICE: '+s);
-        if (['disconnected','failed','closed'].includes(s)) { handleDisconnect("ICE " + s); }
-      };
-      pc.onconnectionstatechange=()=>{ const s=pc.connectionState; pill('pPc', s==='connected'?'ok':(s==='failed'?'bad':'warn'), 'Peer: '+s);
-        if (['disconnected','failed','closed'].includes(s)) { handleDisconnect("PeerConnection " + s); }
-      };
+      pc.oniceconnectionstatechange=()=>{ const s=pc.iceConnectionState; pill('pIce', (s==='connected'||s==='completed')?'ok':(s==='failed'?'bad':'warn'), 'ICE: '+s); if(s==='failed'){ showOverlay('Re[...]
+      pc.onconnectionstatechange=()=>{ const s=pc.connectionState; pill('pPc', s==='connected'?'ok':(s==='failed'?'bad':'warn'), 'Peer: '+s); pill('pDtls', s==='connected'?'ok':(s==='failed'?'bad':'wa[...]
+      pc.onicecandidate=(ev)=>{ if(ev.candidate && viewerID && ws?.readyState===1){ ws.send(JSON.stringify({type:'candidate',viewer:viewerID,candidate:{candidate:ev.candidate.candidate,sdpMid:ev.candi[...]
 
       ws=new WebSocket(wsUrl);
       ws.onopen=()=>{ log('WS open'); pill('pWs','ok','WS: open'); ws.send(JSON.stringify({type:'hello',role:'viewer'})); startHeartbeats(); };
-      ws.onerror=()=>{ handleDisconnect("WebSocket error"); };
-      ws.onclose=()=>{ handleDisconnect("WebSocket closed"); };
+      ws.onerror=()=>{ log('WS error'); pill('pWs','bad','WS: error'); restartSoon(); };
+      ws.onclose=()=>{ log('WS closed'); pill('pWs','bad','WS: closed'); restartSoon(); };
       ws.onmessage=async(ev)=>{ const msg=JSON.parse(ev.data); if(msg.type==='pong') return;
-        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}})); }
+        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.[...]
         else if(msg.type==='answer'){ await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay(); }
         else if(msg.type==='candidate'){ try{ await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }catch(e){ log('ICE add err '+e); } }
       };
 
-      if (dc) {
-        dc.onclose = () => handleDisconnect("DataChannel closed");
-        dc.onerror = () => handleDisconnect("DataChannel error");
-      }
+      startStallDetector();
     }
 
     function showOverlay(text){ if(text) ovText.textContent=text; overlay.hidden=false; }
     function hideOverlay(){ overlay.hidden=true; }
-    function startHeartbeats(){ if(hbTimer) clearInterval(hbTimer); hbTimer=setInterval(()=>{ try{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID})); if(dc&&dc.readyState==='open') dc.send(JSON.stringify({type:'ping',viewer:viewerID})); }catch{} }, 2500); }
-    function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5, 5000); }, retryDelay); }
-    function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?.close(); }catch{} try{ pc?.close(); }catch{} }
+    function startHeartbeats(){ if(hbTimer) clearInterval(hbTimer); hbTimer=setInterval(()=>{ try{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID})); if(dc&&dc.readyStat[...]
+    function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5,[...]
+    function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?[...]
 
     function startStallDetector(){
       if(stallTimer) clearInterval(stallTimer);
@@ -821,27 +858,94 @@
       }, 1000);
     }
 
+    // ----- Button Remapper -----
+    // Default logical order (standard Xbox/DS4/NS layout)
+    const buttonMapNames = [
+      'A','B','X','Y','LB','RB','Back','Start','LS','RS','DPadUp','DPadDown','DPadLeft','DPadRight'
+    ];
+    // Show dropdown on remap button
+    const remapBtn = document.getElementById('remapBtn');
+    const remapDropdown = document.getElementById('remapDropdown');
+    let remapConfig = {};
+    // For each logical button, allow selecting a physical mapping
+    function buildRemapDropdown() {
+      remapDropdown.innerHTML = '';
+      buttonMapNames.forEach(btn => {
+        const row = document.createElement('div');
+        row.className = 'remap-row';
+        const label = document.createElement('label');
+        label.textContent = btn;
+        label.setAttribute('for', 'remap-'+btn);
+        const select = document.createElement('select');
+        select.id = 'remap-'+btn;
+        // List all possible buttons
+        buttonMapNames.forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt;
+          o.textContent = opt;
+          if(remapConfig[btn]===opt) o.selected = true;
+          row.appendChild(label.cloneNode(true));
+          select.appendChild(o);
+        });
+        select.value = remapConfig[btn] || btn;
+        select.onchange = function() {
+          remapConfig[btn] = select.value;
+          localStorage.setItem('remapConfig', JSON.stringify(remapConfig));
+        };
+        row.appendChild(select);
+        remapDropdown.appendChild(row);
+      });
+      // Close button
+      const close = document.createElement('button');
+      close.className = 'close-remap accent';
+      close.textContent = 'Close';
+      close.onclick = function() { remapDropdown.classList.remove('open'); remapBtn.setAttribute('aria-expanded','false'); };
+      remapDropdown.appendChild(close);
+    }
+    remapBtn.onclick = function(e) {
+      e.stopPropagation();
+      remapDropdown.classList.toggle('open');
+      remapBtn.setAttribute('aria-expanded', remapDropdown.classList.contains('open') ? 'true' : 'false');
+      if(remapDropdown.classList.contains('open')) {
+        buildRemapDropdown();
+        // Position relative to button
+        const rect = remapBtn.getBoundingClientRect();
+        remapDropdown.style.left = (rect.left - 10) + 'px';
+        remapDropdown.style.top = (rect.bottom + 3 + window.scrollY) + 'px';
+        // Focus for accessibility
+        remapDropdown.focus();
+      }
+    };
+    // Close dropdown on click outside
+    document.addEventListener('mousedown', function(e){
+      if(remapDropdown.classList.contains('open') && !remapDropdown.contains(e.target) && e.target!==remapBtn) {
+        remapDropdown.classList.remove('open');
+        remapBtn.setAttribute('aria-expanded','false');
+      }
+    });
+    // Restore remap config
+    try { remapConfig = JSON.parse(localStorage.getItem('remapConfig'))||{}; } catch (e) { remapConfig = {}; }
+
     // Inputs (send only)
     let inputTimer=null,lastPayload='';
-    const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
-    function sendInput(o){
-      const s = JSON.stringify(o);
-      if(s === lastPayload) return;
-      lastPayload = s;
-      try {
-        if(dc && dc.readyState === 'open') {
-          log("[SEND] DataChannel: " + s);
-          dc.send(s);
-        } else if(ws && ws.readyState === 1) {
-          log("[SEND] WebSocket: " + s);
-          ws.send(s);
-        } else {
-          log("[SEND] No channel open for input: " + s);
-        }
-      } catch(e) {
-        log("[SEND ERROR] " + e);
-      }
+    // Default logical mapping
+    const buttonMap = {
+      0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'
+    };
+
+    // Helper: get remapped logical button name for a given button index
+    function getLogicalButton(idx) {
+      const logical = buttonMap[idx];
+      if (!logical) return null;
+      const remapped = remapConfig[logical];
+      return remapped || logical;
     }
+
+    // Stick drift/idle removal threshold
+    const DEADZONE = 0.13;
+
+    function sendInput(o){ const s=JSON.stringify(o); if(s===lastPayload) return; lastPayload=s;
+      try{ if(dc&&dc.readyState==='open') dc.send(s); else if(ws&&ws.readyState===1) ws.send(s); }catch{} }
     function startInputs(){
       if(inputTimer) return;
       inputTimer=setInterval(()=>{
@@ -849,8 +953,19 @@
         const gp=gps.find(g=>g&&g.connected)||null;
         const buttons=[],axes=[0,0,0,0],triggers={LT:0,RT:0};
         if(gp){
-          gp.buttons.forEach((b,i)=>{ if(b&&b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }});
-          axes[0]=gp.axes[0]||0; axes[1]=gp.axes[1]||0; axes[2]=gp.axes[2]||0; axes[3]=gp.axes[3]||0;
+          // Remap buttons
+          gp.buttons.forEach((b,i)=>{
+            if(b&&b.pressed){
+              const logical = getLogicalButton(i);
+              if(logical) buttons.push(logical);
+            }
+          });
+          // Deadzone for sticks to ignore drift/idle
+          axes[0]=Math.abs(gp.axes[0])>DEADZONE?gp.axes[0]:0;
+          axes[1]=Math.abs(gp.axes[1])>DEADZONE?gp.axes[1]:0;
+          axes[2]=Math.abs(gp.axes[2])>DEADZONE?gp.axes[2]:0;
+          axes[3]=Math.abs(gp.axes[3])>DEADZONE?gp.axes[3]:0;
+          // Triggers
           if(gp.buttons[6]) triggers.LT=gp.buttons[6].value||0; if(gp.buttons[7]) triggers.RT=gp.buttons[7].value||0;
         }
         sendInput({type:'input',buttons,axes,triggers});
@@ -877,6 +992,22 @@
         a.remove();
       }catch(e){ log('Download failed'); }
     };
+
+    // Auto-scroll logs to bottom, but only if user is already near the bottom
+    const logPanel = document.getElementById('logPanel');
+    const logPre = document.getElementById('log');
+    function scrollLogToBottom(force=false) {
+      const atBottom = logPre.scrollHeight - logPre.scrollTop - logPre.clientHeight < 32;
+      if(force || atBottom) logPre.scrollTop = logPre.scrollHeight;
+    }
+    const origLog = log;
+    window.log = function(m) {
+      origLog(m);
+      scrollLogToBottom();
+    };
+    // On new message, scroll to bottom if at bottom
+    const observer = new MutationObserver(()=>scrollLogToBottom());
+    observer.observe(logPre, {childList:true,subtree:true});
 
     window.addEventListener('beforeunload', ()=>{ try{ clearInterval(inputTimer); }catch{} });
   </script>
