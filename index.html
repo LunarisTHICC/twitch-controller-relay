@@ -51,8 +51,8 @@
 
     /* Side panel */
     #sidePanel{display:none;grid-template-rows:min-content 1fr;gap:10px}
-    #chatWrap{border:1px solid #1d2436;border-radius:8px;overflow:hidden;background:#0d1322;min-height:320px}
-    #chatIframe{width:100%;height:100%;min-height:320px;border:0;background:#0d1322}
+    #chatWrap{border:1px solid #1d2436;border-radius:8px;overflow:hidden;background:#0d1322;min-height:320px;display:flex;flex-direction:column;height:100%;}
+    #chatIframe{width:100%;height:100%;min-height:320px;flex:1 1 0;display:block;border:0;background:#0d1322;}
 
     /* Logs (debugger) */
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
@@ -432,43 +432,26 @@
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
 
     // ----- Banner with meta fallbacks -----
+    // NOTE: Banner stats are now static per user request!
     const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
     function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(' ')); s.appendChild(document.createTextNode(text)); s.appendChild(document.createTextNode(' ')); s.appendChild(d2); return s; }
-    async function fetchMeta(relayHost){
-      const scheme = location.protocol === 'https:' ? 'https' : 'http';
-      // 1) Try relay /meta
-      try{
-        const r=await fetch(`${scheme}://${relayHost}/meta`, {cache:'no-store', mode:'cors'});
-        if(r.ok) return await r.json();
-      }catch{}
-      // 2) Fallback to raw GitHub (CORS-OK)
-      try{
-        const r=await fetch('https://raw.githubusercontent.com/LunarisTHICC/offline/main/meta.json', {cache:'no-store'});
-        if(r.ok) return await r.json();
-      }catch{}
-      return null;
-    }
     async function buildBanner(){
       brandTrack.innerHTML='';
-      const now=new Date(); const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
+      // Static stats per user request
+      const now=new Date(); 
+      // Local time string formatted as HH:MM (24hr)
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
-      const relayHost=(new URLSearchParams(location.search).get('relay')||location.host).replace(/^https?:\/\//,'').replace(/\/+$/,'');
-      let loc=0, chats=0, langs=['Python','HTML','CSS','JavaScript'];
-      const meta = await fetchMeta(relayHost);
-      if(meta){
-        if(Number.isFinite(meta.loc)) loc = meta.loc|0;
-        if(Number.isFinite(meta.copilot_chats)) chats = meta.copilot_chats|0;
-        if(Array.isArray(meta.languages) && meta.languages.length) langs = meta.languages.map(String);
-      }
+      const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const texts = [
-        `Copilot: ${Math.max(0,chats)}`,
+        `Different architecture types used.`,
         `Local time: ${hh}:${mm}`,
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
-        `Lines of code used (Viewer + Host): ${Math.max(0,loc)}`,
-        `Languages used: ${langs.join(', ')}`,
+        `Lines of code used: 1424+`,
+        `Languages used: Python, HTML, CSS, JavaScript`,
+        `Models used: Gpt-5 & GPT-4.`
       ];
       const frag=document.createDocumentFragment();
       for(let k=0;k<2;k++){ texts.forEach(t=>frag.appendChild(item(t))); }
@@ -478,11 +461,29 @@
     // ----- Chat (force junkfoodjon, dark) -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
     function setChatSrc(){
-      const parent=location.host;
+      const parent=location.hostname; // Twitch requires hostname, not host/port
       const ch='junkfoodjon';
+      // Twitch dark mode, allow iframe to fill entire chatWrap flexbox area
       chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
+      chatIframe.style.background='#0d1322';
+      chatIframe.style.height='100%';
+      chatIframe.style.width='100%';
+      chatIframe.style.display='block';
+      chatIframe.allowTransparency='true';
     }
-    function toggleChat(){ const open=!document.body.classList.contains('chat-open'); if(open){ document.body.classList.add('chat-open'); chatWrap.hidden=false; } else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; } }
+    function toggleChat(){ 
+      const open=!document.body.classList.contains('chat-open'); 
+      if(open){ 
+        document.body.classList.add('chat-open'); 
+        chatWrap.hidden=false;
+        // Ensure chat scales vertically on open
+        chatWrap.style.height = '100%';
+        chatIframe.style.height = '100%';
+      } else { 
+        document.body.classList.remove('chat-open'); 
+        chatWrap.hidden=true; 
+      } 
+    }
     document.getElementById('btnChat').onclick=toggleChat;
 
     // ----- Video / audio -----
