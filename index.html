@@ -111,8 +111,7 @@
 
         <button id="btnFullscreen" class="accent" title="Fullscreen">Fullscreen</button>
         <button id="btnDownloadLogs">Download logs</button>
-        <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px"/>
-        <button id="btnSetChannel">Set chat channel</button>
+        <!-- Removed chat channel input and "Set chat channel" button -->
       </div>
     </section>
 
@@ -131,43 +130,59 @@
     const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
 
-    // ----- Banner -----
+    // ----- Banner with meta fallbacks -----
     const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
     function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; const l=document.createElement('span'); l.textContent=text; s.append(d1,l,d2); return s; }
-    function buildBanner(){
+    async function fetchMeta(relayHost){
+      const scheme = location.protocol === 'https:' ? 'https' : 'http';
+      // 1) Try relay /meta
+      try{
+        const r=await fetch(`${scheme}://${relayHost}/meta`, {cache:'no-store', mode:'cors'});
+        if(r.ok) return await r.json();
+      }catch{}
+      // 2) Fallback to raw GitHub (CORS-OK)
+      try{
+        const r=await fetch('https://raw.githubusercontent.com/LunarisTHICC/offline/main/meta.json', {cache:'no-store'});
+        if(r.ok) return await r.json();
+      }catch{}
+      return null;
+    }
+    async function buildBanner(){
       brandTrack.innerHTML='';
       const now=new Date(); const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
+      const relayHost=(new URLSearchParams(location.search).get('relay')||location.host).replace(/^https?:\/\//,'').replace(/\/+$/,'');
+      let loc=0, chats=0, langs=['Python','HTML','CSS','JavaScript'];
+      const meta = await fetchMeta(relayHost);
+      if(meta){
+        if(Number.isFinite(meta.loc)) loc = meta.loc|0;
+        if(Number.isFinite(meta.copilot_chats)) chats = meta.copilot_chats|0;
+        if(Array.isArray(meta.languages) && meta.languages.length) langs = meta.languages.map(String);
+      }
       const texts = [
+        `Copilot: ${Math.max(0,chats)}`,
         `Local time: ${hh}:${mm}`,
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
+        `Lines of code used (Viewer + Host): ${Math.max(0,loc)}`,
+        `Languages used: ${langs.join(', ')}`,
       ];
       const frag=document.createDocumentFragment();
       for(let k=0;k<2;k++){ texts.forEach(t=>frag.appendChild(item(t))); }
       brandTrack.appendChild(frag);
     }
 
-    // ----- Chat (dark mode) -----
+    // ----- Chat (force junkfoodjon, dark) -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-    function setChatSrc(ch){
-      if(!ch) return;
+    function setChatSrc(){
       const parent=location.host;
+      const ch='junkfoodjon';
       chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
-    }
-    function ensureChatChannel(){
-      const params = new URLSearchParams(location.search);
-      const saved=(localStorage.getItem('twitchChatChannel')||'').trim();
-      let ch = (params.get('channel')||'').trim() || saved || 'junkfoodjon';
-      localStorage.setItem('twitchChatChannel', ch);
-      setChatSrc(ch);
-      const input = document.getElementById('chatChannel'); if(input) input.value = ch;
     }
     function toggleChat(){ const open=!document.body.classList.contains('chat-open'); if(open){ document.body.classList.add('chat-open'); chatWrap.hidden=false; } else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; } }
     document.getElementById('btnChat').onclick=toggleChat;
-    document.getElementById('btnSetChannel').onclick=()=>{ const ch=document.getElementById('chatChannel').value.trim(); if(!ch) return; localStorage.setItem('twitchChatChannel',ch); setChatSrc(ch); document.body.classList.add('chat-open'); chatWrap.hidden=false; };
 
     // ----- Video / audio -----
     const vid=document.getElementById('vid'), vol=document.getElementById('vol'), btnMute=document.getElementById('btnMute');
@@ -210,7 +225,6 @@
       pc=new RTCPeerConnection({iceServers:[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}], bundlePolicy:'max-bundle'});
       const vTrans=pc.addTransceiver('video',{direction:'recvonly'}); pc.addTransceiver('audio',{direction:'recvonly'});
 
-      // Keep receive prefs broad (H264 then VP8); host will choose encoder
       try{
         const caps=RTCRtpReceiver.getCapabilities('video'); const codecs=(caps&&caps.codecs)||[];
         const h264=codecs.filter(c=>(c.mimeType||'').toLowerCase().includes('h264'));
@@ -266,7 +280,7 @@
       }, 1000);
     }
 
-    // Inputs (send only; no viewer-side blocking UI)
+    // Inputs (send only)
     let inputTimer=null,lastPayload='';
     const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
     function sendInput(o){ const s=JSON.stringify(o); if(s===lastPayload) return; lastPayload=s;
@@ -288,7 +302,7 @@
     }
 
     // Start
-    ensureChatChannel();
+    setChatSrc();
     startViewer();
     buildBanner();
     window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; });
