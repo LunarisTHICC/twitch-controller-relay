@@ -837,7 +837,7 @@
       }
     }
     // --- Stick drift fix: zero axes within deadzone threshold ---
-    function filterStickDrift(val, threshold=0.12) {
+    function filterStickDrift(val, threshold=0.05) {
       return (Math.abs(val) < threshold) ? 0 : val;
     }
     function startInputs(){
@@ -883,3 +883,4 @@
   </script>
 </body>
 </html>
+
