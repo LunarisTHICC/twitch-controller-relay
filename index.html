@@ -1009,6 +1009,13 @@
 	function startInputs(){
 	  if (inputTimer) return;
 
+	  // Minimal stick-center calibration
+	  let haveBaseline = false;
+	  let base = [0,0,0,0];
+	  let sum = [0,0,0,0];
+	  let samples = 0;
+	  const CALIB_SAMPLES = 20; // ~0.66s at 33ms
+
 	  const DZ = 0.06;
 	  const clamp1 = v => Math.max(-1, Math.min(1, v || 0));
 	  const q = v => Math.round(v*100)/100;
@@ -1019,6 +1026,9 @@
 		return s * ((m - DZ) / (1 - DZ));
 	  };
 
+	  // For logging once
+	  let loggedPadInfo = false;
+
 	  inputTimer = setInterval(()=>{
 		const gps = (navigator.getGamepads && Array.from(navigator.getGamepads()).filter(Boolean)) || [];
 		const gp = gps.find(g => g && g.connected) || null;
@@ -1028,6 +1038,13 @@
 		let lx=0, ly=0, rx=0, ry=0;
 
 		if (gp) {
+		  if (!loggedPadInfo) {
+			try {
+			  log(`[PAD] mapping=${gp.mapping||'(none)'} axes=${(gp.axes||[]).length} buttons=${(gp.buttons||[]).length}`);
+			} catch {}
+			loggedPadInfo = true;
+		  }
+
 		  // Buttons
 		  gp.buttons.forEach((b,i)=>{
 			if (b && (b.pressed || (typeof b.value==='number' && b.value>0.5))) {
@@ -1036,17 +1053,49 @@
 			}
 		  });
 
-		  // Axes (standard indices like older viewer)
-		  lx = clamp1(gp.axes[0]);
-		  ly = clamp1(gp.axes[1]);
-		  rx = clamp1(gp.axes[2]);
-		  ry = clamp1(gp.axes[3]);
+		  // Raw axes (standard default indices)
+		  const ax = [
+			clamp1(gp.axes[0]),
+			clamp1(gp.axes[1]),
+			clamp1(gp.axes[2]),
+			clamp1(gp.axes[3]),
+		  ];
 
-		  // Minimal deadzone shaping (like before, but prevents drift)
-		  lx = shapeDeadzone(lx);
-		  ly = shapeDeadzone(ly);
-		  rx = shapeDeadzone(rx);
-		  ry = shapeDeadzone(ry);
+		  // Detect the “corner at idle” pattern and treat it as baseline immediately
+		  const looksExtremeCorner =
+			Math.abs(ax[0]) > 0.95 && Math.abs(ax[1]) > 0.95 &&
+			Math.abs(ax[2]) > 0.95 && Math.abs(ax[3]) > 0.95;
+
+		  if (!haveBaseline) {
+			if (looksExtremeCorner) {
+			  base = ax.slice();
+			  haveBaseline = true;
+			  log(`[PAD] Baseline set from extreme idle: [${base.map(v=>v.toFixed(2)).join(', ')}]`);
+			} else {
+			  // Average a few frames to estimate center
+			  sum[0]+=ax[0]; sum[1]+=ax[1]; sum[2]+=ax[2]; sum[3]+=ax[3];
+			  samples++;
+			  if (samples >= CALIB_SAMPLES) {
+				base = sum.map(v=>v/samples);
+				haveBaseline = true;
+				log(`[PAD] Baseline calibrated: [${base.map(v=>v.toFixed(2)).join(', ')}]`);
+			  }
+			}
+		  }
+
+		  // Subtract baseline (once available)
+		  const adj = haveBaseline ? [
+			clamp1(ax[0] - base[0]),
+			clamp1(ax[1] - base[1]),
+			clamp1(ax[2] - base[2]),
+			clamp1(ax[3] - base[3]),
+		  ] : ax;
+
+		  // Deadzone shaping
+		  lx = shapeDeadzone(adj[0]);
+		  ly = shapeDeadzone(adj[1]);
+		  rx = shapeDeadzone(adj[2]);
+		  ry = shapeDeadzone(adj[3]);
 
 		  // Triggers (0..1)
 		  if (gp.buttons[6]) triggers.LT = Math.max(0, Math.min(1, gp.buttons[6].value||0));
@@ -1065,15 +1114,14 @@
 		}
 
 		const axes = [ q(lx), q(ly), q(rx), q(ry) ];
-
-		// Minimal payload (old-style): include buttons/axes/triggers; host accepts without a type field
+		// Old-style payload (host accepts with or without type)
 		sendInput({ buttons: remapped, axes, triggers });
 	  }, 33);
 
-	  log('Input sender started');
+	  log('Input sender started (with minimal center calibration)');
 	}
 
-	// Kick off after load and when a gamepad is first seen (Chrome needs a wake press)
+	// Start the input loop shortly after load and on first pad connect
 	window.addEventListener('load', () => { setTimeout(startInputs, 300); });
 	window.addEventListener('gamepadconnected', () => { setTimeout(startInputs, 0); });
 
