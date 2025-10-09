@@ -48,10 +48,6 @@
     input[type=range]{appearance:none;height:6px;background:#1d1931;border:1px solid #2b2350;width:160px;border-radius:999px}
     input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(145,70,255,.55);border:1px solid #fff1}
 
-    /* Input blocking controls (kept) */
-    #policyRow{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#151525;border:1px solid #272740;border-radius:8px}
-    #policyRow label{opacity:.9}
-
     /* Side panel */
     #sidePanel{display:none;grid-template-rows:min-content 1fr;gap:10px}
     #chatWrap{border:1px solid #1d2436;border-radius:8px;overflow:hidden;background:#0d1322;min-height:320px}
@@ -71,7 +67,7 @@
     body.clean header{display:none!important}
     body.clean #logPanel{display:none!important}
     body.clean #controls>*{display:none}
-    body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow, body.clean #policyRow{display:flex}
+    body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow{display:flex}
     body:not(.clean) #btnFullscreen{display:none}
     .fs-active #videoWrap{box-shadow:0 0 0 2px var(--accent) inset}
   </style>
@@ -113,17 +109,6 @@
           </div>
         </div>
 
-        <!-- Kept: viewer-side policy toggles (host now also has them) -->
-        <div id="policyRow" title="Block selected controller inputs on the host">
-          <label>Block:</label>
-          <label><input type="checkbox" id="cbAbxy" /> ABXY</label>
-          <label><input type="checkbox" id="cbDpad" /> DPad</label>
-          <label><input type="checkbox" id="cbSticks" /> Sticks</label>
-          <label><input type="checkbox" id="cbTrig" /> Triggers</label>
-          <label><input type="checkbox" id="cbMeta" /> Start/Back</label>
-          <button id="btnApplyPolicy" class="accent">Apply</button>
-        </div>
-
         <button id="btnFullscreen" class="accent" title="Fullscreen">Fullscreen</button>
         <button id="btnDownloadLogs">Download logs</button>
         <input id="chatChannel" type="text" placeholder="Twitch channel" style="min-width:160px"/>
@@ -146,11 +131,27 @@
     const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
 
-    // ----- Banner / meta omitted for brevity (unchanged visual/content) -----
+    // ----- Banner -----
+    const PROJECT_START = new Date('2025-09-29T00:00:00Z');
+    const brandTrack = document.getElementById('brandTrack');
+    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; const l=document.createElement('span'); l.textContent=text; s.append(d1,l,d2); return s; }
+    function buildBanner(){
+      brandTrack.innerHTML='';
+      const now=new Date(); const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
+      const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
+      const texts = [
+        `Local time: ${hh}:${mm}`,
+        `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
+        `Made by JunkfoodJon with CoPilot and GitHub`,
+        `How long this project took: ${days} day${days!==1?'s':''}`,
+      ];
+      const frag=document.createDocumentFragment();
+      for(let k=0;k<2;k++){ texts.forEach(t=>frag.appendChild(item(t))); }
+      brandTrack.appendChild(frag);
+    }
 
-    // ----- Chat -----
+    // ----- Chat (dark mode) -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-    const savedCh=(localStorage.getItem('twitchChatChannel')||'').trim();
     function setChatSrc(ch){
       if(!ch) return;
       const parent=location.host;
@@ -158,11 +159,15 @@
     }
     function ensureChatChannel(){
       const params = new URLSearchParams(location.search);
-      let ch = (params.get('channel')||'').trim() || savedCh || 'junkfoodjon';
+      const saved=(localStorage.getItem('twitchChatChannel')||'').trim();
+      let ch = (params.get('channel')||'').trim() || saved || 'junkfoodjon';
       localStorage.setItem('twitchChatChannel', ch);
       setChatSrc(ch);
       const input = document.getElementById('chatChannel'); if(input) input.value = ch;
     }
+    function toggleChat(){ const open=!document.body.classList.contains('chat-open'); if(open){ document.body.classList.add('chat-open'); chatWrap.hidden=false; } else { document.body.classList.remove('chat-open'); chatWrap.hidden=true; } }
+    document.getElementById('btnChat').onclick=toggleChat;
+    document.getElementById('btnSetChannel').onclick=()=>{ const ch=document.getElementById('chatChannel').value.trim(); if(!ch) return; localStorage.setItem('twitchChatChannel',ch); setChatSrc(ch); document.body.classList.add('chat-open'); chatWrap.hidden=false; };
 
     // ----- Video / audio -----
     const vid=document.getElementById('vid'), vol=document.getElementById('vol'), btnMute=document.getElementById('btnMute');
@@ -186,7 +191,7 @@
     videoWrap.ondblclick=toggleFs;
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
 
-    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); };
+    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
 
     // ----- Connection -----
     const params=new URLSearchParams(location.search);
@@ -205,7 +210,7 @@
       pc=new RTCPeerConnection({iceServers:[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}], bundlePolicy:'max-bundle'});
       const vTrans=pc.addTransceiver('video',{direction:'recvonly'}); pc.addTransceiver('audio',{direction:'recvonly'});
 
-      // Keep receiving codec prefs simple; host will choose a working encoder
+      // Keep receive prefs broad (H264 then VP8); host will choose encoder
       try{
         const caps=RTCRtpReceiver.getCapabilities('video'); const codecs=(caps&&caps.codecs)||[];
         const h264=codecs.filter(c=>(c.mimeType||'').toLowerCase().includes('h264'));
@@ -261,39 +266,32 @@
       }, 1000);
     }
 
-    // Inputs + presence
-    let inputTimer=null,lastPayload=''; const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
-    function sendInput(o){ const s=JSON.stringify(o); if(s===lastPayload) return; lastPayload=s; try{ if(dc&&dc.readyState==='open') dc.send(s); else if(ws&&ws.readyState===1) ws.send(s); }catch{} }
-    function startInputs(){ if(inputTimer) return; inputTimer=setInterval(()=>{ const gps=(navigator.getGamepads&&Array.from(navigator.getGamepads()).filter(Boolean))||[]; const gp=gps.find(g=>g&&g.connected)||null;
-      const buttons=[],axes=[0,0,0,0],triggers={LT:0,RT:0}; if(gp){ gp.buttons.forEach((b,i)=>{ if(b&&b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }}); axes[0]=gp.axes[0]||0; axes[1]=gp.axes[1]||0; axes[2]=gp.axes[2]||0; axes[3]=gp.axes[3]||0; if(gp.buttons[6]) triggers.LT=gp.buttons[6].value||0; if(gp.buttons[7]) triggers.RT=gp.buttons[7].value||0; }
-      sendInput({type:'input',buttons,axes,triggers}); },33); log('Input sender started'); }
-
-    // Policy controls (kept; host also has controls now)
-    const cbAbxy=document.getElementById('cbAbxy'), cbDpad=document.getElementById('cbDpad'), cbSticks=document.getElementById('cbSticks'), cbTrig=document.getElementById('cbTrig'), cbMeta=document.getElementById('cbMeta');
-    const btnApplyPolicy=document.getElementById('btnApplyPolicy');
-    async function loadPolicy(){
-      try{
-        const scheme = location.protocol === 'https:' ? 'https' : 'http';
-        const r=await fetch(`${scheme}://${relayHost}/api/input-policy`, {mode:'cors'});
-        const j=await r.json();
-        cbAbxy.checked=!!j.block_abxy; cbDpad.checked=!!j.block_dpad; cbSticks.checked=!!j.block_sticks; cbTrig.checked=!!j.block_triggers; cbMeta.checked=!!j.block_meta;
-      }catch(e){ log('Policy fetch failed'); }
+    // Inputs (send only; no viewer-side blocking UI)
+    let inputTimer=null,lastPayload='';
+    const buttonMap={0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
+    function sendInput(o){ const s=JSON.stringify(o); if(s===lastPayload) return; lastPayload=s;
+      try{ if(dc&&dc.readyState==='open') dc.send(s); else if(ws&&ws.readyState===1) ws.send(s); }catch{} }
+    function startInputs(){
+      if(inputTimer) return;
+      inputTimer=setInterval(()=>{
+        const gps=(navigator.getGamepads&&Array.from(navigator.getGamepads()).filter(Boolean))||[];
+        const gp=gps.find(g=>g&&g.connected)||null;
+        const buttons=[],axes=[0,0,0,0],triggers={LT:0,RT:0};
+        if(gp){
+          gp.buttons.forEach((b,i)=>{ if(b&&b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }});
+          axes[0]=gp.axes[0]||0; axes[1]=gp.axes[1]||0; axes[2]=gp.axes[2]||0; axes[3]=gp.axes[3]||0;
+          if(gp.buttons[6]) triggers.LT=gp.buttons[6].value||0; if(gp.buttons[7]) triggers.RT=gp.buttons[7].value||0;
+        }
+        sendInput({type:'input',buttons,axes,triggers});
+      },33);
+      log('Input sender started');
     }
-    async function applyPolicy(){
-      try{
-        const scheme = location.protocol === 'https:' ? 'https' : 'http';
-        const body={block_abxy:cbAbxy.checked, block_dpad:cbDpad.checked, block_sticks:cbSticks.checked, block_triggers:cbTrig.checked, block_meta:cbMeta.checked};
-        await fetch(`${scheme}://${relayHost}/api/input-policy`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-        log('Policy applied');
-      }catch(e){ log('Policy apply failed'); }
-    }
-    btnApplyPolicy.onclick=applyPolicy;
 
     // Start
-    const relayParam=(new URLSearchParams(location.search).get('relay')||'').trim();
     ensureChatChannel();
     startViewer();
-    window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; loadPolicy(); });
+    buildBanner();
+    window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; });
 
     // Instant download logs
     document.getElementById('btnDownloadLogs').onclick=()=>{
