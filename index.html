@@ -41,7 +41,7 @@
       align-items: center;
       width: 100%;
     }
-    #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 26s linear infinite }
+    #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 40s linear infinite }
     #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -419,6 +419,27 @@
 		<div style="font-size:11px;color:#9aa7c8;opacity:.9">Maps your physical button → virtual button sent to host</div>
 	  </div>
 	  <div id="remapGrid"></div>
+	  <div id="axisOptionsWrap" style="margin-top:8px;padding-top:8px;border-top:1px solid #1d2436">
+  <div style="font-size:12px;color:#9aa7c8;margin-bottom:6px;letter-spacing:.3px">Stick Options</div>
+  <div class="axisGrid" style="display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:6px 12px">
+    <label style="font-size:12px;color:#cfd3df"><input type="checkbox" id="invLX"> Invert Left X</label>
+    <label style="font-size:12px;color:#cfd3df"><input type="checkbox" id="invLY"> Invert Left Y</label>
+    <label style="font-size:12px;color:#cfd3df"><input type="checkbox" id="invRX"> Invert Right X</label>
+    <label style="font-size:12px;color:#cfd3df"><input type="checkbox" id="invRY"> Invert Right Y</label>
+    <label style="font-size:12px;color:#cfd3df"><input type="checkbox" id="swapSticks"> Swap Sticks</label>
+    <label style="font-size:12px;color:#cfd3df"><input type="checkbox" id="smoothOn" checked> Smoothing</label>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+    <label for="deadzone" style="font-size:12px;color:#b9b9c2;width:90px;text-align:right">Deadzone</label>
+    <input id="deadzone" type="range" min="0" max="0.25" step="0.005" value="0.06">
+    <span id="deadzoneVal" style="font-size:12px;color:#9aa7c8;width:52px;text-align:left">0.06</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+    <label for="smoothAlpha" style="font-size:12px;color:#b9b9c2;width:90px;text-align:right">Smooth α</label>
+    <input id="smoothAlpha" type="range" min="0" max="1" step="0.05" value="0.35">
+    <span id="smoothAlphaVal" style="font-size:12px;color:#9aa7c8;width:52px;text-align:left">0.35</span>
+  </div>
+</div>
 	  <div id="remapFooter">
 		<button id="btnRemapReset">Reset</button>
 		<button id="btnRemapClose" class="accent">Close</button>
@@ -558,96 +579,93 @@
       element.style.transition = `opacity ${duration}ms`;
     }
 
-    function animateIntro() {
-      eyesContainer.innerHTML = '';
-      introText.style.opacity = 0;
-      introText.style.backgroundPosition = 'left';
+	function animateIntro() {
+	  eyesContainer.innerHTML = '';
+	  introText.style.opacity = 0;
+	  introText.style.backgroundPosition = 'left';
 
-      const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
-      const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
-      const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-      const leftStartOffset = 40;
-      const leftEndOffset = 0;
+	  const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
+	  const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
+	  const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
+	  const leftStartOffset = 40;
+	  const leftEndOffset = 0;
 
-      // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
-      const leftEyeWrap = document.createElement('div');
-      leftEyeWrap.className = 'eye-wrap';
-      leftEyeWrap.style.opacity = 0;
-      leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
-      leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
-      eyesContainer.appendChild(leftEyeWrap);
+	  const leftEyeWrap = document.createElement('div');
+	  leftEyeWrap.className = 'eye-wrap';
+	  leftEyeWrap.style.opacity = 0;
+	  leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
+	  leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+	  eyesContainer.appendChild(leftEyeWrap);
 
-      fadeInEyeWrap(leftEyeWrap, 900, () => {
-        if (animationSkipped) return skipToEnd();
-        setBlink(leftEyeWrap.firstElementChild, true, 120);
-        setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
+	  fadeInEyeWrap(leftEyeWrap, 900, () => {
+		if (animationSkipped) return skipToEnd();
+		setBlink(leftEyeWrap.firstElementChild, true, 120);
+		setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
 
-        // After a second, fade in right eye and slide left eye smoothly
-        setTimeout(() => {
-          if (animationSkipped) return skipToEnd();
-          const rightEyeWrap = document.createElement('div');
-          rightEyeWrap.className = 'eye-wrap';
-          rightEyeWrap.style.opacity = 0;
-          rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+		setTimeout(() => {
+		  if (animationSkipped) return skipToEnd();
+		  const rightEyeWrap = document.createElement('div');
+		  rightEyeWrap.className = 'eye-wrap';
+		  rightEyeWrap.style.opacity = 0;
+		  rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+		  eyesContainer.appendChild(rightEyeWrap);
 
-          eyesContainer.appendChild(rightEyeWrap);
+		  requestAnimationFrame(() => {
+			leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
+			leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
+			fadeInEyeWrap(rightEyeWrap, 900);
+		  });
 
-          // The fix: trigger both transitions in the same frame, using fadeInEyeWrap for right eye
-          requestAnimationFrame(() => {
-            leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
-            leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
-            fadeInEyeWrap(rightEyeWrap, 900);
-          });
+		  setTimeout(() => {
+			if (animationSkipped) return skipToEnd();
+			animateEyeShape(leftEyeWrap.firstElementChild, eyeTurnRight, 400);
+			animateEyeShape(rightEyeWrap.firstElementChild, eyeTurnLeft, 400);
+			widenEye(leftEyeWrap.firstElementChild, true);
+		  }, 700);
 
-          setTimeout(() => {
-            if (animationSkipped) return skipToEnd();
-            animateEyeShape(leftEyeWrap.firstElementChild, eyeTurnRight, 400);
-            animateEyeShape(rightEyeWrap.firstElementChild, eyeTurnLeft, 400);
-            widenEye(leftEyeWrap.firstElementChild, true);
-          }, 700);
+		  // 👇 Updated blink trigger from 900ms to 1150ms
+		  setTimeout(() => {
+			if (animationSkipped) return skipToEnd();
+			setBlink(leftEyeWrap.firstElementChild, true, 80);
+			setBlink(rightEyeWrap.firstElementChild, true, 80);
+			setTimeout(() => {
+			  setBlink(leftEyeWrap.firstElementChild, false, 100);
+			  setBlink(rightEyeWrap.firstElementChild, false, 100);
 
-          setTimeout(() => {
-            if (animationSkipped) return skipToEnd();
-            setBlink(leftEyeWrap.firstElementChild, true, 80);
-            setBlink(rightEyeWrap.firstElementChild, true, 80);
-            setTimeout(() => {
-              setBlink(leftEyeWrap.firstElementChild, false, 100);
-              setBlink(rightEyeWrap.firstElementChild, false, 100);
+			  setTimeout(() => {
+				setBlink(leftEyeWrap.firstElementChild, true, 80);
+				setBlink(rightEyeWrap.firstElementChild, true, 80);
 
-              setTimeout(() => {
-                setBlink(leftEyeWrap.firstElementChild, true, 80);
-                setBlink(rightEyeWrap.firstElementChild, true, 80);
+				setTimeout(() => {
+				  setBlink(leftEyeWrap.firstElementChild, false, 100);
+				  setBlink(rightEyeWrap.firstElementChild, false, 100);
 
-                setTimeout(() => {
-                  setBlink(leftEyeWrap.firstElementChild, false, 100);
-                  setBlink(rightEyeWrap.firstElementChild, false, 100);
+				  setTimeout(() => {
+					animateEyeShape(leftEyeWrap.firstElementChild, eyeForward, 350);
+					animateEyeShape(rightEyeWrap.firstElementChild, eyeForward, 350);
+					widenEye(leftEyeWrap.firstElementChild, false);
 
-                  setTimeout(() => {
-                    animateEyeShape(leftEyeWrap.firstElementChild, eyeForward, 350);
-                    animateEyeShape(rightEyeWrap.firstElementChild, eyeForward, 350);
-                    widenEye(leftEyeWrap.firstElementChild, false);
+					setTimeout(() => {
+					  if (animationSkipped) return skipToEnd();
+					  fadeIn(introText, 2000);
+					  introText.style.backgroundPosition = 'right';
+					  setTimeout(() => {
+						fadeOut(leftEyeWrap, 600);
+						fadeOut(rightEyeWrap, 600);
+						fadeOut(introText, 600);
+						setTimeout(() => fadeOut(overlayIntro, 800), 600);
+					  }, 1300);
+					}, 380);
+				  }, 350);
+				}, 180);
+			  }, 160);
+			}, 110);
+		  }, 1150); // ← updated delay
+		}, 1100);
+	  });
 
-                    setTimeout(() => {
-                      if (animationSkipped) return skipToEnd();
-                      fadeIn(introText, 2000);
-                      introText.style.backgroundPosition = 'right';
-                      setTimeout(() => {
-                        fadeOut(leftEyeWrap, 600);
-                        fadeOut(rightEyeWrap, 600);
-                        fadeOut(introText, 600);
-                        setTimeout(() => fadeOut(overlayIntro, 800), 600);
-                      }, 1300);
-                    }, 380);
-                  }, 350);
-                }, 180);
-              }, 160);
-            }, 110);
-          }, 900);
-        }, 1100);
-      });
-
-      skipTimeout = setTimeout(() => fadeOut(overlayIntro, 900), 10100);
-    }
+	  skipTimeout = setTimeout(() => fadeOut(overlayIntro, 900), 10100);
+	}
 
     function skipToEnd() {
       if (animationSkipped) return;
@@ -806,20 +824,94 @@
 		remapGrid.appendChild(sel);
 	  });
 	}
+	// ----- Axis config (invert/swap/deadzone/smoothing) -----
+	const AXIS_STORE_KEY = "axisConfigV1";
+	function defaultAxisCfg(){
+	  return { invertLX:false, invertLY:false, invertRX:false, invertRY:false,
+			   swapSticks:false, deadzone:0.06, smoothOn:true, smoothAlpha:0.35 };
+	}
+	function loadAxisCfg(){
+	  try{
+		const raw = localStorage.getItem(AXIS_STORE_KEY);
+		if(!raw) return defaultAxisCfg();
+		const obj = JSON.parse(raw);
+		return Object.assign(defaultAxisCfg(), obj);
+	  }catch{ return defaultAxisCfg(); }
+	}
+	function saveAxisCfg(cfg){
+	  try{ localStorage.setItem(AXIS_STORE_KEY, JSON.stringify(cfg)); }catch{}
+	}
+	let axisCfg = loadAxisCfg();
 
+	function initAxisOptionsUI(){
+	  const ids = {
+		invLX:'invertLX', invLY:'invertLY', invRX:'invertRX', invRY:'invertRY',
+		swapSticks:'swapSticks', smoothOn:'smoothOn'
+	  };
+	  // map DOM ids -> cfg keys
+	  const m = {
+		invLX:'invertLX', invLY:'invertLY', invRX:'invertRX', invRY:'invertRY',
+		swapSticks:'swapSticks', smoothOn:'smoothOn'
+	  };
+	  Object.entries(m).forEach(([domId, key])=>{
+		const el = document.getElementById(domId);
+		if(!el) return;
+		el.checked = !!axisCfg[key];
+		el.onchange = ()=>{ axisCfg[key] = !!el.checked; saveAxisCfg(axisCfg); };
+	  });
+
+	  const dz = document.getElementById('deadzone');
+	  const dzv = document.getElementById('deadzoneVal');
+	  if(dz && dzv){
+		dz.value = String(axisCfg.deadzone ?? 0.06);
+		dzv.textContent = Number(dz.value).toFixed(2);
+		dz.oninput = ()=>{ dzv.textContent = Number(dz.value).toFixed(2); };
+		dz.onchange = ()=>{ axisCfg.deadzone = Math.max(0, Math.min(0.25, Number(dz.value)||0.06)); saveAxisCfg(axisCfg); };
+	  }
+
+	  const sa = document.getElementById('smoothAlpha');
+	  const sav = document.getElementById('smoothAlphaVal');
+	  if(sa && sav){
+		sa.value = String(axisCfg.smoothAlpha ?? 0.35);
+		sav.textContent = Number(sa.value).toFixed(2);
+		sa.oninput = ()=>{ sav.textContent = Number(sa.value).toFixed(2); };
+		sa.onchange = ()=>{ axisCfg.smoothAlpha = Math.max(0, Math.min(1, Number(sa.value)||0.35)); saveAxisCfg(axisCfg); };
+	  }
+	}
+
+	// Make sure axis options render whenever the panel opens
+	const _oldToggleRemapPanel = toggleRemapPanel;
+	toggleRemapPanel = function(){
+	  const willShow = remapPanel.hasAttribute('hidden');
+	  if (willShow) {
+		buildRemapPanel();
+		// buildRemapPanel() recreates the grid; now bind axis controls
+		initAxisOptionsUI();
+	  }
+	  if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
+	};
+// Make sure axis options render whenever the panel opens
 	function toggleRemapPanel() {
 	  const willShow = remapPanel.hasAttribute('hidden');
-	  if (willShow) buildRemapPanel();
-	  if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
+	  if (willShow) {
+		buildRemapPanel();
+		// buildRemapPanel() recreates the grid; now bind axis controls
+		initAxisOptionsUI();
+	  }
+	  if (willShow) remapPanel.removeAttribute('hidden');
+	  else remapPanel.setAttribute('hidden', "");
 	}
 
 	btnRemap.onclick = toggleRemapPanel;
+
 	btnRemapReset.onclick = () => {
 	  remap = defaultRemap();
 	  saveRemap(remap);
 	  buildRemapPanel();
+	  initAxisOptionsUI(); // ensure axis UI reflects defaults immediately
 	  log("[REMAP] Reset to defaults");
 	};
+
 	btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
 
 	// Close when clicking outside
