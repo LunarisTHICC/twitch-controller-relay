@@ -42,7 +42,7 @@
       width: 100%;
     }
     #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 26s linear infinite }
-    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
+    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.35) }
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
@@ -55,16 +55,8 @@
     #wsUrl{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#9fb2d1}
 
     /* Layout */
-    html, body {
-      height: 100%;
-      min-height: 100%;
-    }
-    body, #root {
-      min-height: 100vh;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-    }
+    html, body { height: 100%; min-height: 100%; }
+    body, #root { min-height: 100vh; width: 100%; margin: 0; padding: 0; }
     main {
       display: grid;
       grid-template-columns: 1fr;
@@ -113,62 +105,62 @@
     #ovText{font-size:16px;color:#c6d3ea;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 
     /* Controls */
-	/* Remap dropdown */
-	#controls { position: relative; }
-	#btnRemap { /* same accent style already inherited, just keep id */ }
-	#remapPanel {
-	  position: absolute;
-	  top: calc(100% + 8px);
-	  left: 0;
-	  min-width: 340px;
-	  max-width: 92vw;
-	  background: #0d1322;
-	  color: #efeff1;
-	  border: 1px solid #1d2436;
-	  border-radius: 10px;
-	  box-shadow: 0 8px 30px rgba(0,0,0,0.45);
-	  padding: 12px;
-	  z-index: 9000;
-	}
-	#remapPanel[hidden] { display: none; }
-	#remapHeader {
-	  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-	  padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #1d2436;
-	}
-	#remapHeader h3 {
-	  margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .6px; color: #cfd3df;
-	  font-family: "Orbitron","Montserrat",system-ui,sans-serif;
-	}
-	#remapGrid {
-	  display: grid; grid-template-columns: 120px 1fr; gap: 8px 10px; align-items: center;
-	}
-	#remapGrid label {
-	  font-size: 12px; color: #b9b9c2; text-align: right; padding-right: 4px; user-select: none;
-	}
-	#remapGrid select {
-	  border-radius: 8px; border: 1px solid #2a2a32; color: #f3edff; background: #1e123a;
-	  padding: 6px 8px; font-size: 12px; width: 100%;
-	}
-	#remapFooter {
-	  display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;
-	}
-	#remapFooter button {
-	  border-radius: 8px; border: 1px solid #2a2a32; background: #1e123a; color: #f3edff; padding: 6px 12px;
-	}
-	#remapFooter button.accent {
-	  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-	  border-color: #5f37d6; color: #fff; box-shadow: 0 6px 18px rgba(145,70,255,.25), inset 0 0 0 1px rgba(255,255,255,.05)
-	}
+    /* Remap dropdown */
+    #controls { position: relative; }
+    #btnRemap { }
+    #remapPanel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 340px;
+      max-width: 92vw;
+      background: #0d1322;
+      color: #efeff1;
+      border: 1px solid #1d2436;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+      padding: 12px;
+      z-index: 9000;
+    }
+    #remapPanel[hidden] { display: none; }
+    #remapHeader {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid #1d2436;
+    }
+    #remapHeader h3 {
+      margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .6px; color: #cfd3df;
+      font-family: "Orbitron","Montserrat",system-ui,sans-serif;
+    }
+    #remapGrid {
+      display: grid; grid-template-columns: 120px 1fr; gap: 8px 10px; align-items: center;
+    }
+    #remapGrid label {
+      font-size: 12px; color: #b9b9c2; text-align: right; padding-right: 4px; user-select: none;
+    }
+    #remapGrid select {
+      border-radius: 8px; border: 1px solid #2a2a32; color: #f3edff; background: #1e123a;
+      padding: 6px 8px; font-size: 12px; width: 100%;
+    }
+    #remapFooter {
+      display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;
+    }
+    #remapFooter button {
+      border-radius: 8px; border: 1px solid #2a2a32; background: #1e123a; color: #f3edff; padding: 6px 12px;
+    }
+    #remapFooter button.accent {
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border-color: #5f37d6; color: #fff; box-shadow: 0 6px 18px rgba(145,70,255,.25), inset 0 0 0 1px rgba(255,255,255,.05)
+    }
 
-	/* Make sure Remap remains visible in "clean" mode */
-	body.clean #controls > * { display: none; }
-	body.clean #controls > #btnRemap { display: flex; }
-	body.clean #controls > #btnChat,
-	body.clean #controls > #volumeWrap,
-	body.clean #controls > #btnFullscreen,
-	body.clean #controls > #iconRow { display: flex; }
-	/* Allow panel to show in clean mode when not hidden */
-	body.clean #controls > #remapPanel:not([hidden]) { display: block; }
+    /* Make sure Remap remains visible in "clean" mode */
+    body.clean #controls > * { display: none; }
+    body.clean #controls > #btnRemap { display: flex; }
+    body.clean #controls > #btnChat,
+    body.clean #controls > #volumeWrap,
+    body.clean #controls > #btnFullscreen,
+    body.clean #controls > #iconRow { display: flex; }
+    /* Allow panel to show in clean mode when not hidden */
+    body.clean #controls > #remapPanel:not([hidden]) { display: block; }
     #controls{display:flex;flex-wrap:wrap;gap:10px;padding:10px 0;align-items:center}
     button,input,select{border-radius:8px;border:1px solid #2a2a32;color:#f3edff;background:#1e123a}
     button.accent{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:#5f37d6;color:#fff;box-shadow:0 6px 18px rgba(145,70,255,.25),inset 0 0 0 1px rgba(255,255,255,.05)}
@@ -366,25 +358,11 @@
       text-shadow: 0 1px 4px rgba(0,0,0,0.18);
       text-transform: uppercase;
     }
-    #intro-overlay.fade-out {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 1s;
-    }
+    #intro-overlay.fade-out { opacity: 0; pointer-events: none; transition: opacity 1s; }
     @media (max-width: 600px) {
-      #eyes-container {
-        min-height: 120px;
-        gap: 24px;
-        width: 160px;
-      }
-      .eye-svg {
-        width: 68px;
-        height: 48px;
-      }
-      #intro-text {
-        font-size: 1.6rem;
-        margin-top: 4px;
-      }
+      #eyes-container { min-height: 120px; gap: 24px; width: 160px; }
+      .eye-svg { width: 68px; height: 48px; }
+      #intro-text { font-size: 1.6rem; margin-top: 4px; }
     }
     /* --- End Animated Intro --- */
   </style>
@@ -401,7 +379,15 @@
   <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
   <header>
-    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
+    <span id="pRelay" class="pill">Relay</span>
+    <span id="pWs" class="pill">WS</span>
+    <span id="pSig" class="pill">Signaling</span>
+    <span id="pIce" class="pill">ICE</span>
+    <span id="pDtls" class="pill">DTLS</span>
+    <span id="pPc" class="pill">Peer</span>
+    <span id="pDc" class="pill">DC</span>
+    <span id="pAv" class="pill">A/V</span>
+    <span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
   </header>
 
@@ -412,34 +398,35 @@
         <div id="overlay"><div id="ovText">Connecting…</div></div>
       </div>
       <div id="controls">
-		  <button id="btnRemap" class="accent" title="Remap controller buttons">Remap</button>
-	<div id="remapPanel" hidden>
-	  <div id="remapHeader">
-		<h3>Viewer Control Remap</h3>
-		<div style="font-size:11px;color:#9aa7c8;opacity:.9">Maps your physical button → virtual button sent to host</div>
-	  </div>
-	  <div id="remapGrid"></div>
-	  <div id="remapFooter">
-		<button id="btnRemapReset">Reset</button>
-		<button id="btnRemapClose" class="accent">Close</button>
-	  </div>
-	</div>
+        <button id="btnRemap" class="accent" title="Remap controller buttons">Remap</button>
+        <div id="remapPanel" hidden>
+          <div id="remapHeader">
+            <h3>Viewer Control Remap</h3>
+            <div style="font-size:11px;color:#9aa7c8;opacity:.9">Maps your physical button → virtual button sent to host</div>
+          </div>
+          <div id="remapGrid"></div>
+          <div id="remapFooter">
+            <button id="btnRemapReset">Reset</button>
+            <button id="btnRemapClose" class="accent">Close</button>
+          </div>
+        </div>
+
         <button id="btnChat" class="accent" title="Toggle Twitch chat">Twitch Chat</button>
 
         <div id="volumeWrap" style="display:flex;align-items:center;gap:8px">
           <label for="vol" style="opacity:.8">Volume</label>
           <input id="vol" type="range" min="0" max="100" value="0" />
-          <div id="iconRow">
+          <div id="iconRow" style="display:flex;align-items:center;gap:8px">
             <button id="btnMute" class="muted" aria-label="Toggle mute" title="Toggle audio">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M3 10v4h4l5 4V6L7 10H3z"></path>
-                <path d="M14.5 12a4.5 4.5 0 0 0-1.2-3.1l1.4-1.4A6.5 6.5 0 0 1 16.5 12a6.5 6.5 0 0 1-1.8 4.5l-1.4-1.4A4.5 4.5 0 0 0 14.5 12z"></path>
-                <path d="M18 12a8 8 0 0 0-2.1-5.4l1.4-1.4A10 10 0 0 1 20 12a10 10 0 0 1-2.7 6.8l-1.4-1.4A8 8 0 0 0 18 12z"></path>
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+                <path d="M3 10v4h4l5 4V6L7 10H3z" fill="currentColor"></path>
+                <path d="M14.5 12a4.5 4.5 0 0 0-1.2-3.1l1.4-1.4A6.5 6.5 0 0 1 16.5 12a6.5 6.5 0 0 1-1.8 4.5l-1.4-1.4A4.5 4.5 0 0 0 14.5 12z" fill="currentColor"></path>
+                <path d="M18 12a8 8 0 0 0-2.1-5.4l1.4-1.4A10 10 0 0 1 20 12a10 10 0 0 1-2.7 6.8l-1.4-1.4A8 8 0 0 0 18 12z" fill="currentColor"></path>
               </svg>
             </button>
             <div id="padIconWrap" class="off" title="Controller status">
-              <svg id="padIcon" class="off" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+              <svg id="padIcon" class="off" viewBox="0 0 24 24" aria-hidden="true" width="24" height="24">
+                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" fill="currentColor"></path>
               </svg>
             </div>
           </div>
@@ -447,6 +434,8 @@
 
         <button id="btnFullscreen" class="accent" title="Fullscreen">Fullscreen</button>
         <button id="btnDownloadLogs">Download logs</button>
+        <!-- NEW: Ask host to reopen its AV input -->
+        <button id="btnReopenAV" class="accent" title="Ask host to reopen its AV input">Reopen AV</button>
       </div>
     </section>
 
@@ -592,7 +581,7 @@
 
           eyesContainer.appendChild(rightEyeWrap);
 
-          // The fix: trigger both transitions in the same frame, using fadeInEyeWrap for right eye
+          // Trigger both transitions in the same frame, using fadeInEyeWrap for right eye
           requestAnimationFrame(() => {
             leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
             leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
@@ -682,22 +671,21 @@
       });
     });
   </script>
+
   <script>
-    // --- Viewer.html JS: all original code below, with connection lost overlay logic added ---
+    // --- Viewer.html JS: original code + stability improvements (Reopen AV from viewer) ---
 
     const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
     function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
 
     // ----- Banner with meta fallbacks -----
-    // NOTE: Banner stats are now static per user request!
+    // NOTE: Banner stats are static per request.
     const PROJECT_START = new Date('2025-09-29T00:00:00Z');
     const brandTrack = document.getElementById('brandTrack');
-    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(' ')); s.appendChild(document.createTextNode(text)); s.appendChild(document.createTextNode(' ')); s.appendChild(d2); return s; }
+    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(text)); s.appendChild(d2); return s; }
     async function buildBanner(){
       brandTrack.innerHTML='';
-      // Static stats per user request
-      const now=new Date(); 
-      // Local time string formatted as HH:MM (24hr)
+      const now=new Date();
       const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
       const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
       const texts = [
@@ -705,7 +693,7 @@
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
-        `Lines of code used: 2,287+`,
+        `Lines of code used: 1984+`,
         `Languages used: Python, HTML, CSS, JavaScript`,
         `Models used: Gpt-5 & GPT-4.`
       ];
@@ -717,10 +705,8 @@
     // ----- Chat (force junkfoodjon, dark) -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
     function setChatSrc(){
-      const parent=location.hostname; // Twitch requires hostname, not host/port
+      const parent=location.hostname;
       const ch='junkfoodjon';
-      // Twitch dark mode, allow iframe to fill entire chatWrap flexbox area
-      // The "dark" param is necessary but Twitch may still use system color scheme, so force dark on wrapper
       chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
       chatIframe.classList.add('twitch-dark-bg');
       chatIframe.style.background='#0d1322';
@@ -729,106 +715,94 @@
       chatIframe.style.display='block';
       chatIframe.allowTransparency='true';
     }
-    function toggleChat(){ 
-      const open=!document.body.classList.contains('chat-open'); 
-      if(open){ 
-        document.body.classList.add('chat-open'); 
+    function toggleChat(){
+      const open=!document.body.classList.contains('chat-open');
+      if(open){
+        document.body.classList.add('chat-open');
         chatWrap.hidden=false;
-        // Ensure chat scales vertically on open
         chatWrap.style.height = '100%';
         chatIframe.style.height = '100%';
-      } else { 
-        document.body.classList.remove('chat-open'); 
-        chatWrap.hidden=true; 
-      } 
+      } else {
+        document.body.classList.remove('chat-open');
+        chatWrap.hidden=true;
+      }
     }
     document.getElementById('btnChat').onclick=toggleChat;
-		// ----- Remap UI + state -----
-	const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
-	const DISABLE_SENTINEL = ""; // maps to "send nothing"
-	const REMAP_STORE_KEY = "controlRemapV1";
 
-	function defaultRemap() {
-	  const m = {};
-	  ALL_BUTTONS.forEach(n => m[n] = n);
-	  return m;
-	}
-	function loadRemap() {
-	  try {
-		const raw = localStorage.getItem(REMAP_STORE_KEY);
-		if (!raw) return defaultRemap();
-		const obj = JSON.parse(raw);
-		// sanity: ensure all keys exist
-		ALL_BUTTONS.forEach(n => { if (!(n in obj)) obj[n] = n; });
-		return obj;
-	  } catch { return defaultRemap(); }
-	}
-	function saveRemap(m) {
-	  try { localStorage.setItem(REMAP_STORE_KEY, JSON.stringify(m)); } catch {}
-	}
-	let remap = loadRemap();
+    // ----- Remap UI + state -----
+    const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
+    const DISABLE_SENTINEL = "";
+    const REMAP_STORE_KEY = "controlRemapV1";
+    function defaultRemap() { const m={}; ALL_BUTTONS.forEach(n=>m[n]=n); return m; }
+    function loadRemap() {
+      try {
+        const raw = localStorage.getItem(REMAP_STORE_KEY);
+        if (!raw) return defaultRemap();
+        const obj = JSON.parse(raw);
+        ALL_BUTTONS.forEach(n => { if (!(n in obj)) obj[n] = n; });
+        return obj;
+      } catch { return defaultRemap(); }
+    }
+    function saveRemap(m){ try{ localStorage.setItem(REMAP_STORE_KEY, JSON.stringify(m)); }catch{} }
+    let remap = loadRemap();
 
-	const btnRemap = document.getElementById('btnRemap');
-	const remapPanel = document.getElementById('remapPanel');
-	const remapGrid = document.getElementById('remapGrid');
-	const btnRemapReset = document.getElementById('btnRemapReset');
-	const btnRemapClose = document.getElementById('btnRemapClose');
+    const btnRemap = document.getElementById('btnRemap');
+    const remapPanel = document.getElementById('remapPanel');
+    const remapGrid = document.getElementById('remapGrid');
+    const btnRemapReset = document.getElementById('btnRemapReset');
+    const btnRemapClose = document.getElementById('btnRemapClose');
 
-	function buildRemapPanel() {
-	  remapGrid.innerHTML = "";
-	  ALL_BUTTONS.forEach(src => {
-		const lab = document.createElement('label');
-		lab.textContent = src;
-		const sel = document.createElement('select');
+    function buildRemapPanel() {
+      remapGrid.innerHTML = "";
+      ALL_BUTTONS.forEach(src => {
+        const lab = document.createElement('label');
+        lab.textContent = src;
+        const sel = document.createElement('select');
 
-		// Disabled option
-		const optDis = document.createElement('option');
-		optDis.value = DISABLE_SENTINEL;
-		optDis.textContent = "(Disabled)";
-		sel.appendChild(optDis);
+        const optDis = document.createElement('option');
+        optDis.value = DISABLE_SENTINEL;
+        optDis.textContent = "(Disabled)";
+        sel.appendChild(optDis);
 
-		// Options for all virtual targets
-		ALL_BUTTONS.forEach(dst => {
-		  const opt = document.createElement('option');
-		  opt.value = dst;
-		  opt.textContent = dst;
-		  sel.appendChild(opt);
-		});
+        ALL_BUTTONS.forEach(dst => {
+          const opt = document.createElement('option');
+          opt.value = dst;
+          opt.textContent = dst;
+          sel.appendChild(opt);
+        });
 
-		sel.value = (remap[src] ?? src);
-		sel.onchange = () => {
-		  remap[src] = sel.value;
-		  saveRemap(remap);
-		  log(`[REMAP] ${src} -> ${sel.value || "(Disabled)"}`);
-		};
+        sel.value = (remap[src] ?? src);
+        sel.onchange = () => {
+          remap[src] = sel.value;
+          saveRemap(remap);
+          log(`[REMAP] ${src} -> ${sel.value || "(Disabled)"}`);
+        };
 
-		remapGrid.appendChild(lab);
-		remapGrid.appendChild(sel);
-	  });
-	}
+        remapGrid.appendChild(lab);
+        remapGrid.appendChild(sel);
+      });
+    }
 
-	function toggleRemapPanel() {
-	  const willShow = remapPanel.hasAttribute('hidden');
-	  if (willShow) buildRemapPanel();
-	  if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
-	}
+    function toggleRemapPanel() {
+      const willShow = remapPanel.hasAttribute('hidden');
+      if (willShow) buildRemapPanel();
+      if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
+    }
 
-	btnRemap.onclick = toggleRemapPanel;
-	btnRemapReset.onclick = () => {
-	  remap = defaultRemap();
-	  saveRemap(remap);
-	  buildRemapPanel();
-	  log("[REMAP] Reset to defaults");
-	};
-	btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
-
-	// Close when clicking outside
-	document.addEventListener('click', (e) => {
-	  if (!remapPanel.hasAttribute('hidden')) {
-		const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
-		if (!within) remapPanel.setAttribute('hidden', "");
-	  }
-	});
+    btnRemap.onclick = toggleRemapPanel;
+    btnRemapReset.onclick = () => {
+      remap = defaultRemap();
+      saveRemap(remap);
+      buildRemapPanel();
+      log("[REMAP] Reset to defaults");
+    };
+    btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
+    document.addEventListener('click', (e) => {
+      if (!remapPanel.hasAttribute('hidden')) {
+        const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
+        if (!within) remapPanel.setAttribute('hidden', "");
+      }
+    });
 
     // ----- Video / audio -----
     const vid=document.getElementById('vid'), vol=document.getElementById('vol'), btnMute=document.getElementById('btnMute');
@@ -836,18 +810,50 @@
 
     function ensurePlay(){ const p=vid.play(); if(p&&p.then)p.catch(()=>{}); }
     function updateMuteVisual(){ const muted=vid.muted||vid.volume===0; btnMute.classList.toggle('muted',muted); btnMute.setAttribute('aria-pressed', String(!muted)); }
-    function lockAspectFromTrack(track){ try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{} }
+    function lockAspectFromTrack(track){ try{ const st = (track.getSettings && track.getSettings())||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{} }
 
     let autoUnmuted = false;
-    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume===0&&stored>0){ vid.volume=stored/100; vol.value=stored; } vid.muted=false; updateMuteVisual(); ensurePlay(); }catch{} }
+    async function firstInteract(){
+      if(autoUnmuted) return; autoUnmuted = true;
+      try{
+        const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10)));
+        if(vid.volume===0) vid.volume = stored/100;
+        vid.muted = (stored===0);
+        updateMuteVisual();
+        ensurePlay();
+      }catch{}
+    }
     ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev, firstInteract, {once:true, capture:true}));
 
-    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)||30)); vid.volume=stored/100; vol.value=stored; } }else{ vid.muted=true; } updateMuteVisual(); ensurePlay(); }catch{} };
-    vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.muted=false; updateMuteVisual(); ensurePlay(); });
+    btnMute.onclick=async()=>{
+      try{
+        if(vid.muted || vid.volume===0){
+          vid.muted=false;
+          if (vid.volume===0) {
+            const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)));
+            vid.volume=stored/100;
+          }
+        } else {
+          vid.muted=true;
+        }
+      }catch{}
+      updateMuteVisual(); ensurePlay();
+    };
+    vol.addEventListener('input', ()=>{
+      const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100;
+      vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100)));
+      if(v>0) vid.muted=false; updateMuteVisual(); ensurePlay();
+    });
     const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
 
     // Fullscreen
-    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})?.call(videoWrap); } else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})?.call(document); } }
+    function toggleFs(){
+      if(!document.fullscreenElement){
+        (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})();
+      }else{
+        (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})();
+      }
+    }
     document.getElementById('btnFullscreen').onclick=toggleFs;
     videoWrap.ondblclick=toggleFs;
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
@@ -871,14 +877,12 @@
       if (isDisconnected) return;
       isDisconnected = true;
       log("[CONNECTION LOST] " + reason);
-      // Remove any old overlay
       if (document.getElementById('lostConnectionOverlay')) {
         document.getElementById('lostConnectionOverlay').remove();
       }
-      // Create overlay
-      const overlay = document.createElement('div');
-      overlay.id = 'lostConnectionOverlay';
-      overlay.innerHTML = `
+      const overlayLost = document.createElement('div');
+      overlayLost.id = 'lostConnectionOverlay';
+      overlayLost.innerHTML = `
         <button class="footer-eye-btn" tabindex="-1" aria-label="Animated Eye" style="margin-bottom:1.4em;">
           <svg class="eye-svg" viewBox="0 0 120 80" width="54" height="38">
             <ellipse class="eyeball" cx="60" cy="40" rx="28" ry="18" stroke="#e5e5e5" stroke-width="3" fill="#181818"/>
@@ -892,7 +896,7 @@
         </div>
         <div id="reconnectCountdown">Auto-reloading in <span id="reconnectCount">5</span> seconds...</div>
       `;
-      document.body.appendChild(overlay);
+      document.body.appendChild(overlayLost);
       let seconds = 5;
       const countdownEl = document.getElementById('reconnectCount');
       const timer = setInterval(() => {
@@ -906,7 +910,25 @@
       document.getElementById('reconnectBtn').onclick = () => location.reload();
     }
 
-    // --- End overlay logic ---
+    function showOverlay(text){ if(text) ovText.textContent=text; overlay.hidden=false; }
+    function hideOverlay(){ overlay.hidden=true; }
+
+    // NEW: Ask host to reopen its AV input (via WS or DC); rate-limited on the viewer
+    let askedReopenRecently = false;
+    function askHostReopenAV(manual=false){
+      if(askedReopenRecently) return;
+      askedReopenRecently = true;
+      setTimeout(()=>askedReopenRecently=false, 8000);
+      const payload = JSON.stringify({type:'reopen-av', viewer: viewerID, manual});
+      try{
+        if (dc && dc.readyState === 'open') { dc.send(payload); }
+        else if (ws && ws.readyState === 1) { ws.send(payload); }
+        log('[REQ] reopen-av sent');
+        showOverlay('Reopening stream…');
+      }catch(e){ log('[REQ ERROR] reopen-av: '+e); }
+    }
+    const btnReopen = document.getElementById('btnReopenAV');
+    if (btnReopen) btnReopen.onclick = () => askHostReopenAV(true);
 
     function startViewer(){
       log('WS URL → '+wsUrl); pill('pWs','','WS: connecting'); showOverlay('Connecting…');
@@ -941,23 +963,44 @@
       ws.onopen=()=>{ log('WS open'); pill('pWs','ok','WS: open'); ws.send(JSON.stringify({type:'hello',role:'viewer'})); startHeartbeats(); };
       ws.onerror=()=>{ handleDisconnect("WebSocket error"); };
       ws.onclose=()=>{ handleDisconnect("WebSocket closed"); };
-      ws.onmessage=async(ev)=>{ const msg=JSON.parse(ev.data); if(msg.type==='pong') return;
-        if(msg.type==='welcome'){ viewerID=msg.viewer_id; const offer=await pc.createOffer(); await pc.setLocalDescription(offer); ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}})); }
-        else if(msg.type==='answer'){ await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp)); log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay(); }
-        else if(msg.type==='candidate'){ try{ await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }catch(e){ log('ICE add err '+e); } }
+      ws.onmessage=async(ev)=>{ const msg=JSON.parse(ev.data||'{}'); if(msg.type==='pong') return;
+        if(msg.type==='welcome'){
+          viewerID=msg.viewer_id;
+          const offer=await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({type:'offer',viewer:viewerID,sdp:{type:offer.type,sdp:offer.sdp}}));
+        }
+        else if(msg.type==='answer'){
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+          log('Answer applied'); pill('pSig','ok','Signaling: answer'); hideOverlay(); ensurePlay();
+        }
+        else if(msg.type==='candidate'){
+          try{ await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); }catch(e){ log('ICE add err '+e); }
+        }
       };
 
-      if (dc) {
-        dc.onclose = () => handleDisconnect("DataChannel closed");
-        dc.onerror = () => handleDisconnect("DataChannel error");
-      }
+      startStallDetector();
     }
 
-    function showOverlay(text){ if(text) ovText.textContent=text; overlay.hidden=false; }
-    function hideOverlay(){ overlay.hidden=true; }
-    function startHeartbeats(){ if(hbTimer) clearInterval(hbTimer); hbTimer=setInterval(()=>{ try{ if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID})); if(dc&&dc.readyState==='open') dc.send(JSON.stringify({type:'ping',viewer:viewerID})); }catch{} }, 2500); }
-    function restartSoon(){ if(restarting) return; restarting=true; showOverlay('Reconnecting…'); setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5, 5000); }, retryDelay); }
-    function stopSession(){ try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{} try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{} try{ dc?.close(); }catch{} try{ ws?.close(); }catch{} try{ pc?.close(); }catch{} }
+    function startHeartbeats(){
+      if(hbTimer) clearInterval(hbTimer);
+      hbTimer=setInterval(()=>{
+        try{
+          if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'ping',viewer:viewerID}));
+        }catch{}
+      }, 25000);
+    }
+    function restartSoon(){
+      if(restarting) return;
+      restarting=true;
+      showOverlay('Reconnecting…');
+      setTimeout(()=>{ restarting=false; stopSession(); startViewer(); retryDelay=Math.min(retryDelay*1.5, 6000); }, retryDelay);
+    }
+    function stopSession(){
+      try{ if(hbTimer) clearInterval(hbTimer); hbTimer=null; }catch{}
+      try{ if(stallTimer) clearInterval(stallTimer); stallTimer=null; }catch{}
+      try{ dc?.close(); }catch{} try{ ws?.close(); }catch{} try{ pc?.close(); }catch{}
+    }
 
     function startStallDetector(){
       if(stallTimer) clearInterval(stallTimer);
@@ -966,170 +1009,79 @@
         if(!pc) return;
         try{
           const stats = await pc.getStats(); let vBytes=0;
-          stats.forEach(r=>{ if(r.type==='inbound-rtp' && r.kind==='video' && !r.isRemote) vBytes += (r.bytesReceived||0); });
+          stats.forEach(r=>{ if(r.type==='inbound-rtp' && (r.kind==='video'||r.mediaType==='video') && !r.isRemote) vBytes += (r.bytesReceived||0); });
           const now=performance.now();
           if(vBytes>vBytesPrev){ vBytesPrev=vBytes; lastOk=now; pill('pAv','ok','A/V: receiving'); hideOverlay(); ensurePlay(); }
-          else if(now-lastOk>4500){ showOverlay('Reconnecting…'); restartSoon(); }
-          else if(now-lastOk>2000){ pill('pAv','warn','A/V: stalled'); showOverlay('Buffering…'); }
+          else if(now-lastOk>2500){
+            // NEW: politely ask host to reopen media once before escalating
+            askHostReopenAV(false);
+            if(now-lastOk>5000){ pill('pAv','warn','A/V: stalled'); showOverlay('Reconnecting…'); restartSoon(); }
+            else { pill('pAv','warn','A/V: stalled'); showOverlay('Buffering…'); }
+          }
         }catch{}
       }, 1000);
     }
 
-	// Inputs (send only)
-	let inputTimer = null, lastPayload = '';
-	const buttonMap = {0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
+    // Inputs (send only)
+    let inputTimer = null, lastPayload = '';
+    const buttonMap = {0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
 
-	// Only cache after a successful send (fixes “no channel yet” dedupe bug)
-	function sendInput(o){
-	  const s = JSON.stringify(o);
-	  const canSendDC = (dc && dc.readyState === 'open');
-	  const canSendWS = (ws && ws.readyState === 1);
+    // Only cache after a successful send (fixes “no channel yet” dedupe bug)
+    function sendInput(o){
+      const s = JSON.stringify(o);
+      const canSendDC = (dc && dc.readyState === 'open');
+      const canSendWS = (ws && ws.readyState === 1);
 
-	  if (!canSendDC && !canSendWS) {
-		// No channel yet; don't cache s so we retry next tick when a channel opens
-		return;
-	  }
-	  if (s === lastPayload) return;
+      if (!canSendDC && !canSendWS) {
+        // No channel yet; don't cache s so we retry next tick when a channel opens
+        return;
+      }
+      if (s === lastPayload) return;
 
-	  try {
-		if (canSendDC) {
-		  log("[SEND] DataChannel: " + s);
-		  dc.send(s);
-		  lastPayload = s;
-		} else if (canSendWS) {
-		  log("[SEND] WebSocket: " + s);
-		  ws.send(s);
-		  lastPayload = s;
-		}
-	  } catch (e) {
-		log("[SEND ERROR] " + e);
-	  }
-	}
+      try {
+        if (canSendDC) {
+          log("[SEND] DataChannel: " + s);
+          dc.send(s);
+          lastPayload = s;
+        } else if (canSendWS) {
+          log("[SEND] WebSocket: " + s);
+          ws.send(s);
+          lastPayload = s;
+        }
+      } catch(e) {
+        log("[SEND ERROR] " + e);
+      }
+    }
 
-	function startInputs(){
-	  if (inputTimer) return;
-
-	  // Minimal stick-center calibration
-	  let haveBaseline = false;
-	  let base = [0,0,0,0];
-	  let sum = [0,0,0,0];
-	  let samples = 0;
-	  const CALIB_SAMPLES = 20; // ~0.66s at 33ms
-
-	  const DZ = 0.06;
-	  const clamp1 = v => Math.max(-1, Math.min(1, v || 0));
-	  const q = v => Math.round(v*100)/100;
-	  const shapeDeadzone = (v) => {
-		const m = Math.abs(v);
-		if (m <= DZ) return 0;
-		const s = Math.sign(v);
-		return s * ((m - DZ) / (1 - DZ));
-	  };
-
-	  // For logging once
-	  let loggedPadInfo = false;
-
-	  inputTimer = setInterval(()=>{
-		const gps = (navigator.getGamepads && Array.from(navigator.getGamepads()).filter(Boolean)) || [];
-		const gp = gps.find(g => g && g.connected) || null;
-
-		const buttons = [];
-		const triggers = { LT:0, RT:0 };
-		let lx=0, ly=0, rx=0, ry=0;
-
-		if (gp) {
-		  if (!loggedPadInfo) {
-			try {
-			  log(`[PAD] mapping=${gp.mapping||'(none)'} axes=${(gp.axes||[]).length} buttons=${(gp.buttons||[]).length}`);
-			} catch {}
-			loggedPadInfo = true;
-		  }
-
-		  // Buttons
-		  gp.buttons.forEach((b,i)=>{
-			if (b && (b.pressed || (typeof b.value==='number' && b.value>0.5))) {
-			  const n = buttonMap[i];
-			  if (n) buttons.push(n);
-			}
-		  });
-
-		  // Raw axes (standard default indices)
-		  const ax = [
-			clamp1(gp.axes[0]),
-			clamp1(gp.axes[1]),
-			clamp1(gp.axes[2]),
-			clamp1(gp.axes[3]),
-		  ];
-
-		  // Detect the “corner at idle” pattern and treat it as baseline immediately
-		  const looksExtremeCorner =
-			Math.abs(ax[0]) > 0.95 && Math.abs(ax[1]) > 0.95 &&
-			Math.abs(ax[2]) > 0.95 && Math.abs(ax[3]) > 0.95;
-
-		  if (!haveBaseline) {
-			if (looksExtremeCorner) {
-			  base = ax.slice();
-			  haveBaseline = true;
-			  log(`[PAD] Baseline set from extreme idle: [${base.map(v=>v.toFixed(2)).join(', ')}]`);
-			} else {
-			  // Average a few frames to estimate center
-			  sum[0]+=ax[0]; sum[1]+=ax[1]; sum[2]+=ax[2]; sum[3]+=ax[3];
-			  samples++;
-			  if (samples >= CALIB_SAMPLES) {
-				base = sum.map(v=>v/samples);
-				haveBaseline = true;
-				log(`[PAD] Baseline calibrated: [${base.map(v=>v.toFixed(2)).join(', ')}]`);
-			  }
-			}
-		  }
-
-		  // Subtract baseline (once available)
-		  const adj = haveBaseline ? [
-			clamp1(ax[0] - base[0]),
-			clamp1(ax[1] - base[1]),
-			clamp1(ax[2] - base[2]),
-			clamp1(ax[3] - base[3]),
-		  ] : ax;
-
-		  // Deadzone shaping
-		  lx = shapeDeadzone(adj[0]);
-		  ly = shapeDeadzone(adj[1]);
-		  rx = shapeDeadzone(adj[2]);
-		  ry = shapeDeadzone(adj[3]);
-
-		  // Triggers (0..1)
-		  if (gp.buttons[6]) triggers.LT = Math.max(0, Math.min(1, gp.buttons[6].value||0));
-		  if (gp.buttons[7]) triggers.RT = Math.max(0, Math.min(1, gp.buttons[7].value||0));
-		}
-
-		// Apply button remap + dedupe
-		const remapped = [];
-		const seen = new Set();
-		for (const phys of buttons) {
-		  const virtualName = (remap[phys] ?? phys);
-		  if (virtualName && !seen.has(virtualName)) {
-			seen.add(virtualName);
-			remapped.push(virtualName);
-		  }
-		}
-
-		const axes = [ q(lx), q(ly), q(rx), q(ry) ];
-		// Old-style payload (host accepts with or without type)
-		sendInput({ buttons: remapped, axes, triggers });
-	  }, 33);
-
-	  log('Input sender started (with minimal center calibration)');
-	}
-
-	// Start the input loop shortly after load and on first pad connect
-	window.addEventListener('load', () => { setTimeout(startInputs, 300); });
-	window.addEventListener('gamepadconnected', () => { setTimeout(startInputs, 0); });
+    function startInputs(){
+      if(inputTimer) return;
+      inputTimer=setInterval(()=>{
+        const gps=(navigator.getGamepads&&Array.from(navigator.getGamepads()).filter(Boolean))||[];
+        const gp=gps.find(g=>g&&g.connected)||null;
+        let buttons=[],axes=[0,0,0,0],triggers={LT:0,RT:0};
+        if(gp){
+          gp.buttons.forEach((b,i)=>{ if(b&&b.pressed){ const n=buttonMap[i]; if(n) buttons.push(n); }});
+          axes[0]=gp.axes[0]||0; axes[1]=gp.axes[1]||0; axes[2]=gp.axes[2]||0; axes[3]=gp.axes[3]||0;
+          if(gp.buttons[6]) triggers.LT=gp.buttons[6].value||0; if(gp.buttons[7]) triggers.RT=gp.buttons[7].value||0;
+        }
+        // Apply remap (button → target), filtering disabled
+        if (buttons.length){
+          buttons = buttons.map(src => remap[src] ?? src).filter(v => v && v !== DISABLE_SENTINEL);
+        }
+        sendInput({type:'input',buttons,axes,triggers});
+      },33);
+      log('Input sender started');
+    }
 
     // Start
     setChatSrc();
     startViewer();
     buildBanner();
-    window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; });
+    window.addEventListener('load', ()=>{
+      setTimeout(startInputs,300);
+      document.body.classList.remove('chat-open');
+      chatWrap.hidden=true;
+    });
 
     // Instant download logs
     document.getElementById('btnDownloadLogs').onclick=()=>{
@@ -1149,5 +1101,3 @@
   </script>
 </body>
 </html>
-
-
