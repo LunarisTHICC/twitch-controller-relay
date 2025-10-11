@@ -860,6 +860,19 @@
     const wsUrl=`${location.protocol==='https:'?'wss':'ws'}://${relayHost}/ws/viewer`;
     document.getElementById('wsUrl').textContent=wsUrl;
     pill('pRelay','ok','Relay: '+relayHost); pill('pTransport','ok','Transport: WebRTC');
+	
+	    // --- TURN support: fetch ICE servers from relay.json; allow ?relayOnly=1 to force TURN ---
+    const forceRelay = params.get('relayOnly') === '1';
+    const proto = (location.protocol === 'https:') ? 'https' : 'http';
+    async function getIceServers(){
+      const fallback=[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}];
+      try{
+        const r=await fetch(`${proto}://${relayHost}/relay.json`, {cache:'no-store'});
+        const j=await r.json();
+        if (Array.isArray(j.ice_servers) && j.ice_servers.length) return j.ice_servers;
+      }catch(e){ try{ log('ICE fetch failed, using fallback STUN: '+e);}catch{} }
+      return fallback;
+    }
 
     let pc, ws, dc, viewerID=null, restarting=false, hbTimer=null, stallTimer=null;
     let retryDelay = 700;
@@ -908,10 +921,13 @@
 
     // --- End overlay logic ---
 
-    function startViewer(){
+    async function startViewer(){
       log('WS URL → '+wsUrl); pill('pWs','','WS: connecting'); showOverlay('Connecting…');
 
-      pc=new RTCPeerConnection({iceServers:[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}], bundlePolicy:'max-bundle'});
+      const iceServers = await getIceServers();
+      const pcCfg = { iceServers, bundlePolicy:'max-bundle' };
+      if (forceRelay) pcCfg.iceTransportPolicy = 'relay';
+      pc=new RTCPeerConnection(pcCfg);
       const vTrans=pc.addTransceiver('video',{direction:'recvonly'}); pc.addTransceiver('audio',{direction:'recvonly'});
 
       try{
@@ -1149,3 +1165,4 @@
   </script>
 </body>
 </html>
+
