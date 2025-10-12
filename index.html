@@ -14,7 +14,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Oswald for intro, Montserrat/Orbitron for main UI -->
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Montserrat:wght@500;700&family=Orbitron:wght@600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1"> <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1"> <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=1"> <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1"> <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#9146ff"> <meta name="theme-color" content="#0e1524">
+  <!-- Favicons: modern + legacy -->
+  <link rel="icon" href="/favicon.ico?v=1" sizes="any"> <!-- legacy fallback; must exist -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1"> <!-- crisp on modern browsers -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=1">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=1">
+
+  <!-- Apple iOS home screen icon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1">
+  <meta name="apple-mobile-web-app-title" content="doppel.stream">
+
+  <!-- PWA / Android manifest -->
+  <link rel="manifest" href="/site.webmanifest?v=1">
+  <meta name="theme-color" content="#0e0e10"> <!-- status bar/tab color -->
+
+  <!-- Safari pinned tab (macOS) -->
+  <link rel="mask-icon" href="/safari-pinned-tab.svg?v=1" color="#9146ff">
+
+  <!-- Windows tiles (optional but safe) -->
+  <meta name="msapplication-TileColor" content="#0e0e10">
   <style>
     :root {
       --bg: #0e0e10; --panel: #18181b; --edge: #23232a; --fg: #efeff1; --muted: #b9b9c2;
