@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Solid version for Safari pinned tabs; Safari uses the 'color' from link tag -->
+  <path d="M10 32c4.8-9 13-14 22-14s17.2 5 22 14c-4.8 9-13 14-22 14S14.8 41 10 32z" fill="#000"/>
+  <circle cx="32" cy="32" r="10" fill="#000"/>
+  <circle cx="32" cy="32" r="6" fill="#000"/>
+</svg>
