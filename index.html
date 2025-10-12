@@ -200,95 +200,76 @@
 	  padding: 12px;
 	  z-index: 9000;
 	}
-	/* Mobile portrait: row1 = [viewerCount][Remap][Chat][Fullscreen]; row2 = Volume full-width */
+	/* Mobile portrait: row1 = [viewerCount][Remap][Chat][Fullscreen]; row2 = Volume full-width
+	   Buttons trimmed ~30% vertically; Fullscreen sits beside Chat. */
 	@media (max-width: 700px) and (orientation: portrait) {
 	  #controls {
 		display: grid !important; /* override later flex */
 		grid-template-columns:
 		  auto                       /* viewerCount */
 		  auto                       /* Remap icon */
-		  minmax(120px, 1fr)         /* Chat */
-		  minmax(120px, 1fr);        /* Fullscreen */
-		grid-auto-rows: minmax(44px, auto);
-		column-gap: 12px;
-		row-gap: 10px;
+		  minmax(110px, 1fr)         /* Chat */
+		  minmax(110px, 1fr);        /* Fullscreen */
+		grid-auto-rows: minmax(32px, auto); /* shorter rows (~30% down) */
+		column-gap: 10px;
+		row-gap: 8px;
 		align-items: center;
 	  }
 
 	  /* Row 1 explicit placement */
-	  #viewerCount  { grid-column: 1; grid-row: 1; justify-self: start; align-self: stretch; }
-	  #btnRemap     { grid-column: 2; grid-row: 1; }
-	  #btnChat      { grid-column: 3; grid-row: 1; justify-self: stretch; }
-	  #btnFullscreen{ grid-column: 4; grid-row: 1; justify-self: stretch; }
+	  #viewerCount   { grid-column: 1; grid-row: 1; justify-self: start; align-self: stretch; }
+	  #btnRemap      { grid-column: 2; grid-row: 1; }
+	  #btnChat       { grid-column: 3; grid-row: 1; justify-self: stretch; }
+	  #btnFullscreen { grid-column: 4; grid-row: 1; justify-self: stretch; }
 
 	  /* Row 2: Volume across full width */
-	  #volumeWrap   { grid-column: 1 / -1; grid-row: 2; }
+	  #volumeWrap { grid-column: 1 / -1; grid-row: 2; }
 
-	  /* Make viewer tile similar height to buttons but compact in width */
+	  /* Compact viewer tile */
 	  #viewerCount {
-		min-height: clamp(44px, 11vw, 56px);
-		min-width: clamp(56px, 18vw, 86px);
-		padding-inline: 10px;
+		min-height: clamp(32px, 7.8vw, 40px);     /* ~30% shorter */
+		min-width: clamp(50px, 16vw, 78px);
+		padding-inline: 8px;
 	  }
 
-	  /* Remap icon: square tile, larger tap target */
+	  /* Remap icon: smaller square tile */
 	  #btnRemap.icon-only {
-		width: clamp(52px, 13vw, 64px);
-		height: clamp(52px, 13vw, 64px);
+		width: clamp(38px, 10.5vw, 48px);
+		height: clamp(38px, 10.5vw, 48px);
 		padding: 0;
 		min-width: 0;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 14px; /* chunkier tile */
+		border-radius: 12px;
 	  }
 	  #btnRemap.icon-only svg {
-		width: 62%;
-		height: 62%;
-		filter: drop-shadow(0 0 6px rgba(145,70,255,0.45));
+		width: 64%;
+		height: 64%;
+		filter: drop-shadow(0 0 5px rgba(145,70,255,0.45));
 	  }
 
-	  /* Chat and Fullscreen: same visual height & comfortable text */
+	  /* Chat and Fullscreen: ~30% shorter, consistent height */
 	  #btnChat,
 	  #btnFullscreen {
-		min-height: clamp(44px, 11vw, 56px);
+		min-height: clamp(32px, 8.2vw, 40px);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		padding-inline: 14px;
-		font-size: clamp(14px, 3.7vw, 16px);
+		padding-inline: 12px;
+		font-size: clamp(13px, 3.4vw, 15px);
 	  }
 
 	  /* Tidy labels in tighter widths */
 	  #controls button { white-space: nowrap; }
 	}
 
-	/* Safety fallback for extra-narrow phones: wrap Fullscreen to next row */
+	/* Extra-narrow portrait: if four items can’t fit, wrap Fullscreen down, keep Volume below */
 	@media (max-width: 380px) and (orientation: portrait) {
 	  #btnFullscreen { grid-row: 2; grid-column: 3 / -1; justify-self: end; }
 	  #volumeWrap    { grid-row: 3; grid-column: 1 / -1; }
 	}
-	  #btnRemap { grid-column: 1; }
-	  #btnChat { grid-column: 2; justify-self: stretch; }
-	  #btnFullscreen { grid-column: 3; }
-	  #volumeWrap { grid-column: 1 / -1; } /* span full width below buttons */
-
-	  /* Allow compact labels */
-	  #controls button { white-space: nowrap; }
-
-	  /* Icon-only Remap styling */
-	  #btnRemap.icon-only {
-		padding: 8px 10px;
-		min-width: 0;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-	  }
-	  #btnRemap.icon-only svg {
-		width: 22px; height: 22px; display: block;
-		filter: drop-shadow(0 0 6px rgba(145,70,255,0.45));
-	  }
-	}
+	
 	#remapPanel[hidden] { display: none; }
 	#remapHeader {
 	  display: flex; align-items: center; justify-content: space-between; gap: 10px;
