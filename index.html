@@ -469,6 +469,42 @@
       pointer-events: none;
       transition: opacity 1s;
     }
+		/* Remap sidebar behavior (desktop) */
+	body.remap-open #sidePanel { display: grid; }
+	body.remap-open main { grid-template-columns: var(--chat-w) 1fr; } /* left column width like chat */
+	body.remap-open main > #sidePanel { order: 1; }
+	body.remap-open main > section { order: 2; }
+
+	/* When #remapPanel is used as a left sidebar, make it fill the column */
+	body.remap-open #remapPanel {
+	  position: static;  /* not absolute popover */
+	  top: auto; left: auto;
+	  width: 100%;
+	  max-width: none;
+	  height: 100%;
+	  display: block !important;
+	  border-radius: 8px;
+	  overflow: auto;
+	}
+
+	/* Mobile-friendly Remap popover sizing (prevents edge cut-off) */
+	@media (max-width: 700px) {
+	  /* Stack single column when remap sidebar class is present on mobile */
+	  body.remap-open main { grid-template-columns: 1fr !important; }
+	  main > section { order: 1; }
+	  main > #sidePanel { order: 2; }
+
+	  /* Keep the original popover, but constrain to viewport width/height */
+	  #remapPanel {
+		position: absolute;
+		left: 0;
+		right: 0;    /* center within viewport */
+		width: min(96vw, 480px);
+		max-width: 96vw;
+		max-height: 70vh;
+		overflow: auto;
+	  }
+	}
     /* --- Mobile chat-under-video layout (additions) --- */
     @media (max-width: 900px) {
       #sidePanel { width: 100%; }
@@ -1093,6 +1129,76 @@
       });
     }
 
+	// === Remap: desktop left sidebar, mobile popover (safe override) ===
+	const sidePanel = document.getElementById('sidePanel');
+	const remapHome = remapPanel.parentElement; // original location under #controls
+
+	function isMobileViewport() {
+	  return window.matchMedia('(max-width: 700px)').matches;
+	}
+
+	function openRemapDesktop() {
+	  // Close chat and open left sidebar layout
+	  document.body.classList.remove('chat-open');
+	  document.body.classList.add('remap-open');
+
+	  // Hide chat inside the sidebar if present
+	  try {
+		const cw = document.getElementById('chatWrap');
+		if (cw) cw.hidden = true;
+	  } catch {}
+
+	  // Move the same remapPanel node into #sidePanel
+	  if (remapPanel.parentElement !== sidePanel) sidePanel.prepend(remapPanel);
+	  buildRemapPanel();
+	  remapPanel.removeAttribute('hidden');
+	}
+
+	function closeRemapDesktop() {
+	  document.body.classList.remove('remap-open');
+	  // Move panel back under #controls
+	  if (remapPanel.parentElement !== remapHome) remapHome.appendChild(remapPanel);
+	  remapPanel.setAttribute('hidden', '');
+	}
+
+	function toggleRemap() {
+	  if (isMobileViewport()) {
+		// Keep popover on mobile, but it’s now size-constrained by CSS
+		const willShow = remapPanel.hasAttribute('hidden');
+		if (willShow) buildRemapPanel();
+		if (willShow) remapPanel.removeAttribute('hidden');
+		else remapPanel.setAttribute('hidden', '');
+	  } else {
+		// Desktop: behaves like Twitch chat but on the LEFT
+		if (!document.body.classList.contains('remap-open')) openRemapDesktop();
+		else closeRemapDesktop();
+	  }
+	}
+
+	// Override old handlers safely (no need to delete the old ones)
+	btnRemap.onclick = toggleRemap;
+
+	btnRemapReset.onclick = () => {
+	  remap = defaultRemap();
+	  saveRemap(remap);
+	  buildRemapPanel();
+	  log("[REMAP] Reset to defaults");
+	};
+
+	// Close button works in both modes
+	btnRemapClose.onclick = () => {
+	  if (isMobileViewport()) remapPanel.setAttribute('hidden', '');
+	  else closeRemapDesktop();
+	};
+
+	// Click-outside to close only on mobile (desktop uses sidebar)
+	document.addEventListener('click', (e) => {
+	  if (!isMobileViewport()) return;
+	  if (!remapPanel.hasAttribute('hidden')) {
+		const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
+		if (!within) remapPanel.setAttribute('hidden', '');
+	  }
+	});
     function toggleRemapPanel() {
       const willShow = remapPanel.hasAttribute('hidden');
       if (willShow) buildRemapPanel();
