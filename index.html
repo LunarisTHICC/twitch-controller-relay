@@ -200,6 +200,37 @@
 	  padding: 12px;
 	  z-index: 9000;
 	}
+		/* Mobile: lay out controls as [Remap icon] [Chat] [Fullscreen] on one row; volume below */
+	@media (max-width: 700px) {
+	  #controls {
+		display: grid;               /* override base flex */
+		grid-template-columns: auto 1fr auto;
+		grid-auto-rows: min-content;
+		column-gap: 10px;
+		row-gap: 10px;
+		align-items: center;
+	  }
+	  #btnRemap { grid-column: 1; }
+	  #btnChat { grid-column: 2; justify-self: stretch; }
+	  #btnFullscreen { grid-column: 3; }
+	  #volumeWrap { grid-column: 1 / -1; } /* span full width below buttons */
+
+	  /* Allow compact labels */
+	  #controls button { white-space: nowrap; }
+
+	  /* Icon-only Remap styling */
+	  #btnRemap.icon-only {
+		padding: 8px 10px;
+		min-width: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	  }
+	  #btnRemap.icon-only svg {
+		width: 22px; height: 22px; display: block;
+		filter: drop-shadow(0 0 6px rgba(145,70,255,0.45));
+	  }
+	}
 	#remapPanel[hidden] { display: none; }
 	#remapHeader {
 	  display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -328,14 +359,14 @@
     footer .eye-svg { width: 34px; height: 24px; }
 
     /* Mobile footer layout/scaling */
-    @media (max-width: 700px) {
+    @media (max-width: 700px) and (orientation: portrait) {
       footer {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        column-gap: 10px;
-        row-gap: 8px;
-        padding: 10px 12px;
+	    display: grid !important;   /* ensure grid wins over the later flex */
+		grid-template-columns: auto 1fr auto;
+		grid-auto-rows: min-content;
+		column-gap: 10px;
+		row-gap: 10px;
+		align-items: center;
       }
       #footerNoticeWrap {
         display: grid;
@@ -1033,36 +1064,88 @@
 	}
     document.getElementById('btnChat').onclick = toggleChat;
 
-    // --- Mobile layout helper (additions) ---
-    (function () {
-      const AUTO_OPEN_CHAT_ON_MOBILE = true;
-      const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
-      let autoOpenedOnce = false;
+	// --- Mobile layout helper (additions) ---
+	(function () {
+	  const AUTO_OPEN_CHAT_ON_MOBILE = true;
+	  const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
+	  let autoOpenedOnce = false;
 
-      function isMobile() { return MOBILE_MEDIA.matches; }
+	  const chatWrap = document.getElementById('chatWrap');
+	  const chatIframe = document.getElementById('chatIframe');
+	  const btnChat = document.getElementById('btnChat');
+	  const btnRemap = document.getElementById('btnRemap');
 
-      function applyMobileLayout() {
-        const mobile = isMobile();
-        document.body.classList.toggle('mobile', mobile);
+	  // Sliders/remap icon (matches site style; lines use #e5e5e5)
+	  const REMAP_ICON_SVG = `
+		<svg viewBox="0 0 24 24" aria-hidden="true" role="img">
+		  <g fill="none" stroke="#e5e5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<line x1="4" y1="6" x2="20" y2="6"/>
+			<circle cx="9" cy="6" r="2"/>
+			<line x1="4" y1="12" x2="20" y2="12"/>
+			<circle cx="15" cy="12" r="2"/>
+			<line x1="4" y1="18" x2="20" y2="18"/>
+			<circle cx="7" cy="18" r="2"/>
+		  </g>
+		</svg>
+	  `;
 
-        if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
-          autoOpenedOnce = true;
-          try {
-            if (!document.body.classList.contains('chat-open')) {
-              document.body.classList.add('chat-open');
-              if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
-              setChatSrc();
-              if (chatWrap) chatWrap.style.height = '100%';
-              if (chatIframe) chatIframe.style.height = '100%';
-            }
-          } catch {}
-        }
-      }
+	  function isMobile() { return MOBILE_MEDIA.matches; }
 
-      applyMobileLayout();
-      MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
-      window.addEventListener('resize', applyMobileLayout);
-    })();
+	  // Swap labels and convert Remap to icon-only on mobile; restore on desktop
+	  function setMobileControlsLabels(mobile) {
+		if (!btnChat || !btnRemap) return;
+
+		if (mobile) {
+		  // Chat → "Chat" (short)
+		  if (!btnChat.dataset.labelBackup) btnChat.dataset.labelBackup = (btnChat.textContent || '').trim();
+		  if ((btnChat.textContent || '').trim() !== 'Chat') btnChat.textContent = 'Chat';
+
+		  // Remap → icon-only (keep aria for accessibility)
+		  if (!btnRemap.dataset.labelBackup) btnRemap.dataset.labelBackup = (btnRemap.textContent || '').trim();
+		  if (!btnRemap.dataset.mobileIconApplied) {
+			btnRemap.classList.add('icon-only');
+			btnRemap.setAttribute('aria-label', 'Remap');
+			btnRemap.innerHTML = REMAP_ICON_SVG;
+			btnRemap.dataset.mobileIconApplied = '1';
+		  }
+		} else {
+		  // Restore original labels on desktop
+		  if (btnChat.dataset.labelBackup) btnChat.textContent = btnChat.dataset.labelBackup;
+		  if (btnRemap.dataset.mobileIconApplied) {
+			btnRemap.classList.remove('icon-only');
+			btnRemap.innerHTML = btnRemap.dataset.labelBackup || 'Remap';
+			delete btnRemap.dataset.mobileIconApplied;
+		  }
+		}
+	  }
+
+	  function applyMobileLayout() {
+		const mobile = isMobile();
+		document.body.classList.toggle('mobile', mobile);
+
+		// Update labels/icon per viewport
+		setMobileControlsLabels(mobile);
+
+		// Optionally open chat once on mobile so it appears under the video
+		if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
+		  autoOpenedOnce = true;
+		  try {
+			if (!document.body.classList.contains('chat-open')) {
+			  document.body.classList.add('chat-open');
+			  if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
+			  if (typeof setChatSrc === 'function') setChatSrc();
+			  if (chatWrap) chatWrap.style.height = '100%';
+			  if (chatIframe) chatIframe.style.height = '100%';
+			}
+		  } catch {}
+		}
+	  }
+
+	  // Run now and on viewport changes
+	  applyMobileLayout();
+	  MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
+	  window.addEventListener('resize', applyMobileLayout);
+	})();
 
     // Ensure chat URL is ready even if user never presses the button
     window.addEventListener('DOMContentLoaded', () => {
@@ -1092,13 +1175,13 @@
     function saveRemap(m) {
       try { localStorage.setItem(REMAP_STORE_KEY, JSON.stringify(m)); } catch {}
     }
-    let remap = loadRemap();
+      let remap = loadRemap();
 
-    const btnRemap = document.getElementById('btnRemap');
-    const remapPanel = document.getElementById('remapPanel');
-    const remapGrid = document.getElementById('remapGrid');
-    const btnRemapReset = document.getElementById('btnRemapReset');
-    const btnRemapClose = document.getElementById('btnRemapClose');
+      const btnRemap = document.getElementById('btnRemap');
+      const remapPanel = document.getElementById('remapPanel');
+      const remapGrid = document.getElementById('remapGrid');
+      const btnRemapReset = document.getElementById('btnRemapReset');
+      const btnRemapClose = document.getElementById('btnRemapClose');
 
     function buildRemapPanel() {
       remapGrid.innerHTML = "";
@@ -1136,9 +1219,9 @@
     const sidePanel = document.getElementById('sidePanel');
     const remapHome = remapPanel.parentElement; // original location under #controls
     
-    function isMobileViewport() {
-      return MQ_MOBILE.matches;
-    }
+	function isMobileViewport() {
+	  return MQ_MOBILE.matches && window.matchMedia('(orientation: portrait)').matches;
+	}
 
     function openRemapDesktop() {
       document.body.classList.remove('chat-open');
@@ -1216,6 +1299,7 @@
 
     MQ_MOBILE.addEventListener?.('change', reconcileRemapLayout);
     window.addEventListener('resize', reconcileRemapLayout);
+	window.matchMedia('(orientation: portrait)').addEventListener?.('change', reconcileRemapLayout);
 
     /* Legacy dropdown bindings (kept but disabled when advanced handlers are present) */
     if (!window.__REMAP_ADVANCED__) {
@@ -1516,26 +1600,87 @@
 
 	// --- Mobile layout helper (additions) ---
 	(function () {
-	  // Set to false if you do NOT want chat to auto-open once on mobile.
+	const AUTO_OPEN_CHAT_ON_MOBILE = true;
+	const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
+	const PORTRAIT = window.matchMedia('(orientation: portrait)');
+	let autoOpenedOnce = false;
+
+	const chatWrap = document.getElementById('chatWrap');
+	const chatIframe = document.getElementById('chatIframe');
+	const btnChat = document.getElementById('btnChat');
+	const btnRemap = document.getElementById('btnRemap');
+
+	// Remap icon (matches site style; lines use #e5e5e5)
+	const REMAP_ICON_SVG = `
+	  <svg viewBox="0 0 24 24" aria-hidden="true" role="img">
+		<g fill="none" stroke="#e5e5e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		  <line x1="4" y1="6" x2="20" y2="6"/>
+		  <circle cx="9" cy="6" r="2"/>
+		  <line x1="4" y1="12" x2="20" y2="12"/>
+		  <circle cx="15" cy="12" r="2"/>
+		  <line x1="4" y1="18" x2="20" y2="18"/>
+		  <circle cx="7" cy="18" r="2"/>
+		</g>
+	  </svg>
+	`;
+
+	// --- Mobile layout helper (additions) ---
+	(function () {
 	  const AUTO_OPEN_CHAT_ON_MOBILE = true;
 	  const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
+	  const PORTRAIT = window.matchMedia('(orientation: portrait)');
 	  let autoOpenedOnce = false;
 
-	  function isMobile() { return MOBILE_MEDIA.matches; }
+	  const chatWrap = document.getElementById('chatWrap');
+	  const chatIframe = document.getElementById('chatIframe');
+	  const btnChat = document.getElementById('btnChat');
+	  const btnRemap = document.getElementById('btnRemap');
+
+	  function isMobile() { return MOBILE_MEDIA.matches && PORTRAIT.matches; }
+
+	  // Swap labels and convert Remap to icon-only on mobile; restore on desktop
+	  function setMobileControlsLabels(mobile) {
+		if (!btnChat || !btnRemap) return;
+
+		if (mobile) {
+		  // Chat → "Chat" (short)
+		  if (!btnChat.dataset.labelBackup) btnChat.dataset.labelBackup = (btnChat.textContent || '').trim();
+		  if ((btnChat.textContent || '').trim() !== 'Chat') btnChat.textContent = 'Chat';
+
+		  // Remap → icon-only (keep aria for accessibility)
+		  if (!btnRemap.dataset.labelBackup) btnRemap.dataset.labelBackup = (btnRemap.textContent || '').trim();
+		  if (!btnRemap.dataset.mobileIconApplied) {
+			btnRemap.classList.add('icon-only');
+			btnRemap.setAttribute('aria-label', 'Remap');
+			btnRemap.innerHTML = REMAP_ICON_SVG;
+			btnRemap.dataset.mobileIconApplied = '1';
+		  }
+		} else {
+			if (btnChat.dataset.labelBackup) btnChat.textContent = btnChat.dataset.labelBackup;
+			if (btnRemap.dataset.mobileIconApplied) {
+			  btnRemap.classList.remove('icon-only');
+			  btnRemap.textContent = btnRemap.dataset.labelBackup || 'Remap';
+			  btnRemap.removeAttribute('aria-label');
+			  delete btnRemap.dataset.mobileIconApplied;
+			}
+		}
+	  }
 
 	  function applyMobileLayout() {
 		const mobile = isMobile();
 		document.body.classList.toggle('mobile', mobile);
 
-		// On mobile, optionally open chat once so it appears under the video
+		// Update labels/icon per viewport
+		setMobileControlsLabels(mobile);
+
+		// Optionally open chat once on mobile so it appears under the video
 		if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
 		  autoOpenedOnce = true;
 		  try {
 			if (!document.body.classList.contains('chat-open')) {
 			  document.body.classList.add('chat-open');
 			  if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
-			  // Make sure the iframe URL is set when auto-opening
-			  setChatSrc();
+			  if (typeof setChatSrc === 'function') setChatSrc();
 			  if (chatWrap) chatWrap.style.height = '100%';
 			  if (chatIframe) chatIframe.style.height = '100%';
 			}
@@ -1543,18 +1688,12 @@
 		}
 	  }
 
-	  // Run now and on viewport changes
+	  // Run now and on viewport/orientation changes
 	  applyMobileLayout();
-	  /* FIX: listen on MOBILE_MEDIA and re-run applyMobileLayout (the remap reconcile runs elsewhere) */
 	  MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
+	  PORTRAIT.addEventListener?.('change', applyMobileLayout);
 	  window.addEventListener('resize', applyMobileLayout);
 	})();
-
-	// Ensure chat URL is ready even if user never presses the button
-	  window.addEventListener('DOMContentLoaded', () => {
-		buildBanner();
-		setChatSrc();
-	});
 
     // ----- Remap UI + state -----
     const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
