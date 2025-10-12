@@ -46,6 +46,43 @@
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
+	/* Viewer count indicator (left of Remap) */
+	#viewerCount {
+	  display: inline-flex;
+	  align-items: center;
+	  gap: 6px;
+	  padding: 6px 10px;
+	  border-radius: 999px;
+	  font-size: 12px;
+	  line-height: 14px;
+	  font-family: "Orbitron", system-ui, sans-serif;
+	  letter-spacing: 0.6px;
+	  color: #e9e2ff;
+	  background: #1b1232;
+	  border: 1px solid #3a2a62;
+	  box-shadow: 0 0 12px rgba(145,70,255,0.25), inset 0 0 0 1px rgba(255,255,255,0.04);
+	  transition: filter .2s, box-shadow .2s, background-color .2s, border-color .2s, color .2s, transform .1s;
+	}
+	#viewerCount:hover { filter: brightness(1.05); }
+	#viewerCount svg {
+	  width: 16px;
+	  height: 16px;
+	  display: block;
+	  filter: drop-shadow(0 0 6px rgba(145,70,255,0.5));
+	}
+	#viewerCount.hot {
+	  color: #fff1f1;
+	  background: #2a1212;
+	  border-color: #702323;
+	  box-shadow:
+		0 0 14px rgba(239, 68, 68, 0.35),
+		0 0 4px rgba(239, 68, 68, 0.35),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+	}
+	#viewerCount.hot svg {
+	  filter: drop-shadow(0 0 8px rgba(239,68,68,0.65));
+	}
+
     /* Debug header */
     header{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1f1f23;border-bottom:1px solid var(--edge);position:sticky;top:var(--banner-h);z-index:10;flex-wrap:wrap}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;line-height:14px;background:#2a2a32;border:1px solid #3a3a4a;color:#cfd3df}
@@ -161,6 +198,8 @@
 	}
 
 	/* Make sure Remap remains visible in "clean" mode */
+	/* Clean mode: ensure the counter is visible */
+	body.clean #controls > #viewerCount { display: inline-flex; }
 	body.clean #controls > * { display: none; }
 	body.clean #controls > #btnRemap { display: flex; }
 	body.clean #controls > #btnChat,
@@ -352,7 +391,8 @@
     }
     #intro-text {
       color: #e5e5e5;
-      font-size: 3.0rem;
+      font-size: clamp(40px, 7vw, 96px);
+	  white-space: nowrap;
       font-family: 'Oswald', 'Arial Narrow', Arial, Helvetica, sans-serif;
       font-weight: 700;
       letter-spacing: 0.12em;
@@ -412,6 +452,13 @@
         <div id="overlay"><div id="ovText">Connecting…</div></div>
       </div>
       <div id="controls">
+	  <div id="viewerCount" title="Connected viewers">
+	  <svg viewBox="0 0 24 24" aria-hidden="true">
+		<!-- Person icon -->
+		<path fill="#e5e5e5" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 8v-1a6 6 0 0 1 12 0v1H4Z"/>
+	  </svg>
+	  <span id="viewerCountNum">0</span>
+	</div>
         <button id="btnRemap" class="accent" title="Remap controller buttons">Remap</button>
         <div id="remapPanel" hidden>
           <div id="remapHeader">
@@ -732,14 +779,104 @@
       for(let k=0;k<2;k++){ texts.forEach(t=>frag.appendChild(item(t))); }
       brandTrack.appendChild(frag);
     }
+		// --- Viewer count indicator logic ---
+	const viewerCountEl = document.getElementById('viewerCount');
+	const viewerCountNumEl = document.getElementById('viewerCountNum');
+	let currentUsers = 0;
+	const HOT_THRESHOLD = 10;
 
-    // ----- Chat (force junkfoodjon, dark) -----
-    const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-	function setChatSrc(){
-	  const parent = location.hostname; // Twitch requires the exact page hostname
+	function applyViewerCountGlow(n) {
+	  if (!viewerCountEl) return;
+	  viewerCountEl.classList.toggle('hot', n >= HOT_THRESHOLD);
+	}
+
+	function updateCurrentUsers(n) {
+	  const num = Math.max(0, Number(n) || 0);
+	  currentUsers = num;
+	  if (viewerCountNumEl) viewerCountNumEl.textContent = String(num);
+	  applyViewerCountGlow(num);
+	}
+
+	// Initialize to 0
+		updateCurrentUsers(0);
+	// Hook WebSocket to listen for viewer count messages on /ws/viewer
+	(function () {
+	  const NativeWS = window.WebSocket;
+	  window.WebSocket = function(url, protocols) {
+		const sock = new NativeWS(url, protocols);
+		try {
+		  if (String(url).includes('/ws/viewer')) {
+			sock.addEventListener('open', () => {
+			  // Ask server for current count (implement server handler)
+			  try { sock.send(JSON.stringify({ type: 'get_viewer_count' })); } catch {}
+			});
+			sock.addEventListener('message', (e) => {
+			  try {
+				const msg = JSON.parse(e.data);
+				// Accept multiple payload shapes
+				if (msg && (
+				  msg.type === 'viewer_count' ||
+				  msg.type === 'stats' ||
+				  msg.type === 'presence' ||
+				  typeof msg.viewerCount === 'number' ||
+				  typeof msg.currentUsers === 'number' ||
+				  typeof msg.viewers === 'number' ||
+				  typeof msg.count === 'number'
+				)) {
+				  const n = msg.count ?? msg.viewerCount ?? msg.viewers ?? msg.currentUsers;
+				  if (typeof n === 'number') updateCurrentUsers(n);
+				}
+			  } catch {}
+			});
+		  }
+		} catch {}
+		return sock;
+	  };
+	  // Preserve prototype chain
+	  window.WebSocket.prototype = NativeWS.prototype;
+	})();
+	
+	// Optional REST fallback if your relay exposes /viewer-count
+	(function () {
+	  const COUNT_URL = `${location.protocol === 'https:' ? 'https' : 'http'}://${(new URL(location.href)).host}/viewer-count`;
+
+	  async function pollViewerCount() {
+		try {
+		  const r = await fetch(COUNT_URL, { cache: 'no-store', headers: { 'ngrok-skip-browser-warning': '1' } });
+		  if (!r.ok) return;
+		  let num = NaN;
+		  const ct = r.headers.get('content-type') || '';
+		  if (ct.includes('application/json')) {
+			const j = await r.json();
+			const n = j.count ?? j.viewerCount ?? j.viewers ?? j.currentUsers;
+			num = Number(n);
+		  } else {
+			num = Number(await r.text());
+		  }
+		  if (!Number.isNaN(num)) updateCurrentUsers(num);
+		} catch {}
+	  }
+
+	  // Poll every 15s
+	  pollViewerCount();
+	  setInterval(pollViewerCount, 15000);
+	})();
+
+	// ----- Chat (force junkfoodjon, dark) -----
+	const chatWrap = document.getElementById('chatWrap');
+	const chatIframe = document.getElementById('chatIframe');
+
+	function setChatSrc() {
+	  if (!chatIframe) return;
+
+	  // Only set once (avoid reloads)
+	  if (chatIframe.src && chatIframe.src !== 'about:blank') return;
+
+	  const qs = new URLSearchParams(location.search);
+	  const parent = (qs.get('parent') || location.hostname); // override with ?parent= if needed
 	  const ch = 'junkfoodjon';
 
-	  // Force dark UI via both theme=dark and darkpop
+	  // Official param is theme=dark; darkpop is harmless (ignored by Twitch)
 	  const params = new URLSearchParams({
 		parent: parent,
 		theme: 'dark',
@@ -759,53 +896,67 @@
 	  chatIframe.style.height = '100%';
 	  chatIframe.style.width = '100%';
 	  chatIframe.style.display = 'block';
+	  // Not required for modern browsers, harmless if left:
 	  chatIframe.allowTransparency = 'true';
 	}
-    function toggleChat(){ 
-      const open=!document.body.classList.contains('chat-open'); 
-      if(open){ 
-        document.body.classList.add('chat-open'); 
-        chatWrap.hidden=false;
-        // Ensure chat scales vertically on open
-        chatWrap.style.height = '100%';
-        chatIframe.style.height = '100%';
-      } else { 
-        document.body.classList.remove('chat-open'); 
-        chatWrap.hidden=true; 
-      } 
-    }
-    document.getElementById('btnChat').onclick=toggleChat;
 
-    // --- Mobile layout helper (additions) ---
-    (function () {
-      // Set to false if you do NOT want chat to auto-open once on mobile.
-      const AUTO_OPEN_CHAT_ON_MOBILE = true;
-      const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
-      let autoOpenedOnce = false;
+	function toggleChat() {
+	  const open = !document.body.classList.contains('chat-open');
+	  if (open) {
+		document.body.classList.add('chat-open');
+		if (chatWrap) chatWrap.hidden = false;
+		// Ensure src is set the first time it’s opened
+		setChatSrc();
+		// Ensure chat scales vertically on open
+		if (chatWrap) chatWrap.style.height = '100%';
+		if (chatIframe) chatIframe.style.height = '100%';
+	  } else {
+		document.body.classList.remove('chat-open');
+		if (chatWrap) chatWrap.hidden = true;
+	  }
+	}
+	document.getElementById('btnChat').onclick = toggleChat;
 
-      function isMobile() { return MOBILE_MEDIA.matches; }
+	// --- Mobile layout helper (additions) ---
+	(function () {
+	  // Set to false if you do NOT want chat to auto-open once on mobile.
+	  const AUTO_OPEN_CHAT_ON_MOBILE = true;
+	  const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
+	  let autoOpenedOnce = false;
 
-      function applyMobileLayout() {
-        const mobile = isMobile();
-        document.body.classList.toggle('mobile', mobile);
+	  function isMobile() { return MOBILE_MEDIA.matches; }
 
-        // On mobile, optionally open chat once so it appears under the video
-        if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
-          autoOpenedOnce = true;
-          try {
-            if (!document.body.classList.contains('chat-open')) {
-              document.body.classList.add('chat-open');
-              if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
-            }
-          } catch {}
-        }
-      }
+	  function applyMobileLayout() {
+		const mobile = isMobile();
+		document.body.classList.toggle('mobile', mobile);
 
-      // Run now and on viewport changes
-      applyMobileLayout();
-      MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
-      window.addEventListener('resize', applyMobileLayout);
-    })();
+		// On mobile, optionally open chat once so it appears under the video
+		if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
+		  autoOpenedOnce = true;
+		  try {
+			if (!document.body.classList.contains('chat-open')) {
+			  document.body.classList.add('chat-open');
+			  if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
+			  // Make sure the iframe URL is set when auto-opening
+			  setChatSrc();
+			  if (chatWrap) chatWrap.style.height = '100%';
+			  if (chatIframe) chatIframe.style.height = '100%';
+			}
+		  } catch {}
+		}
+	  }
+
+	  // Run now and on viewport changes
+	  applyMobileLayout();
+	  MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
+	  window.addEventListener('resize', applyMobileLayout);
+	})();
+
+	// Ensure chat URL is ready even if user never presses the button
+	window.addEventListener('DOMContentLoaded', () => {
+	  // If you prefer to defer until chat opens, you can remove this line
+	  setChatSrc();
+	});
 
     // ----- Remap UI + state -----
     const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
