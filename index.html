@@ -566,19 +566,14 @@
       const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
       const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
       const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-
-      // Center first eye at start; once the second eye appears, slide both outward symmetrically
-      const EYE_SEP = window.matchMedia('(max-width: 600px)').matches ? 24 : 36;
       const leftStartOffset = 0;
-      const leftEndOffset   = -EYE_SEP;
-      const rightStartOffset = 0;
-      const rightEndOffset   =  EYE_SEP;
+      const leftEndOffset = 0;
 
-      // Create left eye wrap, fade-in centered
+      // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
       const leftEyeWrap = document.createElement('div');
       leftEyeWrap.className = 'eye-wrap';
       leftEyeWrap.style.opacity = 0;
-      leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`; // centered
+      leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
       leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
       eyesContainer.appendChild(leftEyeWrap);
 
@@ -587,26 +582,21 @@
         setBlink(leftEyeWrap.firstElementChild, true, 120);
         setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
 
-        // After a second, add the right eye and slide both outward from center
+        // After a second, fade in right eye and slide left eye smoothly
         setTimeout(() => {
           if (animationSkipped) return skipToEnd();
           const rightEyeWrap = document.createElement('div');
           rightEyeWrap.className = 'eye-wrap';
           rightEyeWrap.style.opacity = 0;
-          rightEyeWrap.style.transform = `translateX(${rightStartOffset}px)`; // centered
           rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+
           eyesContainer.appendChild(rightEyeWrap);
 
-          // Trigger both transitions in the same frame: slide out + fade right in
+          // The fix: trigger both transitions in the same frame, using fadeInEyeWrap for right eye
           requestAnimationFrame(() => {
-            const moveEase = 'transform 0.7s cubic-bezier(.8,2,.6,1)';
-            const fadeEase = 'opacity 0.9s ease';
-            leftEyeWrap.style.transition  = `${moveEase}, ${fadeEase}`;
-            rightEyeWrap.style.transition = `${moveEase}, ${fadeEase}`;
-
-            leftEyeWrap.style.transform  = `translateX(${leftEndOffset}px)`;
-            rightEyeWrap.style.transform = `translateX(${rightEndOffset}px)`;
-            rightEyeWrap.style.opacity = 1;
+            leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
+            leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
+            fadeInEyeWrap(rightEyeWrap, 900);
           });
 
           setTimeout(() => {
