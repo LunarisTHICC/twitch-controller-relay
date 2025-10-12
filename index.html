@@ -494,15 +494,17 @@
 	  main > section { order: 1; }
 	  main > #sidePanel { order: 2; }
 
-	  /* Keep the original popover, but constrain to viewport width/height */
+	  /* Keep the original popover, but constrain and center it in the viewport */
 	  #remapPanel {
 		position: absolute;
-		left: 0;
-		right: 0;    /* center within viewport */
+		left: 50%;
+		transform: translateX(-50%);
+		right: auto;
 		width: min(96vw, 480px);
 		max-width: 96vw;
 		max-height: 70vh;
 		overflow: auto;
+		z-index: 9000; /* ensure above nearby controls */
 	  }
 	}
     /* --- Mobile chat-under-video layout (additions) --- */
@@ -1054,9 +1056,9 @@
 	  }
 
 	  // Run now and on viewport changes
-	  applyMobileLayout();
-	  MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
-	  window.addEventListener('resize', applyMobileLayout);
+	applyMobileLayout();
+	MQ_MOBILE.addEventListener?.('change', reconcileRemapLayout);
+	window.addEventListener('resize', reconcileRemapLayout);
 	})();
 
 	// Ensure chat URL is ready even if user never presses the button
@@ -1130,9 +1132,10 @@
     }
 
 	// === Remap: desktop left sidebar, mobile popover (safe override) ===
+	const MQ_MOBILE = window.matchMedia('(max-width: 700px)');
 	const sidePanel = document.getElementById('sidePanel');
 	const remapHome = remapPanel.parentElement; // original location under #controls
-
+	
 	function isMobileViewport() {
 	  return window.matchMedia('(max-width: 700px)').matches;
 	}
@@ -1174,9 +1177,26 @@
 		else closeRemapDesktop();
 	  }
 	}
+	// Reconcile layout if the panel is open and the viewport crosses the breakpoint
+	function reconcileRemapLayout() {
+	  // Consider “open” if either the desktop sidebar is active or the popover is visible
+	  const open = document.body.classList.contains('remap-open') || !remapPanel.hasAttribute('hidden');
+	  if (!open) return;
+
+	  if (isMobileViewport()) {
+		// Switch to mobile popover under controls
+		if (remapPanel.parentElement !== remapHome) remapHome.appendChild(remapPanel);
+		remapPanel.removeAttribute('hidden');
+		document.body.classList.remove('remap-open');
+	  } else {
+		// Switch to desktop left sidebar
+		if (remapPanel.parentElement !== sidePanel) sidePanel.prepend(remapPanel);
+		document.body.classList.add('remap-open');
+		remapPanel.removeAttribute('hidden');
+	  }
+	}
 
 	// Override old handlers safely (no need to delete the old ones)
-	btnRemap.onclick = toggleRemap;
 
 	btnRemapReset.onclick = () => {
 	  remap = defaultRemap();
@@ -1186,19 +1206,20 @@
 	};
 
 	// Close button works in both modes
+	btnRemap.onclick = toggleRemap;
 	btnRemapClose.onclick = () => {
-	  if (isMobileViewport()) remapPanel.setAttribute('hidden', '');
+	  if (isMobileViewport()) remapPanel.setAttribute('hidden','');
 	  else closeRemapDesktop();
 	};
-
 	// Click-outside to close only on mobile (desktop uses sidebar)
 	document.addEventListener('click', (e) => {
 	  if (!isMobileViewport()) return;
 	  if (!remapPanel.hasAttribute('hidden')) {
 		const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
-		if (!within) remapPanel.setAttribute('hidden', '');
+		if (!within) remapPanel.setAttribute('hidden','');
 	  }
 	});
+
     function toggleRemapPanel() {
       const willShow = remapPanel.hasAttribute('hidden');
       if (willShow) buildRemapPanel();
