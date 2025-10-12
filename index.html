@@ -470,203 +470,204 @@
     <div id="footerRight"><button id="btnDebugger" title="Toggle debug UI">Debugger</button></div>
   </footer>
 
-// --- Animated Intro JS ---
-// Use #e5e5e5 for all "white" lines (10% darker than #fff)
-function getEyeSVG(rx = 50, ry = 30, pupilDx = 0, pupilDy = 0, eyelidOpacity = 0) {
-  return `
-<svg class="eye-svg" viewBox="0 0 120 80" fill="none">
-  <ellipse class="eyeball" cx="60" cy="40" rx="${rx}" ry="${ry}" stroke="#e5e5e5" stroke-width="4" fill="#181818"/>
-  <ellipse class="iris" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="18" ry="18" fill="#e5e5e5"/>
-  <ellipse class="pupil" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="8" ry="8" fill="#1a1a1a"/>
-  <ellipse class="eyelid" cx="60" cy="40" rx="${rx}" ry="${ry}" fill="black" style="opacity:${eyelidOpacity};"/>
-</svg>
-      `;
-}
+  <!-- Scripts: Animated Intro (runs first), then Viewer scripts -->
+  <script>
+	// --- Animated Intro JS ---
+	// Use #e5e5e5 for all "white" lines (10% darker than #fff)
+	function getEyeSVG(rx = 50, ry = 30, pupilDx = 0, pupilDy = 0, eyelidOpacity = 0) {
+	  return `
+	<svg class="eye-svg" viewBox="0 0 120 80" fill="none">
+	  <ellipse class="eyeball" cx="60" cy="40" rx="${rx}" ry="${ry}" stroke="#e5e5e5" stroke-width="4" fill="#181818"/>
+	  <ellipse class="iris" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="18" ry="18" fill="#e5e5e5"/>
+	  <ellipse class="pupil" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="8" ry="8" fill="#1a1a1a"/>
+	  <ellipse class="eyelid" cx="60" cy="40" rx="${rx}" ry="${ry}" fill="black" style="opacity:${eyelidOpacity};"/>
+	</svg>
+		  `;
+	}
 
-const overlayIntro = document.getElementById('intro-overlay');
-const eyesContainer = document.getElementById('eyes-container');
-const introText = document.getElementById('intro-text');
-let animationSkipped = false;
-let skipTimeout;
+	const overlayIntro = document.getElementById('intro-overlay');
+	const eyesContainer = document.getElementById('eyes-container');
+	const introText = document.getElementById('intro-text');
+	let animationSkipped = false;
+	let skipTimeout;
 
-function animateEyeShape(eye, opts, duration = 400) {
-  const eyeball = eye.querySelector('.eyeball');
-  const iris = eye.querySelector('.iris');
-  const pupil = eye.querySelector('.pupil');
-  let start = null;
-  const rx0 = +eyeball.getAttribute('rx');
-  const ry0 = +eyeball.getAttribute('ry');
-  const irisCx0 = +iris.getAttribute('cx');
-  const irisCy0 = +iris.getAttribute('cy');
-  const pupilCx0 = +pupil.getAttribute('cx');
-  const pupilCy0 = +pupil.getAttribute('cy');
-  const rx1 = opts.rx;
-  const ry1 = opts.ry;
-  const irisCx1 = 60 + opts.pupilDx;
-  const irisCy1 = 40 + opts.pupilDy;
-  const pupilCx1 = 60 + opts.pupilDx;
-  const pupilCy1 = 40 + opts.pupilDy;
+	function animateEyeShape(eye, opts, duration = 400) {
+	  const eyeball = eye.querySelector('.eyeball');
+	  const iris = eye.querySelector('.iris');
+	  const pupil = eye.querySelector('.pupil');
+	  let start = null;
+	  const rx0 = +eyeball.getAttribute('rx');
+	  const ry0 = +eyeball.getAttribute('ry');
+	  const irisCx0 = +iris.getAttribute('cx');
+	  const irisCy0 = +iris.getAttribute('cy');
+	  const pupilCx0 = +pupil.getAttribute('cx');
+	  const pupilCy0 = +pupil.getAttribute('cy');
+	  const rx1 = opts.rx;
+	  const ry1 = opts.ry;
+	  const irisCx1 = 60 + opts.pupilDx;
+	  const irisCy1 = 40 + opts.pupilDy;
+	  const pupilCx1 = 60 + opts.pupilDx;
+	  const pupilCy1 = 40 + opts.pupilDy;
 
-  function stepEye(ts) {
-    if (!start) start = ts;
-    let t = Math.min(1, (ts - start)/duration);
-    t = t<0.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
-    eyeball.setAttribute('rx', rx0 + (rx1 - rx0)*t);
-    eyeball.setAttribute('ry', ry0 + (ry1 - ry0)*t);
-    iris.setAttribute('cx', irisCx0 + (irisCx1 - irisCx0)*t);
-    iris.setAttribute('cy', irisCy0 + (irisCy1 - irisCy0)*t);
-    pupil.setAttribute('cx', pupilCx0 + (pupilCx1 - pupilCx0)*t);
-    pupil.setAttribute('cy', pupilCy0 + (pupilCy1 - pupilCy0)*t);
-    const eyelid = eye.querySelector('.eyelid');
-    eyelid.setAttribute('rx', rx0 + (rx1 - rx0)*t);
-    eyelid.setAttribute('ry', ry0 + (ry1 - ry0)*t);
-    if (t < 1) requestAnimationFrame(stepEye);
-  }
-  requestAnimationFrame(stepEye);
-}
+	  function stepEye(ts) {
+		if (!start) start = ts;
+		let t = Math.min(1, (ts - start)/duration);
+		t = t<0.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
+		eyeball.setAttribute('rx', rx0 + (rx1 - rx0)*t);
+		eyeball.setAttribute('ry', ry0 + (ry1 - ry0)*t);
+		iris.setAttribute('cx', irisCx0 + (irisCx1 - irisCx0)*t);
+		iris.setAttribute('cy', irisCy0 + (irisCy1 - irisCy0)*t);
+		pupil.setAttribute('cx', pupilCx0 + (pupilCx1 - pupilCx0)*t);
+		pupil.setAttribute('cy', pupilCy0 + (pupilCy1 - pupilCy0)*t);
+		const eyelid = eye.querySelector('.eyelid');
+		eyelid.setAttribute('rx', rx0 + (rx1 - rx0)*t);
+		eyelid.setAttribute('ry', ry0 + (ry1 - ry0)*t);
+		if (t < 1) requestAnimationFrame(stepEye);
+	  }
+	  requestAnimationFrame(stepEye);
+	}
 
-function setBlink(eye, closed, duration = 200) {
-  const eyelid = eye.querySelector('.eyelid');
-  eyelid.style.transition = `opacity ${duration}ms`;
-  eyelid.style.opacity = closed ? 1 : 0;
-}
-function widenEye(eye, widened = true) {
-  const eyeball = eye.querySelector('.eyeball');
-  const eyelid = eye.querySelector('.eyelid');
-  const targetRy = widened ? 38 : 30;
-  eyeball.setAttribute('ry', targetRy);
-  eyelid.setAttribute('ry', targetRy);
-}
+	function setBlink(eye, closed, duration = 200) {
+	  const eyelid = eye.querySelector('.eyelid');
+	  eyelid.style.transition = `opacity ${duration}ms`;
+	  eyelid.style.opacity = closed ? 1 : 0;
+	}
+	function widenEye(eye, widened = true) {
+	  const eyeball = eye.querySelector('.eyeball');
+	  const eyelid = eye.querySelector('.eyelid');
+	  const targetRy = widened ? 38 : 30;
+	  eyeball.setAttribute('ry', targetRy);
+	  eyelid.setAttribute('ry', targetRy);
+	}
 
-function fadeInEyeWrap(eyeWrap, duration = 900, cb) {
-  eyeWrap.style.transition = `opacity ${duration}ms`;
-  setTimeout(() => {
-    eyeWrap.style.opacity = 1;
-    if (typeof cb === "function") setTimeout(cb, duration);
-  }, 20);
-}
+	function fadeInEyeWrap(eyeWrap, duration = 900, cb) {
+	  eyeWrap.style.transition = `opacity ${duration}ms`;
+	  setTimeout(() => {
+		eyeWrap.style.opacity = 1;
+		if (typeof cb === "function") setTimeout(cb, duration);
+	  }, 20);
+	}
 
-function fadeOut(element, duration = 800) {
-  element.style.opacity = 0;
-  element.style.transition = `opacity ${duration}ms`;
-}
+	function fadeOut(element, duration = 800) {
+	  element.style.opacity = 0;
+	  element.style.transition = `opacity ${duration}ms`;
+	}
 
-function fadeIn(element, duration = 2000) {
-  element.style.opacity = 1;
-  element.style.transition = `opacity ${duration}ms`;
-}
+	function fadeIn(element, duration = 2000) {
+	  element.style.opacity = 1;
+	  element.style.transition = `opacity ${duration}ms`;
+	}
 
-function animateIntro() {
-  eyesContainer.innerHTML = '';
-  introText.style.opacity = 0;
-  introText.style.backgroundPosition = 'left';
+	function animateIntro() {
+	  eyesContainer.innerHTML = '';
+	  introText.style.opacity = 0;
+	  introText.style.backgroundPosition = 'left';
 
-  const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
-  const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
-  const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-  const leftStartOffset = 0;
-  const leftEndOffset = 0;
+	  const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
+	  const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
+	  const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
+	  const leftStartOffset = 0;
+	  const leftEndOffset = 0;
 
-  // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
-  const leftEyeWrap = document.createElement('div');
-  leftEyeWrap.className = 'eye-wrap';
-  leftEyeWrap.style.opacity = 0;
-  leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
-  leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
-  eyesContainer.appendChild(leftEyeWrap);
+	  // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
+	  const leftEyeWrap = document.createElement('div');
+	  leftEyeWrap.className = 'eye-wrap';
+	  leftEyeWrap.style.opacity = 0;
+	  leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
+	  leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+	  eyesContainer.appendChild(leftEyeWrap);
 
-  fadeInEyeWrap(leftEyeWrap, 900, () => {
-    if (animationSkipped) return skipToEnd();
-    setBlink(leftEyeWrap.firstElementChild, true, 120);
-    setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
+	  fadeInEyeWrap(leftEyeWrap, 900, () => {
+		if (animationSkipped) return skipToEnd();
+		setBlink(leftEyeWrap.firstElementChild, true, 120);
+		setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
 
-    // After a second, fade in right eye and slide left eye smoothly
-    setTimeout(() => {
-      if (animationSkipped) return skipToEnd();
-      const rightEyeWrap = document.createElement('div');
-      rightEyeWrap.className = 'eye-wrap';
-      rightEyeWrap.style.opacity = 0;
-      rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+		// After a second, fade in right eye and slide left eye smoothly
+		setTimeout(() => {
+		  if (animationSkipped) return skipToEnd();
+		  const rightEyeWrap = document.createElement('div');
+		  rightEyeWrap.className = 'eye-wrap';
+		  rightEyeWrap.style.opacity = 0;
+		  rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
 
-      // FLIP: measure before layout change
-      const firstRect = leftEyeWrap.getBoundingClientRect();
+		  // FLIP: measure before layout change
+		  const firstRect = leftEyeWrap.getBoundingClientRect();
 
-      // Append right eye (causes layout shift)
-      eyesContainer.appendChild(rightEyeWrap);
+		  // Append right eye (causes layout shift)
+		  eyesContainer.appendChild(rightEyeWrap);
 
-      // Measure after layout change
-      const lastRect = leftEyeWrap.getBoundingClientRect();
-      const deltaX = firstRect.left - lastRect.left;
+		  // Measure after layout change
+		  const lastRect = leftEyeWrap.getBoundingClientRect();
+		  const deltaX = firstRect.left - lastRect.left;
 
-      // Invert: keep left eye visually in place, then animate to final
-      const computed = getComputedStyle(leftEyeWrap);
-      const baseMatrix = computed.transform === 'none' ? 'matrix(1,0,0,1,0,0)' : computed.transform;
-      const matrix = new DOMMatrixReadOnly(baseMatrix);
-      const currentX = matrix.m41 || 0;
+		  // Invert: keep left eye visually in place, then animate to final
+		  const computed = getComputedStyle(leftEyeWrap);
+		  const baseMatrix = computed.transform === 'none' ? 'matrix(1,0,0,1,0,0)' : computed.transform;
+		  const matrix = new DOMMatrixReadOnly(baseMatrix);
+		  const currentX = matrix.m41 || 0;
 
-      leftEyeWrap.style.transform = `translateX(${currentX + deltaX}px)`;
-      leftEyeWrap.style.willChange = 'transform, opacity';
+		  leftEyeWrap.style.transform = `translateX(${currentX + deltaX}px)`;
+		  leftEyeWrap.style.willChange = 'transform, opacity';
 
-      // Force reflow so the inverted transform takes effect
-      void leftEyeWrap.offsetWidth;
+		  // Force reflow so the inverted transform takes effect
+		  void leftEyeWrap.offsetWidth;
 
-      // Play: glide to intended position, fade in right eye
-      requestAnimationFrame(() => {
-        leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
-        leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
-        fadeInEyeWrap(rightEyeWrap, 900);
-      });
+		  // Play: glide to intended position, fade in right eye
+		  requestAnimationFrame(() => {
+			leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
+			leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
+			fadeInEyeWrap(rightEyeWrap, 900);
+		  });
 
-      setTimeout(() => {
-        if (animationSkipped) return skipToEnd();
-        animateEyeShape(leftEyeWrap.firstElementChild, eyeTurnRight, 400);
-        animateEyeShape(rightEyeWrap.firstElementChild, eyeTurnLeft, 400);
-        widenEye(leftEyeWrap.firstElementChild, true);
-      }, 700);
+		  setTimeout(() => {
+			if (animationSkipped) return skipToEnd();
+			animateEyeShape(leftEyeWrap.firstElementChild, eyeTurnRight, 400);
+			animateEyeShape(rightEyeWrap.firstElementChild, eyeTurnLeft, 400);
+			widenEye(leftEyeWrap.firstElementChild, true);
+		  }, 700);
 
-      setTimeout(() => {
-        if (animationSkipped) return skipToEnd();
-        setBlink(leftEyeWrap.firstElementChild, true, 80);
-        setBlink(rightEyeWrap.firstElementChild, true, 80);
-        setTimeout(() => {
-          setBlink(leftEyeWrap.firstElementChild, false, 100);
-          setBlink(rightEyeWrap.firstElementChild, false, 100);
+		  setTimeout(() => {
+			if (animationSkipped) return skipToEnd();
+			setBlink(leftEyeWrap.firstElementChild, true, 80);
+			setBlink(rightEyeWrap.firstElementChild, true, 80);
+			setTimeout(() => {
+			  setBlink(leftEyeWrap.firstElementChild, false, 100);
+			  setBlink(rightEyeWrap.firstElementChild, false, 100);
 
-          setTimeout(() => {
-            setBlink(leftEyeWrap.firstElementChild, true, 80);
-            setBlink(rightEyeWrap.firstElementChild, true, 80);
+			  setTimeout(() => {
+				setBlink(leftEyeWrap.firstElementChild, true, 80);
+				setBlink(rightEyeWrap.firstElementChild, true, 80);
 
-            setTimeout(() => {
-              setBlink(leftEyeWrap.firstElementChild, false, 100);
-              setBlink(rightEyeWrap.firstElementChild, false, 100);
+				setTimeout(() => {
+				  setBlink(leftEyeWrap.firstElementChild, false, 100);
+				  setBlink(rightEyeWrap.firstElementChild, false, 100);
 
-              setTimeout(() => {
-                animateEyeShape(leftEyeWrap.firstElementChild, eyeForward, 350);
-                animateEyeShape(rightEyeWrap.firstElementChild, eyeForward, 350);
-                widenEye(leftEyeWrap.firstElementChild, false);
+				  setTimeout(() => {
+					animateEyeShape(leftEyeWrap.firstElementChild, eyeForward, 350);
+					animateEyeShape(rightEyeWrap.firstElementChild, eyeForward, 350);
+					widenEye(leftEyeWrap.firstElementChild, false);
 
-                setTimeout(() => {
-                  if (animationSkipped) return skipToEnd();
-                  fadeIn(introText, 2000);
-                  introText.style.backgroundPosition = 'right';
-                  setTimeout(() => {
-                    fadeOut(leftEyeWrap, 600);
-                    fadeOut(rightEyeWrap, 600);
-                    fadeOut(introText, 600);
-                    setTimeout(() => fadeOut(overlayIntro, 800), 600);
-                  }, 1300);
-                }, 380);
-              }, 350);
-            }, 180);
-          }, 160);
-        }, 110);
-      }, 900);
-    }, 1100);
-  });
+					setTimeout(() => {
+					  if (animationSkipped) return skipToEnd();
+					  fadeIn(introText, 2000);
+					  introText.style.backgroundPosition = 'right';
+					  setTimeout(() => {
+						fadeOut(leftEyeWrap, 600);
+						fadeOut(rightEyeWrap, 600);
+						fadeOut(introText, 600);
+						setTimeout(() => fadeOut(overlayIntro, 800), 600);
+					  }, 1300);
+					}, 380);
+				  }, 350);
+				}, 180);
+			  }, 160);
+			}, 110);
+		  }, 900);
+		}, 1100);
+	  });
 
-  skipTimeout = setTimeout(() => fadeOut(overlayIntro, 900), 10100);
-}
-
+	  skipTimeout = setTimeout(() => fadeOut(overlayIntro, 900), 10100);
+	}
     function skipToEnd() {
       if (animationSkipped) return;
       animationSkipped = true;
