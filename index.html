@@ -215,6 +215,60 @@
 		row-gap: 8px;
 		align-items: center;
 	  }
+	  /* Fine‑tuning for common phone widths ~430–460px: keep 4 items on one row */
+	@media (max-width: 460px) and (orientation: portrait) {
+	  #controls {
+		column-gap: 8px; /* shave a bit of gap */
+	  }
+	  #viewerCount {
+		min-width: clamp(46px, 15vw, 72px);
+		min-height: clamp(30px, 7.2vw, 36px);
+		padding-inline: 8px;
+	  }
+	  #btnRemap.icon-only {
+		width: clamp(36px, 9.8vw, 44px);
+		height: clamp(36px, 9.8vw, 44px);
+		border-radius: 12px;
+	  }
+	  #btnRemap.icon-only svg { width: 66%; height: 66%; }
+
+	  /* Trim button height/width just a touch so Chat + Fullscreen always sit side-by-side */
+	  #btnChat,
+	  #btnFullscreen {
+		min-height: clamp(30px, 7.6vw, 36px);
+		padding-inline: 10px;
+		font-size: clamp(12.5px, 3.2vw, 14.5px);
+	  }
+
+	  /* Slightly narrower min widths help the 4-column row fit */
+	  #controls {
+		grid-template-columns:
+		  auto
+		  auto
+		  minmax(100px, 1fr)
+		  minmax(100px, 1fr);
+	  }
+	}
+
+	/* Extra‑narrow phones <= 400px: last resort – still keep Chat and Fullscreen together if possible,
+	   otherwise wrap only Fullscreen to a second row and keep Volume below (what you already implemented). */
+	@media (max-width: 400px) and (orientation: portrait) {
+	  #controls {
+		column-gap: 8px;
+	  }
+	  #viewerCount { min-width: 44px; }
+	  #btnRemap.icon-only { width: 34px; height: 34px; }
+	  #btnChat,
+	  #btnFullscreen {
+		min-height: 30px;
+		padding-inline: 10px;
+		font-size: 13px;
+	  }
+	  /* If the 4 items still don’t fit, allow Fullscreen to wrap (your previous fallback)
+		 while keeping Volume on the next full-width row. */
+	  #btnFullscreen { grid-row: 2; grid-column: 3 / -1; justify-self: end; }
+	  #volumeWrap    { grid-row: 3; grid-column: 1 / -1; }
+	}
 
 	  /* Row 1 explicit placement */
 	  #viewerCount   { grid-column: 1; grid-row: 1; justify-self: start; align-self: stretch; }
@@ -395,7 +449,10 @@
     #btnDebugger{padding:6px 10px;font-size:12px;opacity:.9}
 
     /* Footer: make sure eye icon base size is not affected by global .eye-svg (desktop/base) */
-    footer .eye-svg { width: 34px; height: 24px; }
+		footer .eye-svg {
+		width: clamp(40px, 3.2vw, 72px); /* scales up on wide desktops, capped for taste */
+		height: auto;
+	  }
 
     /* Mobile footer layout/scaling */
     @media (max-width: 700px) and (orientation: portrait) {
@@ -432,10 +489,23 @@
       }
     }
     @media (max-width: 420px) {
-      #footerNoticeWrap .footer-eye-btn .eye-svg { width: clamp(20px, 8vw, 26px); }
-      #footerNoticeText { font-size: clamp(11px, 3.6vw, 13px); }
-      #btnDebugger { font-size: clamp(10px, 3.1vw, 11px); padding: 5px 9px; }
+		#footerNoticeWrap .footer-eye-btn .eye-svg {
+		width: clamp(44px, 12.5vw, 64px);
+		height: auto;
+	}	
+		#footerNoticeText { font-size: clamp(11px, 3.6vw, 13px); }
+		#btnDebugger { font-size: clamp(10px, 3.1vw, 11px); padding: 5px 9px; }
     }
+	
+	@media (orientation: landscape) and (max-height: 480px) {
+	  #controls { gap: 8px; }
+	  #controls button { white-space: nowrap; }
+	  #btnChat, #btnFullscreen { min-height: 32px; font-size: 14px; padding-inline: 10px; }
+	  #viewerCount { min-height: 30px; padding-inline: 8px; }
+	  #btnRemap.icon-only { width: 36px; height: 36px; }
+	  /* Keep video from getting too tall in landscape */
+	  #videoWrap { max-height: 68vh; }
+	}
 
     /* Connection Lost Overlay */
     #lostConnectionOverlay {
@@ -588,7 +658,7 @@
 	  main > #sidePanel { order: 2; }
 
 	  /* Keep the original popover, but constrain and center it in the viewport */
-	  #remapPanel {
+	#remapPanel {
 		position: absolute;
 		left: 50%;
 		transform: translateX(-50%);
@@ -606,6 +676,9 @@
       #sidePanel { width: 100%; }
       #chatWrap { min-height: 220px; }
     }
+	@media (max-width: 460px) and (orientation: portrait) {
+	  #chatWrap { min-height: 200px; }
+	}
     @media (max-width: 700px) {
       body.chat-open main {
         grid-template-columns: 1fr !important; /* override desktop two-column rule */
