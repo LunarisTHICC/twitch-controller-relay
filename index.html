@@ -203,7 +203,7 @@
 		/* Mobile: lay out controls as [Remap icon] [Chat] [Fullscreen] on one row; volume below */
 	@media (max-width: 700px) {
 	  #controls {
-		display: grid;               /* override base flex */
+		display: grid !important;
 		grid-template-columns: auto 1fr auto;
 		grid-auto-rows: min-content;
 		column-gap: 10px;
