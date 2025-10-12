@@ -371,23 +371,6 @@
       pointer-events: none;
       transition: opacity 1s;
     }
-    @media (max-width: 600px) {
-      #eyes-container {
-        min-height: 120px;
-        gap: 24px;
-        width: 160px;
-      }
-      .eye-svg {
-        width: 68px;
-        height: 48px;
-      }
-      #intro-text {
-        font-size: 1.6rem;
-        margin-top: 4px;
-      }
-    }
-    /* --- End Animated Intro --- */
-
     /* --- Mobile chat-under-video layout (additions) --- */
     @media (max-width: 900px) {
       #sidePanel { width: 100%; }
@@ -583,14 +566,19 @@
       const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
       const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
       const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-      const leftStartOffset = 40;
-      const leftEndOffset = 0;
 
-      // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
+      // Center first eye at start; once the second eye appears, slide both outward symmetrically
+      const EYE_SEP = window.matchMedia('(max-width: 600px)').matches ? 24 : 36;
+      const leftStartOffset = 0;
+      const leftEndOffset   = -EYE_SEP;
+      const rightStartOffset = 0;
+      const rightEndOffset   =  EYE_SEP;
+
+      // Create left eye wrap, fade-in centered
       const leftEyeWrap = document.createElement('div');
       leftEyeWrap.className = 'eye-wrap';
       leftEyeWrap.style.opacity = 0;
-      leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
+      leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`; // centered
       leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
       eyesContainer.appendChild(leftEyeWrap);
 
@@ -599,21 +587,26 @@
         setBlink(leftEyeWrap.firstElementChild, true, 120);
         setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
 
-        // After a second, fade in right eye and slide left eye smoothly
+        // After a second, add the right eye and slide both outward from center
         setTimeout(() => {
           if (animationSkipped) return skipToEnd();
           const rightEyeWrap = document.createElement('div');
           rightEyeWrap.className = 'eye-wrap';
           rightEyeWrap.style.opacity = 0;
+          rightEyeWrap.style.transform = `translateX(${rightStartOffset}px)`; // centered
           rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
-
           eyesContainer.appendChild(rightEyeWrap);
 
-          // Trigger both transitions in the same frame
+          // Trigger both transitions in the same frame: slide out + fade right in
           requestAnimationFrame(() => {
-            leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
-            leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
-            fadeInEyeWrap(rightEyeWrap, 900);
+            const moveEase = 'transform 0.7s cubic-bezier(.8,2,.6,1)';
+            const fadeEase = 'opacity 0.9s ease';
+            leftEyeWrap.style.transition  = `${moveEase}, ${fadeEase}`;
+            rightEyeWrap.style.transition = `${moveEase}, ${fadeEase}`;
+
+            leftEyeWrap.style.transform  = `translateX(${leftEndOffset}px)`;
+            rightEyeWrap.style.transform = `translateX(${rightEndOffset}px)`;
+            rightEyeWrap.style.opacity = 1;
           });
 
           setTimeout(() => {
@@ -722,7 +715,7 @@
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
-        `Lines of code used: 1984+`,
+        `Lines of code used: 2635+`,
         `Languages used: Python, HTML, CSS, JavaScript`,
         `Models used: Gpt-5 & GPT-4.`
       ];
@@ -733,19 +726,32 @@
 
     // ----- Chat (force junkfoodjon, dark) -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-    function setChatSrc(){
-      const parent=location.hostname; // Twitch requires hostname, not host/port
-      const ch='junkfoodjon';
-      // Twitch dark mode, allow iframe to fill entire chatWrap flexbox area
-      // The "dark" param is necessary but Twitch may still use system color scheme, so force dark on wrapper
-      chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
-      chatIframe.classList.add('twitch-dark-bg');
-      chatIframe.style.background='#0d1322';
-      chatIframe.style.height='100%';
-      chatIframe.style.width='100%';
-      chatIframe.style.display='block';
-      chatIframe.allowTransparency='true';
-    }
+	function setChatSrc(){
+	  const parent = location.hostname; // Twitch requires the exact page hostname
+	  const ch = 'junkfoodjon';
+
+	  // Force dark UI via both theme=dark and darkpop
+	  const params = new URLSearchParams({
+		parent: parent,
+		theme: 'dark',
+		darkpop: '1'
+	  });
+	  const url = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?${params.toString()}`;
+
+	  // Prevent white flash: start transparent, fade in on load
+	  chatIframe.style.opacity = '0';
+	  chatIframe.style.transition = 'opacity .15s ease';
+	  chatIframe.onload = () => { chatIframe.style.opacity = '1'; };
+
+	  // Apply and keep container dark as a safety net
+	  chatIframe.src = url;
+	  chatIframe.classList.add('twitch-dark-bg');
+	  chatIframe.style.background = '#0d1322';
+	  chatIframe.style.height = '100%';
+	  chatIframe.style.width = '100%';
+	  chatIframe.style.display = 'block';
+	  chatIframe.allowTransparency = 'true';
+	}
     function toggleChat(){ 
       const open=!document.body.classList.contains('chat-open'); 
       if(open){ 
