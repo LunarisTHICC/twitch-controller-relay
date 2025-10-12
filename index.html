@@ -912,23 +912,6 @@
 	  chatIframe.allowTransparency = 'true';
 	}
 	  
-	  const url = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?${params.toString()}`;
-
-	  // Prevent white flash: start transparent, fade in on load
-	  chatIframe.style.opacity = '0';
-	  chatIframe.style.transition = 'opacity .15s ease';
-	  chatIframe.onload = () => { chatIframe.style.opacity = '1'; };
-
-	  // Apply and keep container dark as a safety net
-	  chatIframe.src = url;
-	  chatIframe.classList.add('twitch-dark-bg');
-	  chatIframe.style.background = '#0d1322';
-	  chatIframe.style.height = '100%';
-	  chatIframe.style.width = '100%';
-	  chatIframe.style.display = 'block';
-	  // Not required for modern browsers, harmless if left:
-	  chatIframe.allowTransparency = 'true';
-	}
 
 	function toggleChat() {
 	  const open = !document.body.classList.contains('chat-open');
