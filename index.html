@@ -486,6 +486,11 @@
 	  border-radius: 8px;
 	  overflow: auto;
 	}
+		/* When Remap is open, keep chat hidden unless user explicitly opened chat */
+	body.remap-open:not(.chat-open) #chatWrap { display: none !important; }
+
+	/* Ensure the hidden attribute always wins for chat */
+	#chatWrap[hidden] { display: none !important; }
 
 	/* Mobile-friendly Remap popover sizing (prevents edge cut-off) */
 	@media (max-width: 700px) {
@@ -984,19 +989,30 @@
       chatIframe.allowTransparency = 'true';
     }
       
-    function toggleChat() {
-      const open = !document.body.classList.contains('chat-open');
-      if (open) {
-        document.body.classList.add('chat-open');
-        if (chatWrap) chatWrap.hidden = false;
-        setChatSrc();
-        if (chatWrap) chatWrap.style.height = '100%';
-        if (chatIframe) chatIframe.style.height = '100%';
-      } else {
-        document.body.classList.remove('chat-open');
-        if (chatWrap) chatWrap.hidden = true;
-      }
-    }
+	function toggleChat() {
+	  const open = !document.body.classList.contains('chat-open');
+
+	  if (open) {
+		// NEW: If Remap is open, close it first so chat doesn’t sit under the remap panel
+		if (document.body.classList.contains('remap-open')) {
+		  try {
+			if (typeof closeRemapDesktop === 'function') closeRemapDesktop();
+			else document.body.classList.remove('remap-open');
+		  } catch {}
+		}
+
+		document.body.classList.add('chat-open');
+		if (chatWrap) chatWrap.hidden = false;
+		// Ensure src is set the first time it’s opened
+		setChatSrc();
+		// Ensure chat scales vertically on open
+		if (chatWrap) chatWrap.style.height = '100%';
+		if (chatIframe) chatIframe.style.height = '100%';
+	  } else {
+		document.body.classList.remove('chat-open');
+		if (chatWrap) chatWrap.hidden = true;
+	  }
+	}
     document.getElementById('btnChat').onclick = toggleChat;
 
     // --- Mobile layout helper (additions) ---
@@ -1138,21 +1154,24 @@
       }
     }
 
-    function reconcileRemapLayout() {
-      const open = document.body.classList.contains('remap-open') || !remapPanel.hasAttribute('hidden');
-      if (!open) return;
+	function reconcileRemapLayout() {
+	  const open = document.body.classList.contains('remap-open') || !remapPanel.hasAttribute('hidden');
+	  if (!open) return;
 
-      if (isMobileViewport()) {
-        if (remapPanel.parentElement !== remapHome) remapHome.appendChild(remapPanel);
-        remapPanel.removeAttribute('hidden');
-        document.body.classList.remove('remap-open');
-      } else {
-        if (remapPanel.parentElement !== sidePanel) sidePanel.prepend(remapPanel);
-        document.body.classList.add('remap-open');
-        remapPanel.removeAttribute('hidden');
-      }
-    }
+	  if (isMobileViewport()) {
+		if (remapPanel.parentElement !== remapHome) remapHome.appendChild(remapPanel);
+		remapPanel.removeAttribute('hidden');
+		document.body.classList.remove('remap-open');
+	  } else {
+		// Ensure chat is not visible under the remap panel
+		document.body.classList.remove('chat-open');         // NEW
+		try { const cw = document.getElementById('chatWrap'); if (cw) cw.hidden = true; } catch {} // NEW
 
+		if (remapPanel.parentElement !== sidePanel) sidePanel.prepend(remapPanel);
+		document.body.classList.add('remap-open');
+		remapPanel.removeAttribute('hidden');
+	  }
+	}
     // Advanced remap handlers (final); prevent legacy from overriding
     window.__REMAP_ADVANCED__ = true;
 
