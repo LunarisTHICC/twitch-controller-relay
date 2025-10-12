@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Doppelganger</title>
+  <title>doppel.stream</title>
+  <meta name="application-name" content="doppel.stream">
   <meta property="og:title" content="doppel.stream">
   <meta property="og:type" content="website">
   <meta property="og:image" content="/social-card.png">
@@ -972,9 +973,9 @@
 	})();
 
 	// Ensure chat URL is ready even if user never presses the button
-	window.addEventListener('DOMContentLoaded', () => { buildBanner(); setChatSrc(); });
-	  // If you prefer to defer until chat opens, you can remove this line
-	  setChatSrc();
+	  window.addEventListener('DOMContentLoaded', () => {
+		buildBanner();
+		setChatSrc();
 	});
 
     // ----- Remap UI + state -----
