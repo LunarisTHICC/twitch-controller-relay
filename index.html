@@ -966,7 +966,7 @@
 	})();
 
 	// Ensure chat URL is ready even if user never presses the button
-	window.addEventListener('DOMContentLoaded', () => {
+	window.addEventListener('DOMContentLoaded', () => { buildBanner(); setChatSrc(); });
 	  // If you prefer to defer until chat opens, you can remove this line
 	  setChatSrc();
 	});
