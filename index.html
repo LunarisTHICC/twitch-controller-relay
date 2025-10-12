@@ -504,7 +504,8 @@
 		max-width: 96vw;
 		max-height: 70vh;
 		overflow: auto;
-		z-index: 9000; /* ensure above nearby controls */
+		z-index: 9000;
+		min-width: 0;
 	  }
 	}
     /* --- Mobile chat-under-video layout (additions) --- */
@@ -1056,9 +1057,10 @@
 	  }
 
 	  // Run now and on viewport changes
-	applyMobileLayout();
-	MQ_MOBILE.addEventListener?.('change', reconcileRemapLayout);
-	window.addEventListener('resize', reconcileRemapLayout);
+	  applyMobileLayout();
+	  /* FIX: listen on MOBILE_MEDIA and re-run applyMobileLayout (the remap reconcile runs elsewhere) */
+	  MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
+	  window.addEventListener('resize', applyMobileLayout);
 	})();
 
 	// Ensure chat URL is ready even if user never presses the button
@@ -1197,6 +1199,8 @@
 	}
 
 	// Override old handlers safely (no need to delete the old ones)
+	// Mark that advanced remap handlers are active so legacy bindings won't override them
+	window.__REMAP_ADVANCED__ = true;
 
 	btnRemapReset.onclick = () => {
 	  remap = defaultRemap();
@@ -1220,28 +1224,31 @@
 	  }
 	});
 
-    function toggleRemapPanel() {
-      const willShow = remapPanel.hasAttribute('hidden');
-      if (willShow) buildRemapPanel();
-      if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
-    }
-
-    btnRemap.onclick = toggleRemapPanel;
-    btnRemapReset.onclick = () => {
-      remap = defaultRemap();
-      saveRemap(remap);
-      buildRemapPanel();
-      log("[REMAP] Reset to defaults");
-    };
-    btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
-
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!remapPanel.hasAttribute('hidden')) {
-        const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
-        if (!within) remapPanel.setAttribute('hidden', "");
+    /* Legacy dropdown bindings (kept but disabled when advanced handlers are present) */
+    if (!window.__REMAP_ADVANCED__) {
+      function toggleRemapPanel() {
+        const willShow = remapPanel.hasAttribute('hidden');
+        if (willShow) buildRemapPanel();
+        if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
       }
-    });
+
+      btnRemap.onclick = toggleRemapPanel;
+      btnRemapReset.onclick = () => {
+        remap = defaultRemap();
+        saveRemap(remap);
+        buildRemapPanel();
+        log("[REMAP] Reset to defaults");
+      };
+      btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
+
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!remapPanel.hasAttribute('hidden')) {
+          const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
+          if (!within) remapPanel.setAttribute('hidden', "");
+        }
+      });
+    }
 
     // ----- Video / audio -----
     const vid=document.getElementById('vid'), vol=document.getElementById('vol'), btnMute=document.getElementById('btnMute');
@@ -1335,7 +1342,6 @@
       }, 1000);
       document.getElementById('reconnectBtn').onclick = () => location.reload();
     }
-
     // --- End overlay logic ---
 
     async function startViewer(){
