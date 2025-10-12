@@ -41,8 +41,8 @@
       align-items: center;
       width: 100%;
     }
-    #brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 26s linear infinite }
-    #brandTrack .item{ font-family: "Orbitron",system-ui,sans-serif; font-size: 14px; letter-spacing: 1.4px; line-height: 1; color: #e9e2ff; text-shadow: 0 0 12px rgba(145,70,255,.55),0 0 2px rgba(145,70,255,.9);}
+	#brandTrack { display: flex; gap: 40px; align-items: center; white-space: nowrap; will-change: transform; animation: scrollX 39s linear infinite }
+	#brandTrack .item{ font-family:"Orbitron",system-ui,sans-serif; font-size:14px; letter-spacing:1.4px; line-height:1; color:#e9e2ff; text-shadow:0 0 12px rgba(145,70,255,.55), 0 0 2px rgba(145,70,255,.35) }
     .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
     @keyframes scrollX{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
@@ -153,7 +153,7 @@
 	  display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;
 	}
 	#remapFooter button {
-	  border-radius: 8px; border: 1px solid #2a2a32; background: #1e123a; color: #f3edff; padding: 6px 12px;
+	  border-radius: 8px; border: 1px solid #2a2a32; background: #1e123a; color: #efeff1; padding: 6px 12px;
 	}
 	#remapFooter button.accent {
 	  background: linear-gradient(180deg, var(--accent), var(--accent-2));
@@ -371,22 +371,22 @@
       pointer-events: none;
       transition: opacity 1s;
     }
-    @media (max-width: 600px) {
-      #eyes-container {
-        min-height: 120px;
-        gap: 24px;
-        width: 160px;
-      }
-      .eye-svg {
-        width: 68px;
-        height: 48px;
-      }
-      #intro-text {
-        font-size: 1.6rem;
-        margin-top: 4px;
-      }
+    /* --- Mobile chat-under-video layout (additions) --- */
+    @media (max-width: 900px) {
+      #sidePanel { width: 100%; }
+      #chatWrap { min-height: 260px; }
     }
-    /* --- End Animated Intro --- */
+    @media (max-width: 700px) {
+      body.chat-open main {
+        grid-template-columns: 1fr !important; /* override desktop two-column rule */
+      }
+      /* Ensure stacking order on small screens */
+      main > section { order: 1; }
+      main > #sidePanel { order: 2; }
+
+      /* Slightly taller video on small screens */
+      #videoWrap { height: 48vw; min-height: 160px; }
+    }
   </style>
 </head>
 <body class="clean">
@@ -401,7 +401,7 @@
   <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
   <header>
-    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pPc" class="pill">Peer</span><span id="pDc" class="pill">DC</span><span id="pAv" class="pill">A/V</span><span id="pTransport" class="pill">Transport</span>
+    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span>
     <span id="wsUrl" class="pill">ws://</span>
   </header>
 
@@ -412,18 +412,18 @@
         <div id="overlay"><div id="ovText">Connecting…</div></div>
       </div>
       <div id="controls">
-		  <button id="btnRemap" class="accent" title="Remap controller buttons">Remap</button>
-	<div id="remapPanel" hidden>
-	  <div id="remapHeader">
-		<h3>Viewer Control Remap</h3>
-		<div style="font-size:11px;color:#9aa7c8;opacity:.9">Maps your physical button → virtual button sent to host</div>
-	  </div>
-	  <div id="remapGrid"></div>
-	  <div id="remapFooter">
-		<button id="btnRemapReset">Reset</button>
-		<button id="btnRemapClose" class="accent">Close</button>
-	  </div>
-	</div>
+        <button id="btnRemap" class="accent" title="Remap controller buttons">Remap</button>
+        <div id="remapPanel" hidden>
+          <div id="remapHeader">
+            <h3>Viewer Control Remap</h3>
+            <div style="font-size:11px;color:#9aa7c8;opacity:.9">Maps your physical button → virtual button sent to host</div>
+          </div>
+          <div id="remapGrid"></div>
+          <div id="remapFooter">
+            <button id="btnRemapReset">Reset</button>
+            <button id="btnRemapClose" class="accent">Close</button>
+          </div>
+        </div>
         <button id="btnChat" class="accent" title="Toggle Twitch chat">Twitch Chat</button>
 
         <div id="volumeWrap" style="display:flex;align-items:center;gap:8px">
@@ -433,7 +433,7 @@
             <button id="btnMute" class="muted" aria-label="Toggle mute" title="Toggle audio">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 10v4h4l5 4V6L7 10H3z"></path>
-                <path d="M14.5 12a4.5 4.5 0 0 0-1.2-3.1l1.4-1.4A6.5 6.5 0 0 1 16.5 12a6.5 6.5 0 0 1-1.8 4.5l-1.4-1.4A4.5 4.5 0 0 0 14.5 12z"></path>
+                <path d="M14.5 12a4.5 4.5 0 0 0-1.2-3.1l1.4-1.4A6.5 6.5 0 0 1 16.5 12a6.5 6.5 0 0 1-1.8 4.5l-1.4-1.4A8 8 0 0 0 18 12z"></path>
                 <path d="M18 12a8 8 0 0 0-2.1-5.4l1.4-1.4A10 10 0 0 1 20 12a10 10 0 0 1-2.7 6.8l-1.4-1.4A8 8 0 0 0 18 12z"></path>
               </svg>
             </button>
@@ -480,7 +480,7 @@ function getEyeSVG(rx = 50, ry = 30, pupilDx = 0, pupilDy = 0, eyelidOpacity = 0
   <ellipse class="pupil" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="8" ry="8" fill="#1a1a1a"/>
   <ellipse class="eyelid" cx="60" cy="40" rx="${rx}" ry="${ry}" fill="black" style="opacity:${eyelidOpacity};"/>
 </svg>
-  `;
+      `;
 }
 
 const overlayIntro = document.getElementById('intro-overlay');
@@ -564,7 +564,7 @@ function animateIntro() {
   const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
   const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
   const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-  const leftStartOffset = 40;
+  const leftStartOffset = 0;
   const leftEndOffset = 0;
 
   // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
@@ -583,35 +583,34 @@ function animateIntro() {
     // After a second, fade in right eye and slide left eye smoothly
     setTimeout(() => {
       if (animationSkipped) return skipToEnd();
-
-      // Prepare right eye (hidden but layout-affecting)
       const rightEyeWrap = document.createElement('div');
       rightEyeWrap.className = 'eye-wrap';
       rightEyeWrap.style.opacity = 0;
       rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
 
-      // FLIP: measure left-eye "first" position
+      // FLIP: measure before layout change
       const firstRect = leftEyeWrap.getBoundingClientRect();
 
-      // Append right eye (this will change layout)
+      // Append right eye (causes layout shift)
       eyesContainer.appendChild(rightEyeWrap);
 
-      // Measure left-eye "last" position after layout shift
+      // Measure after layout change
       const lastRect = leftEyeWrap.getBoundingClientRect();
       const deltaX = firstRect.left - lastRect.left;
 
-      // Invert: offset left eye so it visually stays where it was
+      // Invert: keep left eye visually in place, then animate to final
       const computed = getComputedStyle(leftEyeWrap);
       const baseMatrix = computed.transform === 'none' ? 'matrix(1,0,0,1,0,0)' : computed.transform;
       const matrix = new DOMMatrixReadOnly(baseMatrix);
       const currentX = matrix.m41 || 0;
+
       leftEyeWrap.style.transform = `translateX(${currentX + deltaX}px)`;
       leftEyeWrap.style.willChange = 'transform, opacity';
 
-      // Force reflow so the browser acknowledges the inverted transform before animating
+      // Force reflow so the inverted transform takes effect
       void leftEyeWrap.offsetWidth;
 
-      // Play: animate to the intended final transform while fading in the right eye
+      // Play: glide to intended position, fade in right eye
       requestAnimationFrame(() => {
         leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
         leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
@@ -724,7 +723,7 @@ function animateIntro() {
         `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
         `Made by JunkfoodJon with CoPilot and GitHub`,
         `How long this project took: ${days} day${days!==1?'s':''}`,
-        `Lines of code used: 1984+`,
+        `Lines of code used: 2635+`,
         `Languages used: Python, HTML, CSS, JavaScript`,
         `Models used: Gpt-5 & GPT-4.`
       ];
@@ -735,19 +734,32 @@ function animateIntro() {
 
     // ----- Chat (force junkfoodjon, dark) -----
     const chatWrap=document.getElementById('chatWrap'), chatIframe=document.getElementById('chatIframe');
-    function setChatSrc(){
-      const parent=location.hostname; // Twitch requires hostname, not host/port
-      const ch='junkfoodjon';
-      // Twitch dark mode, allow iframe to fill entire chatWrap flexbox area
-      // The "dark" param is necessary but Twitch may still use system color scheme, so force dark on wrapper
-      chatIframe.src=`https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?parent=${parent}&theme=dark`;
-      chatIframe.classList.add('twitch-dark-bg');
-      chatIframe.style.background='#0d1322';
-      chatIframe.style.height='100%';
-      chatIframe.style.width='100%';
-      chatIframe.style.display='block';
-      chatIframe.allowTransparency='true';
-    }
+	function setChatSrc(){
+	  const parent = location.hostname; // Twitch requires the exact page hostname
+	  const ch = 'junkfoodjon';
+
+	  // Force dark UI via both theme=dark and darkpop
+	  const params = new URLSearchParams({
+		parent: parent,
+		theme: 'dark',
+		darkpop: '1'
+	  });
+	  const url = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?${params.toString()}`;
+
+	  // Prevent white flash: start transparent, fade in on load
+	  chatIframe.style.opacity = '0';
+	  chatIframe.style.transition = 'opacity .15s ease';
+	  chatIframe.onload = () => { chatIframe.style.opacity = '1'; };
+
+	  // Apply and keep container dark as a safety net
+	  chatIframe.src = url;
+	  chatIframe.classList.add('twitch-dark-bg');
+	  chatIframe.style.background = '#0d1322';
+	  chatIframe.style.height = '100%';
+	  chatIframe.style.width = '100%';
+	  chatIframe.style.display = 'block';
+	  chatIframe.allowTransparency = 'true';
+	}
     function toggleChat(){ 
       const open=!document.body.classList.contains('chat-open'); 
       if(open){ 
@@ -762,92 +774,124 @@ function animateIntro() {
       } 
     }
     document.getElementById('btnChat').onclick=toggleChat;
-		// ----- Remap UI + state -----
-	const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
-	const DISABLE_SENTINEL = ""; // maps to "send nothing"
-	const REMAP_STORE_KEY = "controlRemapV1";
 
-	function defaultRemap() {
-	  const m = {};
-	  ALL_BUTTONS.forEach(n => m[n] = n);
-	  return m;
-	}
-	function loadRemap() {
-	  try {
-		const raw = localStorage.getItem(REMAP_STORE_KEY);
-		if (!raw) return defaultRemap();
-		const obj = JSON.parse(raw);
-		// sanity: ensure all keys exist
-		ALL_BUTTONS.forEach(n => { if (!(n in obj)) obj[n] = n; });
-		return obj;
-	  } catch { return defaultRemap(); }
-	}
-	function saveRemap(m) {
-	  try { localStorage.setItem(REMAP_STORE_KEY, JSON.stringify(m)); } catch {}
-	}
-	let remap = loadRemap();
+    // --- Mobile layout helper (additions) ---
+    (function () {
+      // Set to false if you do NOT want chat to auto-open once on mobile.
+      const AUTO_OPEN_CHAT_ON_MOBILE = true;
+      const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
+      let autoOpenedOnce = false;
 
-	const btnRemap = document.getElementById('btnRemap');
-	const remapPanel = document.getElementById('remapPanel');
-	const remapGrid = document.getElementById('remapGrid');
-	const btnRemapReset = document.getElementById('btnRemapReset');
-	const btnRemapClose = document.getElementById('btnRemapClose');
+      function isMobile() { return MOBILE_MEDIA.matches; }
 
-	function buildRemapPanel() {
-	  remapGrid.innerHTML = "";
-	  ALL_BUTTONS.forEach(src => {
-		const lab = document.createElement('label');
-		lab.textContent = src;
-		const sel = document.createElement('select');
+      function applyMobileLayout() {
+        const mobile = isMobile();
+        document.body.classList.toggle('mobile', mobile);
 
-		// Disabled option
-		const optDis = document.createElement('option');
-		optDis.value = DISABLE_SENTINEL;
-		optDis.textContent = "(Disabled)";
-		sel.appendChild(optDis);
+        // On mobile, optionally open chat once so it appears under the video
+        if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
+          autoOpenedOnce = true;
+          try {
+            if (!document.body.classList.contains('chat-open')) {
+              document.body.classList.add('chat-open');
+              if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
+            }
+          } catch {}
+        }
+      }
 
-		// Options for all virtual targets
-		ALL_BUTTONS.forEach(dst => {
-		  const opt = document.createElement('option');
-		  opt.value = dst;
-		  opt.textContent = dst;
-		  sel.appendChild(opt);
-		});
+      // Run now and on viewport changes
+      applyMobileLayout();
+      MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
+      window.addEventListener('resize', applyMobileLayout);
+    })();
 
-		sel.value = (remap[src] ?? src);
-		sel.onchange = () => {
-		  remap[src] = sel.value;
-		  saveRemap(remap);
-		  log(`[REMAP] ${src} -> ${sel.value || "(Disabled)"}`);
-		};
+    // ----- Remap UI + state -----
+    const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
+    const DISABLE_SENTINEL = ""; // maps to "send nothing"
+    const REMAP_STORE_KEY = "controlRemapV1";
 
-		remapGrid.appendChild(lab);
-		remapGrid.appendChild(sel);
-	  });
-	}
+    function defaultRemap() {
+      const m = {};
+      ALL_BUTTONS.forEach(n => m[n] = n);
+      return m;
+    }
+    function loadRemap() {
+      try {
+        const raw = localStorage.getItem(REMAP_STORE_KEY);
+        if (!raw) return defaultRemap();
+        const obj = JSON.parse(raw);
+        // sanity: ensure all keys exist
+        ALL_BUTTONS.forEach(n => { if (!(n in obj)) obj[n] = n; });
+        return obj;
+      } catch { return defaultRemap(); }
+    }
+    function saveRemap(m) {
+      try { localStorage.setItem(REMAP_STORE_KEY, JSON.stringify(m)); } catch {}
+    }
+    let remap = loadRemap();
 
-	function toggleRemapPanel() {
-	  const willShow = remapPanel.hasAttribute('hidden');
-	  if (willShow) buildRemapPanel();
-	  if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
-	}
+    const btnRemap = document.getElementById('btnRemap');
+    const remapPanel = document.getElementById('remapPanel');
+    const remapGrid = document.getElementById('remapGrid');
+    const btnRemapReset = document.getElementById('btnRemapReset');
+    const btnRemapClose = document.getElementById('btnRemapClose');
 
-	btnRemap.onclick = toggleRemapPanel;
-	btnRemapReset.onclick = () => {
-	  remap = defaultRemap();
-	  saveRemap(remap);
-	  buildRemapPanel();
-	  log("[REMAP] Reset to defaults");
-	};
-	btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
+    function buildRemapPanel() {
+      remapGrid.innerHTML = "";
+      ALL_BUTTONS.forEach(src => {
+        const lab = document.createElement('label');
+        lab.textContent = src;
+        const sel = document.createElement('select');
 
-	// Close when clicking outside
-	document.addEventListener('click', (e) => {
-	  if (!remapPanel.hasAttribute('hidden')) {
-		const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
-		if (!within) remapPanel.setAttribute('hidden', "");
-	  }
-	});
+        // Disabled option
+        const optDis = document.createElement('option');
+        optDis.value = DISABLE_SENTINEL;
+        optDis.textContent = "(Disabled)";
+        sel.appendChild(optDis);
+
+        // Options for all virtual targets
+        ALL_BUTTONS.forEach(dst => {
+          const opt = document.createElement('option');
+          opt.value = dst;
+          opt.textContent = dst;
+          sel.appendChild(opt);
+        });
+
+        sel.value = (remap[src] ?? src);
+        sel.onchange = () => {
+          remap[src] = sel.value;
+          saveRemap(remap);
+          log(`[REMAP] ${src} -> ${sel.value || "(Disabled)"}`);
+        };
+
+        remapGrid.appendChild(lab);
+        remapGrid.appendChild(sel);
+      });
+    }
+
+    function toggleRemapPanel() {
+      const willShow = remapPanel.hasAttribute('hidden');
+      if (willShow) buildRemapPanel();
+      if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
+    }
+
+    btnRemap.onclick = toggleRemapPanel;
+    btnRemapReset.onclick = () => {
+      remap = defaultRemap();
+      saveRemap(remap);
+      buildRemapPanel();
+      log("[REMAP] Reset to defaults");
+    };
+    btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!remapPanel.hasAttribute('hidden')) {
+        const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
+        if (!within) remapPanel.setAttribute('hidden', "");
+      }
+    });
 
     // ----- Video / audio -----
     const vid=document.getElementById('vid'), vol=document.getElementById('vol'), btnMute=document.getElementById('btnMute');
@@ -866,12 +910,13 @@ function animateIntro() {
     const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
 
     // Fullscreen
-    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})?.call(videoWrap); } else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})?.call(document); } }
+   function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})?.call(videoWrap); } else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})?.call(document); } }
     document.getElementById('btnFullscreen').onclick=toggleFs;
     videoWrap.ondblclick=toggleFs;
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
 
     document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
+
 
     // ----- Connection -----
     const params=new URLSearchParams(location.search);
@@ -880,21 +925,21 @@ function animateIntro() {
     document.getElementById('wsUrl').textContent=wsUrl;
     pill('pRelay','ok','Relay: '+relayHost); pill('pTransport','ok','Transport: WebRTC');
 	
-	    // --- TURN support: fetch ICE servers from relay.json; allow ?relayOnly=1 to force TURN ---
-	const forceRelay = params.get('relayOnly') === '1';
-	const proto = (location.protocol === 'https:') ? 'https' : 'http';
-	async function getIceServers(){
-	  const fallback=[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}];
-	  try{
-		const r = await fetch(`${proto}://${relayHost}/relay.json`, {
-		  cache: 'no-store',
-		  headers: { 'ngrok-skip-browser-warning': '1' }
-		});
-		const j = await r.json();
-		if (Array.isArray(j.ice_servers) && j.ice_servers.length) return j.ice_servers;
-	  }catch(e){ try{ log('ICE fetch failed, using fallback STUN: '+e);}catch{} }
-	  return fallback;
-	}
+    // --- TURN support: fetch ICE servers from relay.json; allow ?relayOnly=1 to force TURN ---
+    const forceRelay = params.get('relayOnly') === '1';
+    const proto = (location.protocol === 'https:') ? 'https' : 'http';
+    async function getIceServers(){
+      const fallback=[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}];
+      try{
+        const r = await fetch(`${proto}://${relayHost}/relay.json`, {
+          cache: 'no-store',
+          headers: { 'ngrok-skip-browser-warning': '1' }
+        });
+        const j = await r.json();
+        if (Array.isArray(j.ice_servers) && j.ice_servers.length) return j.ice_servers;
+      }catch(e){ try{ log('ICE fetch failed, using fallback STUN: '+e);}catch{} }
+      return fallback;
+    }
 
     let pc, ws, dc, viewerID=null, restarting=false, hbTimer=null, stallTimer=null;
     let retryDelay = 700;
@@ -1013,177 +1058,213 @@ function animateIntro() {
       }, 1000);
     }
 
-	// Inputs (send only)
-	let inputTimer = null, lastPayload = '';
-	const buttonMap = {0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
+    // Inputs (send only)
+     let inputTimer = null, lastPayload = '';
+    const buttonMap = {0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',8:'Back',9:'Start',10:'LS',11:'RS',12:'DPadUp',13:'DPadDown',14:'DPadLeft',15:'DPadRight'};
 
-	// Only cache after a successful send (fixes “no channel yet” dedupe bug)
-	function sendInput(o){
-	  const s = JSON.stringify(o);
-	  const canSendDC = (dc && dc.readyState === 'open');
-	  const canSendWS = (ws && ws.readyState === 1);
+    // --- Gamepad + Keyboard input → send to host (additive, non-breaking) ---
+    const KEY_AXIS = { // simple keyboard axis helpers (WASD / Arrows)
+      ArrowUp:   {i:1, v:-1}, ArrowDown: {i:1, v: 1}, ArrowLeft:{i:0, v:-1}, ArrowRight:{i:0, v: 1},
+      KeyW:      {i:1, v:-1}, KeyS:      {i:1, v: 1}, KeyA:     {i:0, v:-1}, KeyD:       {i:0, v: 1},
+    };
+    const KEY_BUTTON = { // minimal keyboard → virtual buttons
+      Space:'A', KeyJ:'B', KeyK:'X', KeyL:'Y',
+      KeyQ:'LB', KeyE:'RB',
+      Enter:'Start', Backspace:'Back',
+      KeyU:'LS', KeyI:'RS',
+      KeyT:'DPadUp', KeyG:'DPadDown', KeyF:'DPadLeft', KeyH:'DPadRight',
+    };
+    const downKeys = new Set();
 
-	  if (!canSendDC && !canSendWS) {
-		// No channel yet; don't cache s so we retry next tick when a channel opens
-		return;
-	  }
-	  if (s === lastPayload) return;
+    window.addEventListener('keydown', (e)=>{
+      if (e.repeat) return;
+      downKeys.add(e.code);
+    }, {passive:true});
+    window.addEventListener('keyup', (e)=>{
+      downKeys.delete(e.code);
+    }, {passive:true});
 
-	  try {
-		if (canSendDC) {
-		  log("[SEND] DataChannel: " + s);
-		  dc.send(s);
-		  lastPayload = s;
-		} else if (canSendWS) {
-		  log("[SEND] WebSocket: " + s);
-		  ws.send(s);
-		  lastPayload = s;
-		}
-	  } catch (e) {
-		log("[SEND ERROR] " + e);
-	  }
-	}
+    function clamp1(x){ x = Number(x)||0; return x<-1?-1:x>1?1:x; }
+    function deadzone(x, dz=0.10){
+      const s = Math.sign(x); const a = Math.abs(x);
+      if (a <= dz) return 0;
+      return clamp1(s * (a - dz) / (1 - dz));
+    }
 
-	function startInputs(){
-	  if (inputTimer) return;
+    function readKeyboardAxes(){
+      // Left stick only for keyboard
+      let lx = 0, ly = 0;
+      for (const code of downKeys) {
+        const ax = KEY_AXIS[code];
+        if (!ax) continue;
+        if (ax.i === 0) lx += ax.v;
+        else if (ax.i === 1) ly += ax.v;
+      }
+      lx = Math.max(-1, Math.min(1, lx));
+      ly = Math.max(-1, Math.min(1, ly));
+      return [lx, ly, 0, 0];
+    }
 
-	  // Minimal stick-center calibration
-	  let haveBaseline = false;
-	  let base = [0,0,0,0];
-	  let sum = [0,0,0,0];
-	  let samples = 0;
-	  const CALIB_SAMPLES = 20; // ~0.66s at 33ms
+    function readKeyboardButtons(){
+      const b = new Set();
+      for (const code of downKeys) {
+        const name = KEY_BUTTON[code];
+        if (name) b.add(name);
+      }
+      // DPad from explicit keys overrides axis mapping; already handled in KEY_BUTTON
+      return b;
+    }
 
-	  const DZ = 0.06;
-	  const clamp1 = v => Math.max(-1, Math.min(1, v || 0));
-	  const q = v => Math.round(v*100)/100;
-	  const shapeDeadzone = (v) => {
-		const m = Math.abs(v);
-		if (m <= DZ) return 0;
-		const s = Math.sign(v);
-		return s * ((m - DZ) / (1 - DZ));
-	  };
+    function getFirstGamepad(){
+      const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let i=0;i<gps.length;i++){
+        const g=gps[i]; if (g && g.connected) return g;
+      }
+      return null;
+    }
 
-	  // For logging once
-	  let loggedPadInfo = false;
+    function readGamepadState(){
+      const g = getFirstGamepad();
+      if (!g) return null;
+      // Axes: try standard mapping: [lx,ly,rx,ry]; fallbacks if shorter
+      const ax = [
+        clamp1(g.axes?.[0] ?? 0),
+        clamp1(g.axes?.[1] ?? 0),
+        clamp1(g.axes?.[2] ?? 0),
+        clamp1(g.axes?.[3] ?? 0),
+      ];
+      const axes = [
+        deadzone(ax[0]), deadzone(ax[1]),
+        deadzone(ax[2]), deadzone(ax[3]),
+      ];
+      // Buttons into names (pressed)
+      const btnNames = new Set();
+      for (let i=0;i<(g.buttons?.length||0);i++){
+        const pressed = !!g.buttons[i]?.pressed;
+        if (!pressed) continue;
+        const name = buttonMap[i];
+        if (name) btnNames.add(name);
+      }
+      // Triggers (prefer analog if available)
+      let LT = 0, RT = 0;
+      if (g.buttons?.[6]) LT = clamp1(g.buttons[6].value || (g.buttons[6].pressed?1:0));
+      if (g.buttons?.[7]) RT = clamp1(g.buttons[7].value || (g.buttons[7].pressed?1:0));
+      return { axes, buttons: btnNames, LT, RT };
+    }
 
-	  inputTimer = setInterval(()=>{
-		const gps = (navigator.getGamepads && Array.from(navigator.getGamepads()).filter(Boolean)) || [];
-		const gp = gps.find(g => g && g.connected) || null;
+    function applyRemapToButtons(srcButtonsSet){
+      // srcButtonsSet: Set of source names; map via remap object -> dest set
+      const out = new Set();
+      srcButtonsSet.forEach(src=>{
+        const dst = remap[src] ?? src;
+        if (dst && dst.length) out.add(dst); // DISABLE_SENTINEL === "" => skip
+      });
+      return Array.from(out.values());
+    }
 
-		const buttons = [];
-		const triggers = { LT:0, RT:0 };
-		let lx=0, ly=0, rx=0, ry=0;
+    function currentInputSnapshot(){
+      // Merge gamepad + keyboard
+      const gp = readGamepadState();
+      const kbAxes = readKeyboardAxes();
+      const kbButtons = readKeyboardButtons();
 
-		if (gp) {
-		  if (!loggedPadInfo) {
-			try {
-			  log(`[PAD] mapping=${gp.mapping||'(none)'} axes=${(gp.axes||[]).length} buttons=${(gp.buttons||[]).length}`);
-			} catch {}
-			loggedPadInfo = true;
-		  }
+      // Axes: prefer gamepad; if none, use keyboard (left stick)
+      let axes = gp ? gp.axes.slice(0,4) : [0,0,0,0];
+      if (!gp) {
+        axes[0] = kbAxes[0];
+        axes[1] = kbAxes[1];
+      }
 
-		  // Buttons
-		  gp.buttons.forEach((b,i)=>{
-			if (b && (b.pressed || (typeof b.value==='number' && b.value>0.5))) {
-			  const n = buttonMap[i];
-			  if (n) buttons.push(n);
-			}
-		  });
+      // Buttons: union of both
+      const btnSet = new Set(gp ? gp.buttons : []);
+      kbButtons.forEach(b=>btnSet.add(b));
 
-		  // Raw axes (standard default indices)
-		  const ax = [
-			clamp1(gp.axes[0]),
-			clamp1(gp.axes[1]),
-			clamp1(gp.axes[2]),
-			clamp1(gp.axes[3]),
-		  ];
+      // Triggers
+      const LT = gp ? Math.max(0, Math.min(1, gp.LT||0)) : 0;
+      const RT = gp ? Math.max(0, Math.min(1, gp.RT||0)) : 0;
 
-		  // Detect the “corner at idle” pattern and treat it as baseline immediately
-		  const looksExtremeCorner =
-			Math.abs(ax[0]) > 0.95 && Math.abs(ax[1]) > 0.95 &&
-			Math.abs(ax[2]) > 0.95 && Math.abs(ax[3]) > 0.95;
+      // Apply user remap
+      const buttons = applyRemapToButtons(btnSet);
 
-		  if (!haveBaseline) {
-			if (looksExtremeCorner) {
-			  base = ax.slice();
-			  haveBaseline = true;
-			  log(`[PAD] Baseline set from extreme idle: [${base.map(v=>v.toFixed(2)).join(', ')}]`);
-			} else {
-			  // Average a few frames to estimate center
-			  sum[0]+=ax[0]; sum[1]+=ax[1]; sum[2]+=ax[2]; sum[3]+=ax[3];
-			  samples++;
-			  if (samples >= CALIB_SAMPLES) {
-				base = sum.map(v=>v/samples);
-				haveBaseline = true;
-				log(`[PAD] Baseline calibrated: [${base.map(v=>v.toFixed(2)).join(', ')}]`);
-			  }
-			}
-		  }
+      return { buttons, axes, triggers:{LT, RT} };
+    }
 
-		  // Subtract baseline (once available)
-		  const adj = haveBaseline ? [
-			clamp1(ax[0] - base[0]),
-			clamp1(ax[1] - base[1]),
-			clamp1(ax[2] - base[2]),
-			clamp1(ax[3] - base[3]),
-		  ] : ax;
+    function payloadEquals(a,b){
+      if (!a || !b) return false;
+      if (a.buttons.length !== b.buttons.length) return false;
+      for (let i=0;i<a.buttons.length;i++) if (a.buttons[i]!==b.buttons[i]) return false;
+      for (let i=0;i<4;i++) if (Math.abs((a.axes?.[i]||0)-(b.axes?.[i]||0))>0.001) return false;
+      if (Math.abs((a.triggers?.LT||0)-(b.triggers?.LT||0))>0.001) return false;
+      if (Math.abs((a.triggers?.RT||0)-(b.triggers?.RT||0))>0.001) return false;
+      return true;
+    }
 
-		  // Deadzone shaping
-		  lx = shapeDeadzone(adj[0]);
-		  ly = shapeDeadzone(adj[1]);
-		  rx = shapeDeadzone(adj[2]);
-		  ry = shapeDeadzone(adj[3]);
+    function sendInput(obj){
+      const json = JSON.stringify(obj);
+      // Prefer data channel when available
+      try {
+        if (dc && dc.readyState === 'open') {
+          dc.send(json);
+          return;
+        }
+      } catch {}
+      try {
+        if (ws && ws.readyState === 1) {
+          ws.send(json);
+        }
+      } catch {}
+    }
 
-		  // Triggers (0..1)
-		  if (gp.buttons[6]) triggers.LT = Math.max(0, Math.min(1, gp.buttons[6].value||0));
-		  if (gp.buttons[7]) triggers.RT = Math.max(0, Math.min(1, gp.buttons[7].value||0));
-		}
+    function startInputLoop(){
+      // 30Hz-ish loop using rAF + time gating
+      let lastTs = 0;
+      function step(ts){
+        if (!pc) { requestAnimationFrame(step); return; }
+        if (ts - lastTs < 33) { requestAnimationFrame(step); return; }
+        lastTs = ts;
 
-		// Apply button remap + dedupe
-		const remapped = [];
-		const seen = new Set();
-		for (const phys of buttons) {
-		  const virtualName = (remap[phys] ?? phys);
-		  if (virtualName && !seen.has(virtualName)) {
-			seen.add(virtualName);
-			remapped.push(virtualName);
-		  }
-		}
+        const snap = currentInputSnapshot();
+        const payload = {
+          type:'input',
+          buttons: snap.buttons,
+          axes: snap.axes,
+          triggers: snap.triggers
+        };
 
-		const axes = [ q(lx), q(ly), q(rx), q(ry) ];
-		// Old-style payload (host accepts with or without type)
-		sendInput({ buttons: remapped, axes, triggers });
-	  }, 33);
+        // Dedup to reduce spam
+        if (!payloadEquals(payload, lastPayload)) {
+          lastPayload = payload;
+          sendInput(payload);
+        }
+        requestAnimationFrame(step);
+      }
+      if (!inputTimer) {
+        inputTimer = true; // sentinel (we use rAF not setInterval)
+        requestAnimationFrame(step);
+      }
+    }
 
-	  log('Input sender started (with minimal center calibration)');
-	}
-
-	// Start the input loop shortly after load and on first pad connect
-	window.addEventListener('load', () => { setTimeout(startInputs, 300); });
-	window.addEventListener('gamepadconnected', () => { setTimeout(startInputs, 0); });
-
-    // Start
-    setChatSrc();
-    startViewer();
-    buildBanner();
-    window.addEventListener('load', ()=>{ setTimeout(startInputs,300); document.body.classList.remove('chat-open'); chatWrap.hidden=true; });
-
-    // Instant download logs
-    document.getElementById('btnDownloadLogs').onclick=()=>{
+    // ----- Logs download -----
+    document.getElementById('btnDownloadLogs').onclick = ()=>{
       try{
-        const blob = new Blob([logEl.textContent||''], {type:'text/plain'});
+        const blob = new Blob([logEl.textContent || ''], {type:'text/plain;charset=utf-8'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'viewer-log.txt';
+        a.download = `viewer-logs-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
         document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(a.href);
-        a.remove();
-      }catch(e){ log('Download failed'); }
+        setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 50);
+      }catch(e){}
     };
 
-    window.addEventListener('beforeunload', ()=>{ try{ clearInterval(inputTimer); }catch{} });
+    // ----- Boot -----
+    window.addEventListener('load', ()=>{
+      try { setChatSrc(); } catch {}
+      try { buildBanner(); } catch {}
+      try { startViewer(); } catch {}
+      try { startStallDetector(); } catch {}
+      try { startInputLoop(); } catch {}
+    });
   </script>
 </body>
 </html>
