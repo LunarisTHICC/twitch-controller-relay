@@ -538,7 +538,7 @@
   <div id="brandBanner" role="banner" aria-label="Credits banner"><div id="brandTrack"></div></div>
 
   <header>
-    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span>
+    <span id="pRelay" class="pill">Relay</span><span id="pWs" class="pill">WS</span><span id="pSig" class="pill">Signaling</span><span id="pIce" class="pill">ICE</span><span id="pDtls" class="pill">DTLS</span><span id="pTransport" class="pill">Transport</span>
     <span id="wsUrl" class="pill">ws://</span>
   </header>
 
@@ -549,13 +549,12 @@
         <div id="overlay"><div id="ovText">Connecting…</div></div>
       </div>
       <div id="controls">
-	  <div id="viewerCount" title="Connected viewers">
-	  <svg viewBox="0 0 24 24" aria-hidden="true">
-		<!-- Person icon -->
-		<path fill="#e5e5e5" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 8v-1a6 6 0 0 1 12 0v1H4Z"/>
-	  </svg>
-	  <span id="viewerCountNum">0</span>
-	</div>
+        <div id="viewerCount" title="Connected viewers">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#e5e5e5" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 8v-1a6 6 0 0 1 12 0v1H4Z"/>
+          </svg>
+          <span id="viewerCountNum">0</span>
+        </div>
         <button id="btnRemap" class="accent" title="Remap controller buttons">Remap</button>
         <div id="remapPanel" hidden>
           <div id="remapHeader">
@@ -573,7 +572,7 @@
         <div id="volumeWrap" style="display:flex;align-items:center;gap:8px">
           <label for="vol" style="opacity:.8">Volume</label>
           <input id="vol" type="range" min="0" max="100" value="0" />
-          <div id="iconRow">
+          <div id="iconRow" style="display:flex;align-items:center;gap:8px">
             <button id="btnMute" class="muted" aria-label="Toggle mute" title="Toggle audio">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 10v4h4l5 4V6L7 10H3z"></path>
@@ -583,7 +582,7 @@
             </button>
             <div id="padIconWrap" class="off" title="Controller status">
               <svg id="padIcon" class="off" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm8 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
+                <path fill="currentColor" d="M7 8h10a4 4 0 0 1 3.8 2.7l1.1 3.2A3 3 0 0 1 19 18h-1.7l-1.8-2H8.5l-1.8 2H5A3 3 0 0 1 2.1 13.9l1.1-3.2A4 4 0 0 1 7 8zm3 2H8v2H6v2h2v2h2v-2h2v-2h-2v-2zm7.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-3 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
               </svg>
             </div>
           </div>
@@ -616,202 +615,191 @@
 
   <!-- Scripts: Animated Intro (runs first), then Viewer scripts -->
   <script>
-	// --- Animated Intro JS ---
-	// Use #e5e5e5 for all "white" lines (10% darker than #fff)
-	function getEyeSVG(rx = 50, ry = 30, pupilDx = 0, pupilDy = 0, eyelidOpacity = 0) {
-	  return `
-	<svg class="eye-svg" viewBox="0 0 120 80" fill="none">
-	  <ellipse class="eyeball" cx="60" cy="40" rx="${rx}" ry="${ry}" stroke="#e5e5e5" stroke-width="4" fill="#181818"/>
-	  <ellipse class="iris" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="18" ry="18" fill="#e5e5e5"/>
-	  <ellipse class="pupil" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="8" ry="8" fill="#1a1a1a"/>
-	  <ellipse class="eyelid" cx="60" cy="40" rx="${rx}" ry="${ry}" fill="black" style="opacity:${eyelidOpacity};"/>
-	</svg>
-		  `;
-	}
+    // --- Animated Intro JS ---
+    // Use #e5e5e5 for all "white" lines (10% darker than #fff)
+    function getEyeSVG(rx = 50, ry = 30, pupilDx = 0, pupilDy = 0, eyelidOpacity = 0) {
+      return `
+    <svg class="eye-svg" viewBox="0 0 120 80" fill="none">
+      <ellipse class="eyeball" cx="60" cy="40" rx="${rx}" ry="${ry}" stroke="#e5e5e5" stroke-width="4" fill="#181818"/>
+      <ellipse class="iris" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="18" ry="18" fill="#e5e5e5"/>
+      <ellipse class="pupil" cx="${60 + pupilDx}" cy="${40 + pupilDy}" rx="8" ry="8" fill="#1a1a1a"/>
+      <ellipse class="eyelid" cx="60" cy="40" rx="${rx}" ry="${ry}" fill="black" style="opacity:${eyelidOpacity};"/>
+    </svg>
+          `;
+    }
 
-	const overlayIntro = document.getElementById('intro-overlay');
-	const eyesContainer = document.getElementById('eyes-container');
-	const introText = document.getElementById('intro-text');
-	let animationSkipped = false;
-	let skipTimeout;
+    const overlayIntro = document.getElementById('intro-overlay');
+    const eyesContainer = document.getElementById('eyes-container');
+    const introText = document.getElementById('intro-text');
+    let animationSkipped = false;
+    let skipTimeout;
 
-	function animateEyeShape(eye, opts, duration = 400) {
-	  const eyeball = eye.querySelector('.eyeball');
-	  const iris = eye.querySelector('.iris');
-	  const pupil = eye.querySelector('.pupil');
-	  let start = null;
-	  const rx0 = +eyeball.getAttribute('rx');
-	  const ry0 = +eyeball.getAttribute('ry');
-	  const irisCx0 = +iris.getAttribute('cx');
-	  const irisCy0 = +iris.getAttribute('cy');
-	  const pupilCx0 = +pupil.getAttribute('cx');
-	  const pupilCy0 = +pupil.getAttribute('cy');
-	  const rx1 = opts.rx;
-	  const ry1 = opts.ry;
-	  const irisCx1 = 60 + opts.pupilDx;
-	  const irisCy1 = 40 + opts.pupilDy;
-	  const pupilCx1 = 60 + opts.pupilDx;
-	  const pupilCy1 = 40 + opts.pupilDy;
+    function animateEyeShape(eye, opts, duration = 400) {
+      const eyeball = eye.querySelector('.eyeball');
+      const iris = eye.querySelector('.iris');
+      const pupil = eye.querySelector('.pupil');
+      let start = null;
+      const rx0 = +eyeball.getAttribute('rx');
+      const ry0 = +eyeball.getAttribute('ry');
+      const irisCx0 = +iris.getAttribute('cx');
+      const irisCy0 = +iris.getAttribute('cy');
+      const pupilCx0 = +pupil.getAttribute('cx');
+      const pupilCy0 = +pupil.getAttribute('cy');
+      const rx1 = opts.rx;
+      const ry1 = opts.ry;
+      const irisCx1 = 60 + opts.pupilDx;
+      const irisCy1 = 40 + opts.pupilDy;
+      const pupilCx1 = 60 + opts.pupilDx;
+      const pupilCy1 = 40 + opts.pupilDy;
 
-	  function stepEye(ts) {
-		if (!start) start = ts;
-		let t = Math.min(1, (ts - start)/duration);
-		t = t<0.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
-		eyeball.setAttribute('rx', rx0 + (rx1 - rx0)*t);
-		eyeball.setAttribute('ry', ry0 + (ry1 - ry0)*t);
-		iris.setAttribute('cx', irisCx0 + (irisCx1 - irisCx0)*t);
-		iris.setAttribute('cy', irisCy0 + (irisCy1 - irisCy0)*t);
-		pupil.setAttribute('cx', pupilCx0 + (pupilCx1 - pupilCx0)*t);
-		pupil.setAttribute('cy', pupilCy0 + (pupilCy1 - pupilCy0)*t);
-		const eyelid = eye.querySelector('.eyelid');
-		eyelid.setAttribute('rx', rx0 + (rx1 - rx0)*t);
-		eyelid.setAttribute('ry', ry0 + (ry1 - ry0)*t);
-		if (t < 1) requestAnimationFrame(stepEye);
-	  }
-	  requestAnimationFrame(stepEye);
-	}
+      function stepEye(ts) {
+        if (!start) start = ts;
+        let t = Math.min(1, (ts - start)/duration);
+        t = t<0.5 ? 4*t*t*t : 1-(-2*t+2)**3/2;
+        eyeball.setAttribute('rx', rx0 + (rx1 - rx0)*t);
+        eyeball.setAttribute('ry', ry0 + (ry1 - ry0)*t);
+        iris.setAttribute('cx', irisCx0 + (irisCx1 - irisCx0)*t);
+        iris.setAttribute('cy', irisCy0 + (irisCy1 - irisCy0)*t);
+        pupil.setAttribute('cx', pupilCx0 + (pupilCx1 - pupilCx0)*t);
+        pupil.setAttribute('cy', pupilCy0 + (pupilCy1 - pupilCy0)*t);
+        const eyelid = eye.querySelector('.eyelid');
+        eyelid.setAttribute('rx', rx0 + (rx1 - rx0)*t);
+        eyelid.setAttribute('ry', ry0 + (ry1 - ry0)*t);
+        if (t < 1) requestAnimationFrame(stepEye);
+      }
+      requestAnimationFrame(stepEye);
+    }
 
-	function setBlink(eye, closed, duration = 200) {
-	  const eyelid = eye.querySelector('.eyelid');
-	  eyelid.style.transition = `opacity ${duration}ms`;
-	  eyelid.style.opacity = closed ? 1 : 0;
-	}
-	function widenEye(eye, widened = true) {
-	  const eyeball = eye.querySelector('.eyeball');
-	  const eyelid = eye.querySelector('.eyelid');
-	  const targetRy = widened ? 38 : 30;
-	  eyeball.setAttribute('ry', targetRy);
-	  eyelid.setAttribute('ry', targetRy);
-	}
+    function setBlink(eye, closed, duration = 200) {
+      const eyelid = eye.querySelector('.eyelid');
+      eyelid.style.transition = `opacity ${duration}ms`;
+      eyelid.style.opacity = closed ? 1 : 0;
+    }
+    function widenEye(eye, widened = true) {
+      const eyeball = eye.querySelector('.eyeball');
+      const eyelid = eye.querySelector('.eyelid');
+      const targetRy = widened ? 38 : 30;
+      eyeball.setAttribute('ry', targetRy);
+      eyelid.setAttribute('ry', targetRy);
+    }
 
-	function fadeInEyeWrap(eyeWrap, duration = 900, cb) {
-	  eyeWrap.style.transition = `opacity ${duration}ms`;
-	  setTimeout(() => {
-		eyeWrap.style.opacity = 1;
-		if (typeof cb === "function") setTimeout(cb, duration);
-	  }, 20);
-	}
+    function fadeInEyeWrap(eyeWrap, duration = 900, cb) {
+      eyeWrap.style.transition = `opacity ${duration}ms`;
+      setTimeout(() => {
+        eyeWrap.style.opacity = 1;
+        if (typeof cb === "function") setTimeout(cb, duration);
+      }, 20);
+    }
 
-	function fadeOut(element, duration = 800) {
-	  element.style.opacity = 0;
-	  element.style.transition = `opacity ${duration}ms`;
-	}
+    function fadeOut(element, duration = 800) {
+      element.style.opacity = 0;
+      element.style.transition = `opacity ${duration}ms`;
+    }
 
-	function fadeIn(element, duration = 2000) {
-	  element.style.opacity = 1;
-	  element.style.transition = `opacity ${duration}ms`;
-	}
+    function fadeIn(element, duration = 2000) {
+      element.style.opacity = 1;
+      element.style.transition = `opacity ${duration}ms`;
+    }
 
-	function animateIntro() {
-	  eyesContainer.innerHTML = '';
-	  introText.style.opacity = 0;
-	  introText.style.backgroundPosition = 'left';
+    function animateIntro() {
+      eyesContainer.innerHTML = '';
+      introText.style.opacity = 0;
+      introText.style.backgroundPosition = 'left';
 
-	  const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
-	  const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
-	  const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
-	  const leftStartOffset = 0;
-	  const leftEndOffset = 0;
+      const eyeForward = {rx:50, ry:30, pupilDx:0, pupilDy:0};
+      const eyeTurnLeft = {rx:40, ry:33, pupilDx:-23, pupilDy:2};
+      const eyeTurnRight = {rx:40, ry:33, pupilDx:23, pupilDy:2};
+      const leftStartOffset = 0;
+      const leftEndOffset = 0;
 
-	  // Create left eye wrap, opacity 0 for fade-in, start closer to center for smooth slide
-	  const leftEyeWrap = document.createElement('div');
-	  leftEyeWrap.className = 'eye-wrap';
-	  leftEyeWrap.style.opacity = 0;
-	  leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
-	  leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
-	  eyesContainer.appendChild(leftEyeWrap);
+      const leftEyeWrap = document.createElement('div');
+      leftEyeWrap.className = 'eye-wrap';
+      leftEyeWrap.style.opacity = 0;
+      leftEyeWrap.style.transform = `translateX(${leftStartOffset}px)`;
+      leftEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+      eyesContainer.appendChild(leftEyeWrap);
 
-	  fadeInEyeWrap(leftEyeWrap, 900, () => {
-		if (animationSkipped) return skipToEnd();
-		setBlink(leftEyeWrap.firstElementChild, true, 120);
-		setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
+      fadeInEyeWrap(leftEyeWrap, 900, () => {
+        if (animationSkipped) return skipToEnd();
+        setBlink(leftEyeWrap.firstElementChild, true, 120);
+        setTimeout(() => setBlink(leftEyeWrap.firstElementChild, false, 160), 180);
 
-		// After a second, fade in right eye and slide left eye smoothly
-		setTimeout(() => {
-		  if (animationSkipped) return skipToEnd();
-		  const rightEyeWrap = document.createElement('div');
-		  rightEyeWrap.className = 'eye-wrap';
-		  rightEyeWrap.style.opacity = 0;
-		  rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
+        setTimeout(() => {
+          if (animationSkipped) return skipToEnd();
+          const rightEyeWrap = document.createElement('div');
+          rightEyeWrap.className = 'eye-wrap';
+          rightEyeWrap.style.opacity = 0;
+          rightEyeWrap.innerHTML = getEyeSVG(eyeForward.rx, eyeForward.ry, eyeForward.pupilDx, eyeForward.pupilDy, 0);
 
-		  // FLIP: measure before layout change
-		  const firstRect = leftEyeWrap.getBoundingClientRect();
+          const firstRect = leftEyeWrap.getBoundingClientRect();
+          eyesContainer.appendChild(rightEyeWrap);
+          const lastRect = leftEyeWrap.getBoundingClientRect();
+          const deltaX = firstRect.left - lastRect.left;
 
-		  // Append right eye (causes layout shift)
-		  eyesContainer.appendChild(rightEyeWrap);
+          const computed = getComputedStyle(leftEyeWrap);
+          const baseMatrix = computed.transform === 'none' ? 'matrix(1,0,0,1,0,0)' : computed.transform;
+          const matrix = new DOMMatrixReadOnly(baseMatrix);
+          const currentX = matrix.m41 || 0;
 
-		  // Measure after layout change
-		  const lastRect = leftEyeWrap.getBoundingClientRect();
-		  const deltaX = firstRect.left - lastRect.left;
+          leftEyeWrap.style.transform = `translateX(${currentX + deltaX}px)`;
+          leftEyeWrap.style.willChange = 'transform, opacity';
+          void leftEyeWrap.offsetWidth;
 
-		  // Invert: keep left eye visually in place, then animate to final
-		  const computed = getComputedStyle(leftEyeWrap);
-		  const baseMatrix = computed.transform === 'none' ? 'matrix(1,0,0,1,0,0)' : computed.transform;
-		  const matrix = new DOMMatrixReadOnly(baseMatrix);
-		  const currentX = matrix.m41 || 0;
+          requestAnimationFrame(() => {
+            leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
+            leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
+            fadeInEyeWrap(rightEyeWrap, 900);
+          });
 
-		  leftEyeWrap.style.transform = `translateX(${currentX + deltaX}px)`;
-		  leftEyeWrap.style.willChange = 'transform, opacity';
+          setTimeout(() => {
+            if (animationSkipped) return skipToEnd();
+            animateEyeShape(leftEyeWrap.firstElementChild, eyeTurnRight, 400);
+            animateEyeShape(rightEyeWrap.firstElementChild, eyeTurnLeft, 400);
+            widenEye(leftEyeWrap.firstElementChild, true);
+          }, 700);
 
-		  // Force reflow so the inverted transform takes effect
-		  void leftEyeWrap.offsetWidth;
+          setTimeout(() => {
+            if (animationSkipped) return skipToEnd();
+            setBlink(leftEyeWrap.firstElementChild, true, 80);
+            setBlink(rightEyeWrap.firstElementChild, true, 80);
+            setTimeout(() => {
+              setBlink(leftEyeWrap.firstElementChild, false, 100);
+              setBlink(rightEyeWrap.firstElementChild, false, 100);
 
-		  // Play: glide to intended position, fade in right eye
-		  requestAnimationFrame(() => {
-			leftEyeWrap.style.transition = 'transform 0.7s cubic-bezier(.8,2,.6,1), opacity 0.7s';
-			leftEyeWrap.style.transform = `translateX(${leftEndOffset}px)`;
-			fadeInEyeWrap(rightEyeWrap, 900);
-		  });
+              setTimeout(() => {
+                setBlink(leftEyeWrap.firstElementChild, true, 80);
+                setBlink(rightEyeWrap.firstElementChild, true, 80);
 
-		  setTimeout(() => {
-			if (animationSkipped) return skipToEnd();
-			animateEyeShape(leftEyeWrap.firstElementChild, eyeTurnRight, 400);
-			animateEyeShape(rightEyeWrap.firstElementChild, eyeTurnLeft, 400);
-			widenEye(leftEyeWrap.firstElementChild, true);
-		  }, 700);
+                setTimeout(() => {
+                  setBlink(leftEyeWrap.firstElementChild, false, 100);
+                  setBlink(rightEyeWrap.firstElementChild, false, 100);
 
-		  setTimeout(() => {
-			if (animationSkipped) return skipToEnd();
-			setBlink(leftEyeWrap.firstElementChild, true, 80);
-			setBlink(rightEyeWrap.firstElementChild, true, 80);
-			setTimeout(() => {
-			  setBlink(leftEyeWrap.firstElementChild, false, 100);
-			  setBlink(rightEyeWrap.firstElementChild, false, 100);
+                  setTimeout(() => {
+                    animateEyeShape(leftEyeWrap.firstElementChild, eyeForward, 350);
+                    animateEyeShape(rightEyeWrap.firstElementChild, eyeForward, 350);
+                    widenEye(leftEyeWrap.firstElementChild, false);
 
-			  setTimeout(() => {
-				setBlink(leftEyeWrap.firstElementChild, true, 80);
-				setBlink(rightEyeWrap.firstElementChild, true, 80);
+                    setTimeout(() => {
+                      if (animationSkipped) return skipToEnd();
+                      fadeIn(introText, 2000);
+                      introText.style.backgroundPosition = 'right';
+                      setTimeout(() => {
+                        fadeOut(leftEyeWrap, 600);
+                        fadeOut(rightEyeWrap, 600);
+                        fadeOut(introText, 600);
+                        setTimeout(() => fadeOut(overlayIntro, 800), 600);
+                      }, 1300);
+                    }, 380);
+                  }, 350);
+                }, 180);
+              }, 160);
+            }, 110);
+          }, 900);
+        }, 1100);
+      });
 
-				setTimeout(() => {
-				  setBlink(leftEyeWrap.firstElementChild, false, 100);
-				  setBlink(rightEyeWrap.firstElementChild, false, 100);
-
-				  setTimeout(() => {
-					animateEyeShape(leftEyeWrap.firstElementChild, eyeForward, 350);
-					animateEyeShape(rightEyeWrap.firstElementChild, eyeForward, 350);
-					widenEye(leftEyeWrap.firstElementChild, false);
-
-					setTimeout(() => {
-					  if (animationSkipped) return skipToEnd();
-					  fadeIn(introText, 2000);
-					  introText.style.backgroundPosition = 'right';
-					  setTimeout(() => {
-						fadeOut(leftEyeWrap, 600);
-						fadeOut(rightEyeWrap, 600);
-						fadeOut(introText, 600);
-						setTimeout(() => fadeOut(overlayIntro, 800), 600);
-					  }, 1300);
-					}, 380);
-				  }, 350);
-				}, 180);
-			  }, 160);
-			}, 110);
-		  }, 900);
-		}, 1100);
-	  });
-
-	  skipTimeout = setTimeout(() => fadeOut(overlayIntro, 900), 10100);
-	}
+      skipTimeout = setTimeout(() => fadeOut(overlayIntro, 900), 10100);
+    }
     function skipToEnd() {
       if (animationSkipped) return;
       animationSkipped = true;
@@ -844,6 +832,468 @@
         if (overlayIntro.style.opacity === '0') overlayIntro.style.display = 'none';
       });
     });
+  </script>
+
+  <script>
+    // --- Viewer.html JS: all original code below, with connection lost overlay logic added ---
+
+    const logEl=document.getElementById('log'); function log(m){const t=new Date().toLocaleTimeString(); logEl.textContent+=`[${t}] ${m}\n`; logEl.scrollTop=logEl.scrollHeight;}
+    function pill(id,cls,text){const el=document.getElementById(id); if(!el) return; el.className='pill '+(cls||''); if(text) el.textContent=text;}
+
+    // ----- Banner with meta fallbacks -----
+    // NOTE: Banner stats are now static per user request!
+    const PROJECT_START = new Date('2025-09-29T00:00:00Z');
+    const brandTrack = document.getElementById('brandTrack');
+    function item(text){ const s=document.createElement('span'); s.className='item'; const d1=document.createElement('i'); d1.className='dot'; const d2=document.createElement('i'); d2.className='dot'; s.appendChild(d1); s.appendChild(document.createTextNode(' ')); s.appendChild(document.createTextNode(text)); s.appendChild(document.createTextNode(' ')); s.appendChild(d2); return s; }
+    async function buildBanner(){
+      brandTrack.innerHTML='';
+      // Static stats per user request
+      const now=new Date(); 
+      const hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
+      const days=Math.max(1, Math.floor((now-PROJECT_START)/86400000));
+      const texts = [
+        `Local time: ${hh}:${mm}`,
+        `Viewer mode: ${document.body.classList.contains('clean') ? 'Clean' : 'Debugger'}`,
+        `Made by JunkfoodJon with CoPilot and GitHub`,
+        `How long this project took: ${days} day${days!==1?'s':''}`,
+        `Lines of code used: 2635+`,
+        `Languages used: Python, HTML, CSS, JavaScript`,
+        `Models used: Gpt-5 & GPT-4.`
+      ];
+      const frag=document.createDocumentFragment();
+      for(let k=0;k<2;k++){ texts.forEach(t=>frag.appendChild(item(t))); }
+      brandTrack.appendChild(frag);
+    }
+
+    // --- Viewer count indicator logic ---
+    const viewerCountEl = document.getElementById('viewerCount');
+    const viewerCountNumEl = document.getElementById('viewerCountNum');
+    let currentUsers = 0;
+    const HOT_THRESHOLD = 10;
+
+    function applyViewerCountGlow(n) {
+      if (!viewerCountEl) return;
+      viewerCountEl.classList.toggle('hot', n >= HOT_THRESHOLD);
+    }
+
+    function updateCurrentUsers(n) {
+      const num = Math.max(0, Number(n) || 0);
+      currentUsers = num;
+      if (viewerCountNumEl) viewerCountNumEl.textContent = String(num);
+      applyViewerCountGlow(num);
+    }
+
+    // Initialize to 0
+    updateCurrentUsers(0);
+
+    // Hook WebSocket to listen for viewer count messages on /ws/viewer
+    (function () {
+      const NativeWS = window.WebSocket;
+      window.WebSocket = function(url, protocols) {
+        const sock = new NativeWS(url, protocols);
+        try {
+          if (String(url).includes('/ws/viewer')) {
+            sock.addEventListener('open', () => {
+              try { sock.send(JSON.stringify({ type: 'get_viewer_count' })); } catch {}
+            });
+            sock.addEventListener('message', (e) => {
+              try {
+                const msg = JSON.parse(e.data);
+                if (msg && (
+                  msg.type === 'viewer_count' ||
+                  msg.type === 'stats' ||
+                  msg.type === 'presence' ||
+                  typeof msg.viewerCount === 'number' ||
+                  typeof msg.currentUsers === 'number' ||
+                  typeof msg.viewers === 'number' ||
+                  typeof msg.count === 'number'
+                )) {
+                  const n = msg.count ?? msg.viewerCount ?? msg.viewers ?? msg.currentUsers;
+                  if (typeof n === 'number') updateCurrentUsers(n);
+                }
+              } catch {}
+            });
+          }
+        } catch {}
+        return sock;
+      };
+      window.WebSocket.prototype = NativeWS.prototype;
+    })();
+    
+    // Optional REST fallback if your relay exposes /viewer-count
+    (function () {
+      const COUNT_URL = `${location.protocol === 'https:' ? 'https' : 'http'}://${(new URL(location.href)).host}/viewer-count`;
+
+      async function pollViewerCount() {
+        try {
+          const r = await fetch(COUNT_URL, { cache: 'no-store', headers: { 'ngrok-skip-browser-warning': '1' } });
+          if (!r.ok) return;
+          let num = NaN;
+          const ct = r.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            const j = await r.json();
+            const n = j.count ?? j.viewerCount ?? j.viewers ?? j.currentUsers;
+            num = Number(n);
+          } else {
+            num = Number(await r.text());
+          }
+          if (!Number.isNaN(num)) updateCurrentUsers(num);
+        } catch {}
+      }
+
+      pollViewerCount();
+      setInterval(pollViewerCount, 15000);
+    })();
+
+    // ----- Chat (force junkfoodjon, dark) -----
+    const chatWrap = document.getElementById('chatWrap');
+    const chatIframe = document.getElementById('chatIframe');
+
+    function setChatSrc() {
+      if (!chatIframe) return;
+
+      const qs = new URLSearchParams(location.search);
+      const parent = (qs.get('parent') || location.hostname);
+
+      const ch = 'junkfoodjon';
+
+      const params = new URLSearchParams();
+      params.set('parent', parent);
+      params.set('darkpopout', '1');
+      params.set('theme', 'dark');
+
+      const url = `https://www.twitch.tv/embed/${encodeURIComponent(ch)}/chat?${params.toString()}`;
+
+      try {
+        const cur = new URL(chatIframe.src);
+        const hasDark = cur.searchParams.has('darkpopout');
+        const parentOk = cur.searchParams.get('parent') === parent;
+        if (hasDark && parentOk) return;
+      } catch {}
+
+      chatIframe.style.opacity = '0';
+      chatIframe.style.transition = 'opacity .15s ease';
+      chatIframe.onload = () => { chatIframe.style.opacity = '1'; };
+
+      chatIframe.src = url;
+      chatIframe.classList.add('twitch-dark-bg');
+      chatIframe.style.background = '#0d1322';
+      chatIframe.style.height = '100%';
+      chatIframe.style.width = '100%';
+      chatIframe.style.display = 'block';
+      chatIframe.allowTransparency = 'true';
+    }
+      
+    function toggleChat() {
+      const open = !document.body.classList.contains('chat-open');
+      if (open) {
+        document.body.classList.add('chat-open');
+        if (chatWrap) chatWrap.hidden = false;
+        setChatSrc();
+        if (chatWrap) chatWrap.style.height = '100%';
+        if (chatIframe) chatIframe.style.height = '100%';
+      } else {
+        document.body.classList.remove('chat-open');
+        if (chatWrap) chatWrap.hidden = true;
+      }
+    }
+    document.getElementById('btnChat').onclick = toggleChat;
+
+    // --- Mobile layout helper (additions) ---
+    (function () {
+      const AUTO_OPEN_CHAT_ON_MOBILE = true;
+      const MOBILE_MEDIA = window.matchMedia('(max-width: 700px)');
+      let autoOpenedOnce = false;
+
+      function isMobile() { return MOBILE_MEDIA.matches; }
+
+      function applyMobileLayout() {
+        const mobile = isMobile();
+        document.body.classList.toggle('mobile', mobile);
+
+        if (mobile && AUTO_OPEN_CHAT_ON_MOBILE && !autoOpenedOnce) {
+          autoOpenedOnce = true;
+          try {
+            if (!document.body.classList.contains('chat-open')) {
+              document.body.classList.add('chat-open');
+              if (typeof chatWrap !== 'undefined' && chatWrap) chatWrap.hidden = false;
+              setChatSrc();
+              if (chatWrap) chatWrap.style.height = '100%';
+              if (chatIframe) chatIframe.style.height = '100%';
+            }
+          } catch {}
+        }
+      }
+
+      applyMobileLayout();
+      MOBILE_MEDIA.addEventListener?.('change', applyMobileLayout);
+      window.addEventListener('resize', applyMobileLayout);
+    })();
+
+    // Ensure chat URL is ready even if user never presses the button
+    window.addEventListener('DOMContentLoaded', () => {
+      buildBanner();
+      setChatSrc();
+    });
+
+    // ----- Remap UI + state -----
+    const ALL_BUTTONS = ["A","B","X","Y","LB","RB","Back","Start","LS","RS","DPadUp","DPadDown","DPadLeft","DPadRight"];
+    const DISABLE_SENTINEL = ""; // maps to "send nothing"
+    const REMAP_STORE_KEY = "controlRemapV1";
+
+    function defaultRemap() {
+      const m = {};
+      ALL_BUTTONS.forEach(n => m[n] = n);
+      return m;
+    }
+    function loadRemap() {
+      try {
+        const raw = localStorage.getItem(REMAP_STORE_KEY);
+        if (!raw) return defaultRemap();
+        const obj = JSON.parse(raw);
+        ALL_BUTTONS.forEach(n => { if (!(n in obj)) obj[n] = n; });
+        return obj;
+      } catch { return defaultRemap(); }
+    }
+    function saveRemap(m) {
+      try { localStorage.setItem(REMAP_STORE_KEY, JSON.stringify(m)); } catch {}
+    }
+    let remap = loadRemap();
+
+    const btnRemap = document.getElementById('btnRemap');
+    const remapPanel = document.getElementById('remapPanel');
+    const remapGrid = document.getElementById('remapGrid');
+    const btnRemapReset = document.getElementById('btnRemapReset');
+    const btnRemapClose = document.getElementById('btnRemapClose');
+
+    function buildRemapPanel() {
+      remapGrid.innerHTML = "";
+      ALL_BUTTONS.forEach(src => {
+        const lab = document.createElement('label');
+        lab.textContent = src;
+        const sel = document.createElement('select');
+
+        const optDis = document.createElement('option');
+        optDis.value = DISABLE_SENTINEL;
+        optDis.textContent = "(Disabled)";
+        sel.appendChild(optDis);
+
+        ALL_BUTTONS.forEach(dst => {
+          const opt = document.createElement('option');
+          opt.value = dst;
+          opt.textContent = dst;
+          sel.appendChild(opt);
+        });
+
+        sel.value = (remap[src] ?? src);
+        sel.onchange = () => {
+          remap[src] = sel.value;
+          saveRemap(remap);
+          log(`[REMAP] ${src} -> ${sel.value || "(Disabled)"}`);
+        };
+
+        remapGrid.appendChild(lab);
+        remapGrid.appendChild(sel);
+      });
+    }
+
+    // === Remap: desktop left sidebar, mobile popover (safe override) ===
+    const MQ_MOBILE = window.matchMedia('(max-width: 700px)');
+    const sidePanel = document.getElementById('sidePanel');
+    const remapHome = remapPanel.parentElement; // original location under #controls
+    
+    function isMobileViewport() {
+      return MQ_MOBILE.matches;
+    }
+
+    function openRemapDesktop() {
+      document.body.classList.remove('chat-open');
+      document.body.classList.add('remap-open');
+
+      try {
+        const cw = document.getElementById('chatWrap');
+        if (cw) cw.hidden = true;
+      } catch {}
+
+      if (remapPanel.parentElement !== sidePanel) sidePanel.prepend(remapPanel);
+      buildRemapPanel();
+      remapPanel.removeAttribute('hidden');
+    }
+
+    function closeRemapDesktop() {
+      document.body.classList.remove('remap-open');
+      if (remapPanel.parentElement !== remapHome) remapHome.appendChild(remapPanel);
+      remapPanel.setAttribute('hidden', '');
+    }
+
+    function toggleRemap() {
+      if (isMobileViewport()) {
+        const willShow = remapPanel.hasAttribute('hidden');
+        if (willShow) buildRemapPanel();
+        if (willShow) remapPanel.removeAttribute('hidden');
+        else remapPanel.setAttribute('hidden', '');
+      } else {
+        if (!document.body.classList.contains('remap-open')) openRemapDesktop();
+        else closeRemapDesktop();
+      }
+    }
+
+    function reconcileRemapLayout() {
+      const open = document.body.classList.contains('remap-open') || !remapPanel.hasAttribute('hidden');
+      if (!open) return;
+
+      if (isMobileViewport()) {
+        if (remapPanel.parentElement !== remapHome) remapHome.appendChild(remapPanel);
+        remapPanel.removeAttribute('hidden');
+        document.body.classList.remove('remap-open');
+      } else {
+        if (remapPanel.parentElement !== sidePanel) sidePanel.prepend(remapPanel);
+        document.body.classList.add('remap-open');
+        remapPanel.removeAttribute('hidden');
+      }
+    }
+
+    // Advanced remap handlers (final); prevent legacy from overriding
+    window.__REMAP_ADVANCED__ = true;
+
+    btnRemap.onclick = toggleRemap;
+    btnRemapReset.onclick = () => {
+      remap = defaultRemap();
+      saveRemap(remap);
+      buildRemapPanel();
+      log("[REMAP] Reset to defaults");
+    };
+    btnRemapClose.onclick = () => {
+      if (isMobileViewport()) remapPanel.setAttribute('hidden','');
+      else closeRemapDesktop();
+    };
+
+    // Close popover on outside click (mobile only)
+    document.addEventListener('click', (e) => {
+      if (!isMobileViewport()) return;
+      if (!remapPanel.hasAttribute('hidden')) {
+        const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
+        if (!within) remapPanel.setAttribute('hidden','');
+      }
+    });
+
+    MQ_MOBILE.addEventListener?.('change', reconcileRemapLayout);
+    window.addEventListener('resize', reconcileRemapLayout);
+
+    /* Legacy dropdown bindings (kept but disabled when advanced handlers are present) */
+    if (!window.__REMAP_ADVANCED__) {
+      function toggleRemapPanel() {
+        const willShow = remapPanel.hasAttribute('hidden');
+        if (willShow) buildRemapPanel();
+        if (willShow) remapPanel.removeAttribute('hidden'); else remapPanel.setAttribute('hidden', "");
+      }
+
+      btnRemap.onclick = toggleRemapPanel;
+      btnRemapReset.onclick = () => {
+        remap = defaultRemap();
+        saveRemap(remap);
+        buildRemapPanel();
+        log("[REMAP] Reset to defaults");
+      };
+      btnRemapClose.onclick = () => remapPanel.setAttribute('hidden', "");
+
+      document.addEventListener('click', (e) => {
+        if (!remapPanel.hasAttribute('hidden')) {
+          const within = remapPanel.contains(e.target) || btnRemap.contains(e.target);
+          if (!within) remapPanel.setAttribute('hidden', "");
+        }
+      });
+    }
+
+    // ----- Video / audio -----
+    const vid=document.getElementById('vid'), vol=document.getElementById('vol'), btnMute=document.getElementById('btnMute');
+    const overlay=document.getElementById('overlay'), ovText=document.getElementById('ovText'), videoWrap=document.getElementById('videoWrap');
+
+    function ensurePlay(){ const p=vid.play(); if(p&&p.then)p.catch(()=>{}); }
+    function updateMuteVisual(){ const muted=vid.muted||vid.volume===0; btnMute.classList.toggle('muted',muted); btnMute.setAttribute('aria-pressed', String(!muted)); }
+    function lockAspectFromTrack(track){ try{ const st = track.getSettings?.()||{}; const w = st.width||0, h=st.height||0; if(w>0 && h>0) videoWrap.style.aspectRatio = `${w} / ${h}`; }catch{} }
+
+    let autoUnmuted = false;
+    async function firstInteract(){ if(autoUnmuted) return; autoUnmuted = true; try{ const stored = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'30',10))); if(vid.volume===0&&stored>0){ vid.volume=stored/100; vol.value=stored; } vid.muted=false; updateMuteVisual(); ensurePlay(); }catch{} }
+    ['pointerdown','keydown'].forEach(ev=>window.addEventListener(ev, firstInteract, {once:true, capture:true}));
+
+    btnMute.onclick=async()=>{ try{ if(vid.muted || vid.volume===0){ vid.muted=false; if (vid.volume===0) { const stored=Math.max(0,Math.min(100,parseInt(localStorage.getItem('viewerVolume')||'30',10)||30)); vid.volume=stored/100; vol.value=stored; } }else{ vid.muted=true; } updateMuteVisual(); ensurePlay(); }catch{} };
+    vol.addEventListener('input', ()=>{ const v=Math.max(0,Math.min(100,parseInt(vol.value||'0',10)))/100; vid.volume=v; localStorage.setItem('viewerVolume', String(Math.round(v*100))); if(v>0) vid.muted=false; updateMuteVisual(); ensurePlay(); });
+    const initVol = Math.max(0, Math.min(100, parseInt(localStorage.getItem('viewerVolume')||'0',10))); vol.value = initVol; vid.volume = initVol/100; if(initVol===0) vid.muted=true; updateMuteVisual();
+
+    // Fullscreen
+    function toggleFs(){ if(!document.fullscreenElement){ (videoWrap.requestFullscreen||videoWrap.webkitRequestFullscreen||videoWrap.msRequestFullscreen||document.body.requestFullscreen||function(){})?.call(videoWrap); } else { (document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen||function(){})?.call(document); } }
+    document.getElementById('btnFullscreen').onclick=toggleFs;
+    videoWrap.ondblclick=toggleFs;
+    document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
+
+    document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
+
+    // ----- Connection -----
+    const params=new URLSearchParams(location.search);
+    const relayHost=(params.get('relay')||location.host).replace(/^https?:\/\//,'').replace(/\/+$/,'');
+    const wsUrl=`${location.protocol==='https:'?'wss':'ws'}://${relayHost}/ws/viewer`;
+    document.getElementById('wsUrl').textContent=wsUrl;
+    pill('pRelay','ok','Relay: '+relayHost); pill('pTransport','ok','Transport: WebRTC');
+    
+    // --- TURN support: fetch ICE servers from relay.json; allow ?relayOnly=1 to force TURN ---
+    const forceRelay = params.get('relayOnly') === '1';
+    const proto = (location.protocol === 'https:') ? 'https' : 'http';
+    async function getIceServers(){
+      const fallback=[{urls:['stun:stun.l.google.com:19302','stun:global.stun.twilio.com:3478']}];
+      try{
+        const r = await fetch(`${proto}://${relayHost}/relay.json`, {
+          cache: 'no-store',
+          headers: { 'ngrok-skip-browser-warning': '1' }
+        });
+        const j = await r.json();
+        if (Array.isArray(j.ice_servers) && j.ice_servers.length) return j.ice_servers;
+      }catch(e){ try{ log('ICE fetch failed, using fallback STUN: '+e);}catch{} }
+      return fallback;
+    }
+
+    let pc, ws, dc, viewerID=null, restarting=false, hbTimer=null, stallTimer=null;
+    let retryDelay = 700;
+    const inbound=new MediaStream();
+
+    // --- Connection lost/reconnect overlay logic ---
+    let isDisconnected = false;
+    function handleDisconnect(reason) {
+      if (isDisconnected) return;
+      isDisconnected = true;
+      log("[CONNECTION LOST] " + reason);
+      if (document.getElementById('lostConnectionOverlay')) {
+        document.getElementById('lostConnectionOverlay').remove();
+      }
+      const overlay = document.createElement('div');
+      overlay.id = 'lostConnectionOverlay';
+      overlay.innerHTML = `
+        <button class="footer-eye-btn" tabindex="-1" aria-label="Animated Eye" style="margin-bottom:1.4em;">
+          <svg class="eye-svg" viewBox="0 0 120 80" width="54" height="38">
+            <ellipse class="eyeball" cx="60" cy="40" rx="28" ry="18" stroke="#e5e5e5" stroke-width="3" fill="#181818"/>
+            <ellipse class="iris" cx="60" cy="40" rx="10" ry="10" fill="#e5e5e5"/>
+            <ellipse class="pupil" cx="60" cy="40" rx="5" ry="5" fill="#1a1a1a"/>
+          </svg>
+        </button>
+        <div id="lostConnectionMsg">
+          Connection to stream host lost.<br>
+          Please reload or <button id="reconnectBtn">Reconnect</button>
+        </div>
+        <div id="reconnectCountdown">Auto-reloading in <span id="reconnectCount">5</span> seconds...</div>
+      `;
+      document.body.appendChild(overlay);
+      let seconds = 5;
+      const countdownEl = document.getElementById('reconnectCount');
+      const timer = setInterval(() => {
+        seconds--;
+        if (countdownEl) countdownEl.textContent = seconds;
+        if (seconds <= 0) {
+          clearInterval(timer);
+          location.reload();
+        }
+      }, 1000);
+      document.getElementById('reconnectBtn').onclick = () => location.reload();
+    }
   </script>
   <script>
     // --- Viewer.html JS: all original code below, with connection lost overlay logic added ---
