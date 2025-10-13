@@ -273,8 +273,8 @@
 	    grid-template-columns:
 	      auto
 	      auto
-	      minmax(90px, 1fr)
-	      minmax(90px, 1fr);
+	      minmax(88px, 1fr)
+	      minmax(88px, 1fr);
 	  }
 	  #viewerCount { min-width: clamp(42px, 14.5vw, 68px); min-height: clamp(30px, 7.2vw, 36px); }
 	  #btnRemap.icon-only { width: clamp(32px, 9vw, 40px); height: clamp(32px, 9vw, 40px); border-radius: 12px; }
@@ -395,7 +395,15 @@
       background: #0d1322 !important;
       color-scheme: dark !important;
     }
-
+	/* Desktop-only: Chat → Fullscreen → Volume on the top row */
+	@media (min-width: 701px) {
+	  /* Do NOT change base display; just set order numbers */
+	  #viewerCount  { order: 1; }
+	  #btnRemap     { order: 2; }
+	  #btnChat      { order: 3; }
+	  #btnFullscreen{ order: 4; }
+	  #volumeWrap   { order: 5; }  /* Volume group (label+slider+mute) comes after Fullscreen */
+	}
     /* Logs (debugger) */
     #logPanel{display:grid;grid-template-rows:min-content 1fr;border:1px solid #1d2436;border-radius:8px;overflow:hidden}
     #logHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#121824;border-bottom:1px solid #1d2436}
@@ -2361,3 +2369,4 @@
   </script>
 </body>
 </html>
+
