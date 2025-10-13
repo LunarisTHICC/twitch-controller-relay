@@ -211,7 +211,7 @@
 		  minmax(100px, 1fr);        /* Fullscreen */
 		grid-auto-rows: minmax(32px, auto); /* compact rows */
 		column-gap: 10px;
-		row-gap: 8px;
+		row-gap: 8px !important;
 		align-items: center;
 	  }
 
@@ -267,15 +267,14 @@
 	}
 
 	/* Fine‑tuning for ~430–460px CSS widths: keep 4 items on one row */
-	/* Fine‑tuning for ~430–460px CSS widths: keep 4 items on one row */
 	@media (max-width: 460px) and (orientation: portrait) {
 	  #controls { column-gap: 6px; }
 	  #controls {
 	    grid-template-columns:
 	      auto
 	      auto
-	      minmax(92px, 1fr)
-	      minmax(92px, 1fr);
+	      minmax(90px, 1fr)
+	      minmax(90px, 1fr);
 	  }
 	  #viewerCount { min-width: clamp(42px, 14.5vw, 68px); min-height: clamp(30px, 7.2vw, 36px); }
 	  #btnRemap.icon-only { width: clamp(32px, 9vw, 40px); height: clamp(32px, 9vw, 40px); border-radius: 12px; }
@@ -359,26 +358,6 @@
 	  padding: 10px 0;
 	  align-items: center;
 	}
-	/* Desktop-only ordering: Chat → Volume → Fullscreen on the same row */
-	@media (min-width: 701px) {
-	  /* Make sure we’re using the base flex row on desktop */
-	  #controls {
-	    display: flex;
-	    flex-wrap: wrap;    /* allows wrap if window is very narrow */
-	    align-items: center;
-	    gap: 10px;
-	  }
-	
-	  /* Enforce the order on the top row */
-	  #viewerCount { order: 1; }
-	  #btnRemap    { order: 2; }
-	  #btnChat     { order: 3; }
-	  #volumeWrap  { order: 4; flex: 0 1 auto; flex-wrap: nowrap; }
-	  #btnFullscreen { order: 5; }
-	
-	  /* Let the text buttons shrink a little so they stay on the same row */
-	  #btnChat, #btnFullscreen { min-width: 0; }
-	}  
 	
     button,input,select{border-radius:8px;border:1px solid #2a2a32;color:#f3edff;background:#1e123a}
     button.accent{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:#5f37d6;color:#fff;box-shadow:0 6px 18px rgba(145,70,255,.25),inset 0 0 0 1px rgba(255,255,255,.05)}
@@ -2382,9 +2361,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
