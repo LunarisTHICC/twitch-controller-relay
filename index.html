@@ -288,21 +288,7 @@
 	@media (max-width: 700px) and (orientation: portrait) {
 	  #btnChat, #btnFullscreen { min-width: 0; }
 	}
-
-	/* Extra‑narrow <= 400px: if 4 don’t fit, wrap Fullscreen only; keep Volume next row */
-	@media (max-width: 380px) and (orientation: portrait) {
-	  #controls { column-gap: 8px; }
-	  #viewerCount { min-width: 42px; }
-	  #btnRemap.icon-only { width: 32px; height: 32px; }
-	  #btnChat,
-	  #btnFullscreen {
-		min-height: 30px;
-		padding-inline: 10px;
-		font-size: 13px;
-	  }
-	  #btnFullscreen { grid-row: 2; grid-column: 3 / -1; justify-self: end; }
-	  #volumeWrap    { grid-row: 3; grid-column: 1 / -1; }
-	}
+	  
 	#remapPanel[hidden] { display: none; }
 	#remapHeader {
 	  display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -684,6 +670,10 @@
       body.chat-open main {
         grid-template-columns: 1fr !important; /* override desktop two-column rule */
       }
+	  /* Ensure Fullscreen stays on row 1 in mobile portrait */
+	@media (max-width: 700px) and (orientation: portrait) {
+	  #btnFullscreen { grid-row: 1 !important; grid-column: 4 !important; }
+	}
       /* Ensure stacking order on small screens */
       main > section { order: 1; }
       main > #sidePanel { order: 2; }
@@ -2363,6 +2353,7 @@
   </script>
 </body>
 </html>
+
 
 
 
