@@ -263,25 +263,27 @@
 	}
 
 	/* Fine‑tuning for ~430–460px CSS widths: keep 4 items on one row */
+	/* Fine‑tuning for ~430–460px CSS widths: keep 4 items on one row */
 	@media (max-width: 460px) and (orientation: portrait) {
-	  #controls { column-gap: 8px; }
+	  #controls { column-gap: 6px; }
 	  #controls {
-		grid-template-columns:
-		  auto
-		  auto
-		  minmax(96px, 1fr)
-		  minmax(96px, 1fr);
+	    grid-template-columns:
+	      auto
+	      auto
+	      minmax(92px, 1fr)
+	      minmax(92px, 1fr);
 	  }
-	  #viewerCount { min-width: clamp(44px, 15vw, 70px); min-height: clamp(30px, 7.2vw, 36px); }
-	  #btnRemap.icon-only { width: clamp(34px, 9.5vw, 42px); height: clamp(34px, 9.5vw, 42px); border-radius: 12px; }
+	  #viewerCount { min-width: clamp(42px, 14.5vw, 68px); min-height: clamp(30px, 7.2vw, 36px); }
+	  #btnRemap.icon-only { width: clamp(32px, 9vw, 40px); height: clamp(32px, 9vw, 40px); border-radius: 12px; }
 	  #btnRemap.icon-only svg { width: 66%; height: 66%; }
-
-	  #btnChat,
-	  #btnFullscreen {
-		min-height: 30px;
-		padding-inline: 10px;
-		font-size: 13.5px;
-	  }
+	
+	  /* Let text buttons shrink instead of forcing a wrap */
+	  #btnChat, #btnFullscreen { min-height: 30px; padding-inline: 10px; font-size: 13.5px; min-width: 0; }
+	}
+	
+	/* Also let them shrink in the 700px block so they can flex slightly there too */
+	@media (max-width: 700px) and (orientation: portrait) {
+	  #btnChat, #btnFullscreen { min-width: 0; }
 	}
 
 	/* Extra‑narrow <= 400px: if 4 don’t fit, wrap Fullscreen only; keep Volume next row */
@@ -345,7 +347,8 @@
 	body.clean #controls > #iconRow { display: flex; }
 	/* Allow panel to show in clean mode when not hidden */
 	body.clean #controls > #remapPanel:not([hidden]) { display: block; }
-    #controls{display:flex;flex-wrap:wrap;gap:10px;padding:10px 0;align-items:center}
+    #controls{display:flex;flex-wrap:wrap;gap:10px;padding:10px 0;align-items:center;justify-content:center
+	#volumeWrap { justify-content: center; width: 100%; }
     button,input,select{border-radius:8px;border:1px solid #2a2a32;color:#f3edff;background:#1e123a}
     button.accent{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:#5f37d6;color:#fff;box-shadow:0 6px 18px rgba(145,70,255,.25),inset 0 0 0 1px rgba(255,255,255,.05)}
     button.accent:hover{filter:brightness(1.05)} button.accent:active{transform:translateY(1px)}
@@ -449,6 +452,7 @@
 		column-gap: 10px;
 		row-gap: 10px;
 		align-items: center;
+		padding-block: 6px;
       }
     #footerNoticeWrap {
         display: grid;
@@ -474,13 +478,13 @@
         font-size: clamp(11px, 3.2vw, 12px);
       }
     }
-    @media (max-width: 420px) {
+	  
+	@media (max-width: 420px) {
 	  #footerNoticeWrap .footer-eye-btn { height: clamp(44px, 13.5vw, 54px); }
 	  #footerNoticeWrap .footer-eye-btn .eye-svg { height: 94%; }
-	}	
-	  #footerNoticeText { font-size: clamp(11px, 3.6vw, 13px); }
+	  #footerNoticeText { font-size: clamp(11px, 3.1vw, 13px); line-height: 1.1; }
 	  #btnDebugger { font-size: clamp(10px, 3.1vw, 11px); padding: 5px 9px; }
-    }
+	}
 	
 	@media (orientation: landscape) and (max-height: 480px) {
 	  #controls { gap: 8px; }
@@ -2347,6 +2351,7 @@
   </script>
 </body>
 </html>
+
 
 
 
