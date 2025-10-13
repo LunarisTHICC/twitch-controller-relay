@@ -347,8 +347,22 @@
 	body.clean #controls > #iconRow { display: flex; }
 	/* Allow panel to show in clean mode when not hidden */
 	body.clean #controls > #remapPanel:not([hidden]) { display: block; }
-    #controls{display:flex;flex-wrap:wrap;gap:10px;padding:10px 0;align-items:center;justify-content:center
-	#volumeWrap { justify-content: center; width: 100%; }
+    /* Base controls row */
+	#controls {
+	  display: flex;
+	  flex-wrap: wrap;
+	  gap: 10px;
+	  padding: 10px 0;
+	  align-items: center;
+	  justify-content: center;
+	}
+	
+	/* Center the Volume group as a unit */
+	#volumeWrap {
+	  display: flex;          /* keep your inner spacing working */
+	  justify-content: center;
+	  width: 100%;
+	}
     button,input,select{border-radius:8px;border:1px solid #2a2a32;color:#f3edff;background:#1e123a}
     button.accent{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:#5f37d6;color:#fff;box-shadow:0 6px 18px rgba(145,70,255,.25),inset 0 0 0 1px rgba(255,255,255,.05)}
     button.accent:hover{filter:brightness(1.05)} button.accent:active{transform:translateY(1px)}
