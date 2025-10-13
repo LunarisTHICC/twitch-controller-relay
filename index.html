@@ -200,76 +200,104 @@
 	  padding: 12px;
 	  z-index: 9000;
 	}
-	/* Mobile portrait: row1 = [viewerCount][Remap][Chat][Fullscreen]; row2 = Volume full-width
-	   Buttons trimmed ~30% vertically; Fullscreen sits beside Chat. */
+	/* Mobile portrait: row1 = [viewerCount][Remap][Chat][Fullscreen]; row2 = Volume full-width */
 	@media (max-width: 700px) and (orientation: portrait) {
 	  #controls {
 		display: grid !important; /* override later flex */
 		grid-template-columns:
 		  auto                       /* viewerCount */
 		  auto                       /* Remap icon */
-		  minmax(110px, 1fr)         /* Chat */
-		  minmax(110px, 1fr);        /* Fullscreen */
-		grid-auto-rows: minmax(32px, auto); /* shorter rows (~30% down) */
+		  minmax(100px, 1fr)         /* Chat */
+		  minmax(100px, 1fr);        /* Fullscreen */
+		grid-auto-rows: minmax(32px, auto); /* compact rows */
 		column-gap: 10px;
 		row-gap: 8px;
 		align-items: center;
 	  }
-	  /* Fine‑tuning for common phone widths ~430–460px: keep 4 items on one row */
-	@media (max-width: 460px) and (orientation: portrait) {
-	  #controls {
-		column-gap: 8px; /* shave a bit of gap */
-	  }
+
+	  /* Row 1 explicit placement */
+	  #viewerCount   { grid-column: 1; grid-row: 1; justify-self: start; align-self: stretch; }
+	  #btnRemap      { grid-column: 2; grid-row: 1; }
+	  #btnChat       { grid-column: 3; grid-row: 1; justify-self: stretch; }
+	  #btnFullscreen { grid-column: 4; grid-row: 1; justify-self: stretch; }
+
+	  /* Row 2: Volume across full width */
+	  #volumeWrap { grid-column: 1 / -1; grid-row: 2; }
+
+	  /* Compact viewer tile */
 	  #viewerCount {
-		min-width: clamp(46px, 15vw, 72px);
-		min-height: clamp(30px, 7.2vw, 36px);
+		min-height: clamp(30px, 7.2vw, 38px);
+		min-width: clamp(48px, 15vw, 74px);
 		padding-inline: 8px;
 	  }
+
+	  /* Remap icon: smaller square tile */
 	  #btnRemap.icon-only {
-		width: clamp(36px, 9.8vw, 44px);
-		height: clamp(36px, 9.8vw, 44px);
+		width: clamp(36px, 10vw, 46px);
+		height: clamp(36px, 10vw, 46px);
+		padding: 0;
+		min-width: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		border-radius: 12px;
 	  }
-	  #btnRemap.icon-only svg { width: 66%; height: 66%; }
+	  #btnRemap.icon-only svg {
+		width: 66%; height: 66%;
+		filter: drop-shadow(0 0 5px rgba(145,70,255,0.45));
+	  }
 
-	  /* Trim button height/width just a touch so Chat + Fullscreen always sit side-by-side */
+	  /* Chat and Fullscreen: compact and consistent height */
 	  #btnChat,
 	  #btnFullscreen {
 		min-height: clamp(30px, 7.6vw, 36px);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		padding-inline: 10px;
 		font-size: clamp(12.5px, 3.2vw, 14.5px);
 	  }
 
-	  /* Slightly narrower min widths help the 4-column row fit */
+	  /* Tidy labels */
+	  #controls button { white-space: nowrap; }
+	}
+
+	/* Fine‑tuning for ~430–460px CSS widths: keep 4 items on one row */
+	@media (max-width: 460px) and (orientation: portrait) {
+	  #controls { column-gap: 8px; }
 	  #controls {
 		grid-template-columns:
 		  auto
 		  auto
-		  minmax(100px, 1fr)
-		  minmax(100px, 1fr);
+		  minmax(96px, 1fr)
+		  minmax(96px, 1fr);
+	  }
+	  #viewerCount { min-width: clamp(44px, 15vw, 70px); min-height: clamp(30px, 7.2vw, 36px); }
+	  #btnRemap.icon-only { width: clamp(34px, 9.5vw, 42px); height: clamp(34px, 9.5vw, 42px); border-radius: 12px; }
+	  #btnRemap.icon-only svg { width: 66%; height: 66%; }
+
+	  #btnChat,
+	  #btnFullscreen {
+		min-height: 30px;
+		padding-inline: 10px;
+		font-size: 13.5px;
 	  }
 	}
 
-	/* Extra‑narrow phones <= 400px: last resort – still keep Chat and Fullscreen together if possible,
-	   otherwise wrap only Fullscreen to a second row and keep Volume below (what you already implemented). */
+	/* Extra‑narrow <= 400px: if 4 don’t fit, wrap Fullscreen only; keep Volume next row */
 	@media (max-width: 400px) and (orientation: portrait) {
-	  #controls {
-		column-gap: 8px;
-	  }
-	  #viewerCount { min-width: 44px; }
-	  #btnRemap.icon-only { width: 34px; height: 34px; }
+	  #controls { column-gap: 8px; }
+	  #viewerCount { min-width: 42px; }
+	  #btnRemap.icon-only { width: 32px; height: 32px; }
 	  #btnChat,
 	  #btnFullscreen {
 		min-height: 30px;
 		padding-inline: 10px;
 		font-size: 13px;
 	  }
-	  /* If the 4 items still don’t fit, allow Fullscreen to wrap (your previous fallback)
-		 while keeping Volume on the next full-width row. */
 	  #btnFullscreen { grid-row: 2; grid-column: 3 / -1; justify-self: end; }
 	  #volumeWrap    { grid-row: 3; grid-column: 1 / -1; }
 	}
-
 	  /* Row 1 explicit placement */
 	  #viewerCount   { grid-column: 1; grid-row: 1; justify-self: start; align-self: stretch; }
 	  #btnRemap      { grid-column: 2; grid-row: 1; }
