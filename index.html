@@ -442,7 +442,7 @@
 
     /* Mobile footer layout/scaling */
     @media (max-width: 700px) and (orientation: portrait) {
-      footer {
+    footer {
 	    display: grid !important;   /* ensure grid wins over the later flex */
 		grid-template-columns: auto 1fr auto;
 		grid-auto-rows: min-content;
@@ -450,37 +450,37 @@
 		row-gap: 10px;
 		align-items: center;
       }
-      #footerNoticeWrap {
+    #footerNoticeWrap {
         display: grid;
         grid-template-columns: auto 1fr;
         align-items: center;
         gap: 10px;
         min-width: 0;
       }
-      #footerNoticeWrap .footer-eye-btn .eye-svg {
-        width: clamp(32px, 10vw, 44px);
-        height: auto;
-      }
-      #footerNoticeText {
+		
+	#footerNoticeWrap .footer-eye-btn { height: clamp(46px, 12.5vw, 56px); }
+	#footerNoticeWrap .footer-eye-btn .eye-svg { height: 94%; width: auto; }
+		
+    #footerNoticeText {
         font-size: clamp(12px, 3.5vw, 14px);
         line-height: 1.2;
         letter-spacing: 0.03em;
         word-break: break-word;
         overflow-wrap: anywhere;
       }
-      #footerRight { justify-self: end; }
-      #btnDebugger {
+    #footerRight { justify-self: end; }
+	#btnDebugger {
         padding: 6px 10px;
         font-size: clamp(11px, 3.2vw, 12px);
       }
     }
     @media (max-width: 420px) {
-		#footerNoticeWrap .footer-eye-btn .eye-svg {
-		width: clamp(44px, 12.5vw, 64px);
+	  #footerNoticeWrap .footer-eye-btn { height: clamp(44px, 13.5vw, 54px); }
+	  #footerNoticeWrap .footer-eye-btn .eye-svg { height: 94%; }
 		height: auto;
 	}	
-		#footerNoticeText { font-size: clamp(11px, 3.6vw, 13px); }
-		#btnDebugger { font-size: clamp(10px, 3.1vw, 11px); padding: 5px 9px; }
+	  #footerNoticeText { font-size: clamp(11px, 3.6vw, 13px); }
+	  #btnDebugger { font-size: clamp(10px, 3.1vw, 11px); padding: 5px 9px; }
     }
 	
 	@media (orientation: landscape) and (max-height: 480px) {
@@ -2348,4 +2348,5 @@
   </script>
 </body>
 </html>
+
 
