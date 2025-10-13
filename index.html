@@ -303,12 +303,6 @@
 	  #btnFullscreen { grid-row: 2; grid-column: 3 / -1; justify-self: end; }
 	  #volumeWrap    { grid-row: 3; grid-column: 1 / -1; }
 	}
-	/* Extra-narrow portrait: if four items can’t fit, wrap Fullscreen down, keep Volume below */
-	@media (max-width: 380px) and (orientation: portrait) {
-	  #btnFullscreen { grid-row: 2; grid-column: 3 / -1; justify-self: end; }
-	  #volumeWrap    { grid-row: 3; grid-column: 1 / -1; }
-	}
-	
 	#remapPanel[hidden] { display: none; }
 	#remapHeader {
 	  display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -2369,6 +2363,7 @@
   </script>
 </body>
 </html>
+
 
 
 
