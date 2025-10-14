@@ -208,7 +208,7 @@
 		  auto                       /* viewerCount */
 		  auto                       /* Remap icon */
 		  auto       				  /* Chat */
-		  auto       				 /* Fullscreen */
+		  minmax(100px, 1fr);        /* Fullscreen */
 		grid-auto-rows: minmax(32px, auto); /* compact rows */
 		column-gap: 10px;
 		row-gap: 8px !important;
@@ -235,10 +235,10 @@
 		padding-inline: 8px;
 	  }
 
-	  /* Remap icon: smaller square tile */
+	  /* Remap icon: smaller square tile (reduced by ~12%) */
 	  #btnRemap.icon-only {
-		width: clamp(36px, 10vw, 46px);
-		height: clamp(36px, 10vw, 46px);
+		width: clamp(32px, 8.8vw, 40px);
+		height: clamp(32px, 8.8vw, 40px);
 		padding: 0;
 		min-width: 0;
 		display: inline-flex;
@@ -251,10 +251,10 @@
 		filter: drop-shadow(0 0 5px rgba(145,70,255,0.45));
 	  }
 
-	  /* Chat and Fullscreen: compact and consistent height */
+	  /* Chat and Fullscreen: compact and consistent height (reduced by ~12%) */
 	  #btnChat,
 	  #btnFullscreen {
-		min-height: clamp(30px, 7.6vw, 36px);
+		min-height: clamp(26px, 6.7vw, 32px);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -274,14 +274,14 @@
 	      auto
 	      auto
 	      auto
-	      auto
+	      minmax(88px, 1fr);
 	  }
 	  #viewerCount { min-width: clamp(42px, 14.5vw, 68px); min-height: clamp(30px, 7.2vw, 36px); }
-	  #btnRemap.icon-only { width: clamp(32px, 9vw, 40px); height: clamp(32px, 9vw, 40px); border-radius: 12px; }
+	  #btnRemap.icon-only { width: clamp(28px, 8vw, 35px); height: clamp(28px, 8vw, 35px); border-radius: 12px; }
 	  #btnRemap.icon-only svg { width: 66%; height: 66%; }
 	
-	  /* Let text buttons shrink instead of forcing a wrap */
-	  #btnChat, #btnFullscreen { min-height: 30px; padding-inline: 10px; font-size: 12.5px; min-width: 0; }
+	  /* Let text buttons shrink instead of forcing a wrap (reduced by ~12%) */
+	  #btnChat, #btnFullscreen { min-height: 26px; padding-inline: 10px; font-size: 12.5px; min-width: 0; }
 	}
 	
 	/* Also let them shrink in the 700px block so they can flex slightly there too */
@@ -342,6 +342,15 @@
     button,input,select{border-radius:8px;border:1px solid #2a2a32;color:#f3edff;background:#1e123a}
     button.accent{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:#5f37d6;color:#fff;box-shadow:0 6px 18px rgba(145,70,255,.25),inset 0 0 0 1px rgba(255,255,255,.05)}
     button.accent:hover{filter:brightness(1.05)} button.accent:active{transform:translateY(1px)}
+    /* Dimmed text for Chat, Fullscreen, Remap buttons (10% darker than #fff = #e5e5e5) */
+    #btnChat, #btnFullscreen, #btnRemap { color: #e5e5e5 !important; }
+    /* Mute button styling - red glow when muted */
+    #btnMute.muted {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+      filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.35));
+    }
     input[type=range]{appearance:none;height:6px;background:#1d1931;border:1px solid #2b2350;width:160px;border-radius:999px}
     input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(145,70,255,.55);border:1px solid #fff1}
 
@@ -398,7 +407,9 @@
       padding:12px 14px;
       color:#7a8fb2;
       border-top:1px solid #20283a;
-      background:#0e1524
+      background:#0e1524;
+      position: relative;
+      z-index: 10;
     }
     #footerNoticeWrap {
       display: flex;
@@ -421,7 +432,8 @@
       opacity: 0.9;
     }
     #footerNoticeText {
-      font-size: 0.78em;
+      font-size: 0.72em;
+      line-height: 1.3;
       color: #aeb6d3;
       font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
       letter-spacing: 0.04em;
@@ -429,16 +441,18 @@
     #footerRight{margin-left:auto;display:flex;align-items:center;gap:8px}
     #btnDebugger{padding:6px 10px;font-size:12px;opacity:.9}
 
-	/* Base (desktop): size the button; SVG fills it by height */
+	/* Base (desktop): size the button; SVG fills it by height, increased by ~90% */
 	footer .footer-eye-btn {
 	  display: inline-flex;
 	  align-items: center;
 	  justify-content: center;
 	  height: 44px;
+	  overflow: visible;
 	}
 	footer .eye-svg {
-	  height: 92%;
+	  height: 175%;
 	  width: auto;
+	  overflow: visible;
 	}
 
     /* Mobile footer layout/scaling */
@@ -451,6 +465,13 @@
 		row-gap: 10px;
 		align-items: center;
 		padding-block: 6px;
+		position: sticky;
+		bottom: 0;
+		z-index: 10;
+      }
+      /* Add padding to body so content doesn't hide behind sticky footer */
+      body {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
       }
     #footerNoticeWrap {
         display: grid;
@@ -460,12 +481,12 @@
         min-width: 0;
       }
 		
-	#footerNoticeWrap .footer-eye-btn { height: clamp(46px, 12.5vw, 56px); }
-	#footerNoticeWrap .footer-eye-btn .eye-svg { height: 94%; width: auto; }
+	#footerNoticeWrap .footer-eye-btn { height: clamp(46px, 12.5vw, 56px); overflow: visible; }
+	#footerNoticeWrap .footer-eye-btn .eye-svg { height: 178%; width: auto; overflow: visible; }
 		
     #footerNoticeText {
-        font-size: clamp(12px, 3.5vw, 14px);
-        line-height: 1.2;
+        font-size: clamp(10px, 3vw, 12px);
+        line-height: 1.15;
         letter-spacing: 0.03em;
         word-break: break-word;
         overflow-wrap: anywhere;
@@ -478,9 +499,9 @@
     }
 	  
 	@media (max-width: 420px) {
-	  #footerNoticeWrap .footer-eye-btn { height: clamp(44px, 13.5vw, 54px); }
-	  #footerNoticeWrap .footer-eye-btn .eye-svg { height: 94%; }
-	  #footerNoticeText { font-size: clamp(11px, 3.1vw, 13px); line-height: 1.1; }
+	  #footerNoticeWrap .footer-eye-btn { height: clamp(44px, 13.5vw, 54px); overflow: visible; }
+	  #footerNoticeWrap .footer-eye-btn .eye-svg { height: 178%; overflow: visible; }
+	  #footerNoticeText { font-size: clamp(9px, 2.8vw, 11px); line-height: 1.1; }
 	  #btnDebugger { font-size: clamp(10px, 3.1vw, 11px); padding: 5px 9px; }
 	}
 	
@@ -549,6 +570,80 @@
     body.clean #btnChat, body.clean #volumeWrap, body.clean #btnFullscreen, body.clean #iconRow{display:flex}
     body:not(.clean) #btnFullscreen{display:none}
     .fs-active #videoWrap{box-shadow:0 0 0 2px var(--accent) inset}
+
+    /* Eye button modal (About + Donations) */
+    #eyeModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 16, 0.92);
+      z-index: 10001;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #eyeModal.visible { display: flex; }
+    #eyeModalContent {
+      background: linear-gradient(135deg, #1a1a28 0%, #0d1322 100%);
+      border: 1px solid #2a2a42;
+      border-radius: 16px;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+      padding: 28px 32px;
+      max-width: 520px;
+      width: 90%;
+      position: relative;
+      color: #efeff1;
+      font-family: 'Orbitron', 'Montserrat', system-ui, sans-serif;
+    }
+    #eyeModalClose {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #aeb6d3;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 8px;
+      transition: color 0.2s;
+    }
+    #eyeModalClose:hover { color: #fff; }
+    #eyeModalContent h2 {
+      margin: 0 0 16px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #e9e2ff;
+      letter-spacing: 0.8px;
+    }
+    #eyeModalContent p {
+      margin: 0 0 20px 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #cfd3df;
+    }
+    #eyeModalDonateBtn {
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border: 1px solid #5f37d6;
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(145, 70, 255, 0.3);
+      transition: filter 0.2s, transform 0.1s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    #eyeModalDonateBtn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    #eyeModalDonateBtn:active {
+      transform: translateY(0);
+    }
 
     /* --- Animated Intro Styles --- */
     #intro-overlay {
@@ -636,6 +731,9 @@
 
 	/* Ensure the hidden attribute always wins for chat */
 	#chatWrap[hidden] { display: none !important; }
+	
+	/* Sync chat panel height to Remap sidebar height when Remap is open (desktop) */
+	body.remap-open #chatWrap { height: 100%; }
 
 	/* Mobile-friendly Remap popover sizing (prevents edge cut-off) */
 	@media (max-width: 700px) {
@@ -758,7 +856,7 @@
 
   <footer>
     <div id="footerNoticeWrap">
-      <button class="footer-eye-btn" tabindex="-1" aria-label="Animated Eye" style="background:none;border:none;outline:none;padding:0;">
+      <button id="eyeBtn" class="footer-eye-btn" aria-label="About & Donate" style="background:none;border:none;outline:none;padding:0;cursor:pointer;">
         <svg class="eye-svg" viewBox="0 0 120 80" width="34" height="24">
           <ellipse class="eyeball" cx="60" cy="40" rx="28" ry="18" stroke="#e5e5e5" stroke-width="3" fill="#181818"/>
           <ellipse class="iris" cx="60" cy="40" rx="10" ry="10" fill="#e5e5e5"/>
@@ -769,6 +867,25 @@
     </div>
     <div id="footerRight"><button id="btnDebugger" title="Toggle debug UI">Debugger</button></div>
   </footer>
+
+  <!-- Eye modal (About + Donations) -->
+  <div id="eyeModal">
+    <div id="eyeModalContent">
+      <button id="eyeModalClose" aria-label="Close">&times;</button>
+      <h2>About doppel.stream</h2>
+      <p>
+        doppel.stream is a free, open-source streaming platform built for gamers.
+        This project is not affiliated with Twitch and complies with all Terms of Service.
+      </p>
+      <p>
+        All development is done by JunkfoodJon with GitHub Copilot.
+        The code is available on GitHub and uses Python, HTML, CSS, and JavaScript.
+      </p>
+      <a id="eyeModalDonateBtn" href="https://paypal.me/dopplestream" target="_blank" rel="noopener">
+        ❤️ Support via PayPal
+      </a>
+    </div>
+  </div>
 
   <!-- Scripts: Animated Intro (runs first), then Viewer scripts -->
   <script>
@@ -1452,6 +1569,22 @@
     document.addEventListener('fullscreenchange', ()=>{ document.body.classList.toggle('fs-active', !!document.fullscreenElement); });
 
     document.getElementById('btnDebugger').onclick=()=>{ document.body.classList.toggle('clean'); buildBanner(); };
+
+    // Eye modal handlers
+    const eyeModal = document.getElementById('eyeModal');
+    const eyeBtn = document.getElementById('eyeBtn');
+    const eyeModalClose = document.getElementById('eyeModalClose');
+    if (eyeBtn) {
+      eyeBtn.onclick = () => eyeModal.classList.add('visible');
+    }
+    if (eyeModalClose) {
+      eyeModalClose.onclick = () => eyeModal.classList.remove('visible');
+    }
+    if (eyeModal) {
+      eyeModal.onclick = (e) => {
+        if (e.target === eyeModal) eyeModal.classList.remove('visible');
+      };
+    }
 
     // ----- Connection -----
     const params=new URLSearchParams(location.search);
